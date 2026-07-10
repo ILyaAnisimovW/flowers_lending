@@ -1,0 +1,359 @@
+  <!DOCTYPE html>
+  <html lang="ru">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>МАК — цветы громче слов</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  </head>
+  <body>
+
+  <!-- ================= PRELOADER ================= -->
+  <div class="preloader" id="preloader">
+    <div class="preloader-content">
+      <div class="preloader-stack" id="preloaderStack"></div>
+      <div class="preloader-meta">
+        <svg class="preloader-mark" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="6" fill="#E8412C"/><ellipse cx="20" cy="8" rx="6" ry="9" fill="currentColor"/><ellipse cx="20" cy="32" rx="6" ry="9" fill="currentColor"/><ellipse cx="8" cy="20" rx="9" ry="6" fill="currentColor"/><ellipse cx="32" cy="20" rx="9" ry="6" fill="currentColor"/></svg>
+        <div class="preloader-count"><span id="counterNum">0</span><span class="preloader-percent-sign">%</span></div>
+      </div>
+      <div class="preloader-bar"><div class="preloader-bar-fill" id="counterBar"></div></div>
+      <div class="preloader-label">Собираем витрину</div>
+    </div>
+  </div>
+
+  <div class="petal-cursor" id="cursor"></div>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="#" class="logo">
+        <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="6" fill="#E8412C"/><ellipse cx="20" cy="8" rx="6" ry="9" fill="currentColor"/><ellipse cx="20" cy="32" rx="6" ry="9" fill="currentColor"/><ellipse cx="8" cy="20" rx="9" ry="6" fill="currentColor"/><ellipse cx="32" cy="20" rx="9" ry="6" fill="currentColor"/></svg>
+        МАК
+      </a>
+      <nav class="nav-links">
+        <a href="#catalog">Каталог</a>
+        <a href="#how">Как заказать</a>
+        <a href="#about">О нас</a>
+        <a href="#contacts">Контакты</a>
+      </nav>
+      <a href="#catalog" class="nav-cta">Собрать букет</a>
+    </div>
+  </header>
+
+  <section class="showcase" id="showcase">
+    <div class="showcase-stripes" aria-hidden="true"></div>
+    <div class="showcase-inner">
+      <div class="showcase-content">
+        <div class="showcase-tags">
+          <span class="tag-hot">🔥 Хит</span>
+          <span class="tag-cat" id="showcaseCat">ХИТ НЕДЕЛИ</span>
+        </div>
+        <h1 class="showcase-title" id="showcaseTitle">НЕЖНЫЙ ФЛИРТ</h1>
+        <p class="showcase-desc" id="showcaseDesc">Розовые и белые альстромерии в нежной упаковке</p>
+        <div class="showcase-meta">
+          <span class="showcase-price" id="showcasePrice">2 800 ₽</span>
+          <a href="#catalog" class="btn-primary">Смотреть каталог →</a>
+        </div>
+        <a href="#catalog" class="showcase-see-all">Все хиты сезона <span>→</span></a>
+      </div>
+      <div class="showcase-media">
+        <div class="showcase-glow" aria-hidden="true"></div>
+        <img class="showcase-img" id="showcaseImg" src="/images/bouquet-flirt.png" alt="">
+      </div>
+    </div>
+    <div class="showcase-dots" id="showcaseDots"></div>
+    <div class="showcase-nav">
+      <button class="showcase-arrow" id="showcasePrev" aria-label="Предыдущий">‹</button>
+      <button class="showcase-arrow" id="showcaseNext" aria-label="Следующий">›</button>
+    </div>
+  </section>
+
+  <section class="collections" id="catalog">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2>Коллекция, которую собирают за одно утро</h2>
+        <p>Каждый букет — маленький скандал в хорошем смысле. Меняем состав ежедневно, в зависимости от того, что привезли с фермы.</p>
+      </div>
+      <div class="carousel3d-wrap reveal" id="carousel3dWrap">
+        <svg class="carousel3d-ribbons" id="carousel3dRibbons" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <path class="ribbon ribbon-1" d="M -100,190 C 150,90 380,300 650,210 S 1080,70 1300,190 L 1300,300 C 1020,150 800,390 560,310 S 130,160 -100,300 Z"/>
+          <path class="ribbon ribbon-2" d="M -100,400 C 220,510 460,290 740,410 S 1140,560 1300,430 L 1300,540 C 1000,650 780,380 540,470 S 120,630 -100,500 Z"/>
+          <path class="ribbon ribbon-3" d="M -100,560 C 280,660 500,470 800,560 S 1140,690 1300,580 L 1300,680 C 950,770 740,530 490,610 S 90,770 -100,650 Z"/>
+        </svg>
+        <div class="carousel3d" id="carousel3d"></div>
+        <div class="carousel3d-fade" aria-hidden="true"></div>
+        <div class="carousel3d-caption">
+          <span class="carousel3d-caption-tag"><span class="carousel3d-caption-fire">🔥</span>HOT</span>
+          <span class="carousel3d-caption-name" id="carouselCaptionName">НЕЖНЫЙ ФЛИРТ</span>
+          <span class="carousel3d-caption-price" id="carouselCaptionPrice">2 800 ₽</span>
+          <span class="carousel3d-caption-desc" id="carouselCaptionDesc">Розовые и белые альстромерии в нежной упаковке</span>
+        </div>
+        <div class="carousel3d-bottombar" id="carousel3dBottombar">
+          <div class="carousel3d-select" id="carousel3dSelect"></div>
+          <div class="carousel3d-controls">
+            <button class="carousel3d-arrow" id="carouselPrev" aria-label="Предыдущий">‹</button>
+            <button class="carousel3d-arrow" id="carouselNext" aria-label="Следующий">›</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="carousel3d-bg-extend" aria-hidden="true"></div>
+    <div class="curtain-bars" id="curtainBars" aria-hidden="true"></div>
+  </section>
+
+  <section class="story" id="story">
+
+    <div class="story-photo-frame reveal" id="storyPhotoFrame">
+      <img class="story-photo" src="images/bouquet-story.png" alt="Букет пионовидных роз в руках" loading="lazy">
+      <img class="story-photo story-photo-color" src="images/bouquet-story.png" alt="" aria-hidden="true" loading="lazy">
+      <svg class="story-shapes" id="storyShapes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <div class="story-dots" id="storyDots">
+        <button class="story-dot" data-index="0" data-x="32" data-y="35" style="--x:32%; --y:35%;" aria-label="Пионовидные розы"><span>1</span></button>
+        <button class="story-dot" data-index="1" data-x="68.2" data-y="32" style="--x:68.2%; --y:32%;" aria-label="Эвкалипт"><span>2</span></button>
+        <button class="story-dot" data-index="2" data-x="27" data-y="52" style="--x:27%; --y:52%;" aria-label="Кустовые розы"><span>3</span></button>
+        <button class="story-dot" data-index="3" data-x="38.2" data-y="68" style="--x:38.2%; --y:68%;" aria-label="Упаковка"><span>4</span></button>
+        <button class="story-dot" data-index="4" data-x="46" data-y="80" style="--x:46%; --y:80%;" aria-label="Лента"><span>5</span></button>
+      </div>
+    </div>
+
+    <svg class="story-lines" id="storyLines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <line class="story-line" data-index="0"></line>
+      <line class="story-line" data-index="1"></line>
+      <line class="story-line" data-index="2"></line>
+      <line class="story-line" data-index="3"></line>
+      <line class="story-line" data-index="4"></line>
+    </svg>
+
+    <div class="wrap story-content">
+      <div class="story-intro section-head reveal">
+        <h2>Из чего собран этот букет</h2>
+        <p>Наведите курсор на фото или на подпись — расскажем, какие цветы внутри, откуда они и как всё собрано.</p>
+      </div>
+
+      <div class="story-labels-col reveal" id="storyLabelsCol">
+        <div class="story-label" data-index="0">
+          <span class="story-label-num">1</span>
+          <h3 data-text="Пионовидные розы">Пионовидные розы</h3>
+          <p>Сорт David Austin — фермы Эквадора, срезка за 48 часов до сборки букета.</p>
+        </div>
+        <div class="story-label" data-index="1">
+          <span class="story-label-num">2</span>
+          <h3 data-text="Эвкалипт">Эвкалипт</h3>
+          <p>Добавляет текстуру и лёгкий аромат — привозим вместе с розами из тех же теплиц.</p>
+        </div>
+        <div class="story-label" data-index="2">
+          <span class="story-label-num">3</span>
+          <h3 data-text="Кустовые розы">Кустовые розы</h3>
+          <p>Мелкие бутоны того же сорта — заполняют букет и держат форму дольше недели.</p>
+        </div>
+        <div class="story-label" data-index="3">
+          <span class="story-label-num">4</span>
+          <h3 data-text="Упаковка">Упаковка</h3>
+          <p>Двухслойная дизайнерская бумага — матовая снаружи, влагостойкая изнутри.</p>
+        </div>
+        <div class="story-label" data-index="4">
+          <span class="story-label-num">5</span>
+          <h3 data-text="Лента">Лента</h3>
+          <p>Широкая атласная лента — бант завязываем вручную, каждый раз чуть иначе.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="story-legend-mobile" id="storyLegendMobile">
+      <div class="story-legend-item" data-index="0">
+        <span class="story-legend-num">1</span>
+        <div><h4 data-text="Пионовидные розы">Пионовидные розы</h4><p>Сорт David Austin — фермы Эквадора, срезка за 48 часов до сборки букета.</p></div>
+      </div>
+      <div class="story-legend-item" data-index="1">
+        <span class="story-legend-num">2</span>
+        <div><h4 data-text="Эвкалипт">Эвкалипт</h4><p>Добавляет текстуру и лёгкий аромат — привозим вместе с розами из тех же теплиц.</p></div>
+      </div>
+      <div class="story-legend-item" data-index="2">
+        <span class="story-legend-num">3</span>
+        <div><h4 data-text="Кустовые розы">Кустовые розы</h4><p>Мелкие бутоны того же сорта — заполняют букет и держат форму дольше недели.</p></div>
+      </div>
+      <div class="story-legend-item" data-index="3">
+        <span class="story-legend-num">4</span>
+        <div><h4 data-text="Упаковка">Упаковка</h4><p>Двухслойная дизайнерская бумага — матовая снаружи, влагостойкая изнутри.</p></div>
+      </div>
+      <div class="story-legend-item" data-index="4">
+        <span class="story-legend-num">5</span>
+        <div><h4 data-text="Лента">Лента</h4><p>Широкая атласная лента — бант завязываем вручную, каждый раз чуть иначе.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="process" id="how">
+    <div class="wrap process-inner">
+      <div class="process-sticky reveal">
+        <span class="eyebrow">Как заказать</span>
+        <h2>От выбора до звонка в дверь — три шага</h2>
+        <p class="process-sticky-desc">Три простых шага — от выбора настроения до звонка в дверь. Листайте вниз, чтобы увидеть каждый из них.</p>
+      </div>
+
+      <div class="process-steps">
+        <div class="process-step reveal">
+          <div class="process-step-img">
+            <img src="https://picsum.photos/seed/mak-step1/900/700" alt="" loading="lazy">
+          </div>
+          <span class="process-num">01</span>
+          <h3>Выбери настроение</h3>
+          <p>Листай коллекции и лови вайб — от «дерзкого пиона» до «ночного карнавала».</p>
+        </div>
+        <div class="process-step reveal">
+          <div class="process-step-img">
+            <img src="https://picsum.photos/seed/mak-step2/900/700" alt="" loading="lazy">
+          </div>
+          <span class="process-num">02</span>
+          <h3>Добавь открытку</h3>
+          <p>Пара слов от руки — бесплатно к любому букету, доставим вместе с цветами.</p>
+        </div>
+        <div class="process-step reveal">
+          <div class="process-step-img">
+            <img src="https://picsum.photos/seed/mak-step3/900/700" alt="" loading="lazy">
+          </div>
+          <span class="process-num">03</span>
+          <h3>Жди 60 минут</h3>
+          <p>Курьер уже в пути. Пришлём фото букета перед вручением, если получатель не дома.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="about" id="about">
+    <div class="wrap about-inner">
+      <div class="about-visual reveal">
+        <svg viewBox="0 0 300 300" fill="none">
+          <circle cx="150" cy="150" r="26" fill="#E8412C"/>
+          <ellipse cx="150" cy="80" rx="30" ry="48" fill="#FAF9F5"/>
+          <ellipse cx="150" cy="220" rx="30" ry="48" fill="#FAF9F5"/>
+          <ellipse cx="80" cy="150" rx="48" ry="30" fill="#4A4A47"/>
+          <ellipse cx="220" cy="150" rx="48" ry="30" fill="#4A4A47"/>
+          <ellipse cx="100" cy="100" rx="28" ry="42" fill="#0D0D0D" transform="rotate(-45 100 100)"/>
+          <ellipse cx="200" cy="200" rx="28" ry="42" fill="#0D0D0D" transform="rotate(-45 200 200)"/>
+        </svg>
+      </div>
+      <div class="about-text reveal">
+        <p class="about-quote">«Мы верим, что цветы должны быть <span>громче будней</span>, а не просто украшать подоконник.»</p>
+        <p>МАК начался с одного рынка цветов на окраине и упрямого убеждения: букет — это не украшение, а высказывание. Мы не делаем сдержанную классику из трёх роз.</p>
+        <p>Каждое утро флористы отбирают самые дерзкие по цвету стебли и собирают букеты, которые видно с другого конца комнаты.</p>
+        <div class="about-sign">— команда МАК</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section class="faq" id="faq">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2>Вопросы, на которые <span class="faq-accent">отвечаем честно</span></h2>
+        <p>Наведи курсор на вопрос — он на месте превратится в ответ. Убери курсор — вернётся обратно.</p>
+      </div>
+
+      <div class="faq-list" id="faqList">
+
+        <button class="faq-strip" data-index="0" type="button">
+          <span class="faq-strip-num">01</span>
+          <span class="faq-strip-text"
+                data-question="Сколько живут цветы из МАК?"
+                data-answer="В среднем 7–10 дней — если менять воду каждые два дня и подрезать стебли под углом.">Сколько живут цветы из МАК?</span>
+          <span class="faq-strip-icon" aria-hidden="true">+</span>
+          <span class="faq-strip-sheen" aria-hidden="true"></span>
+        </button>
+
+        <button class="faq-strip" data-index="1" type="button">
+          <span class="faq-strip-num">02</span>
+          <span class="faq-strip-text"
+                data-question="Как быстро приедет курьер?"
+                data-answer="За 60 минут по Риге. Пришлём фото букета перед вручением, если получателя нет дома.">Как быстро приедет курьер?</span>
+          <span class="faq-strip-icon" aria-hidden="true">+</span>
+          <span class="faq-strip-sheen" aria-hidden="true"></span>
+        </button>
+
+        <button class="faq-strip" data-index="2" type="button">
+          <span class="faq-strip-num">03</span>
+          <span class="faq-strip-text"
+                data-question="Можно забрать букет самим?"
+                data-answer="Да — самовывоз с ул. Бривибас 12 ежедневно с 8:00 до 22:00, без наценки.">Можно забрать букет самим?</span>
+          <span class="faq-strip-icon" aria-hidden="true">+</span>
+          <span class="faq-strip-sheen" aria-hidden="true"></span>
+        </button>
+
+        <button class="faq-strip" data-index="3" type="button">
+          <span class="faq-strip-num">04</span>
+          <span class="faq-strip-text"
+                data-question="Открытка идёт бесплатно?"
+                data-answer="Да, пара слов от руки — бесплатно к любому букету, доставим вместе с цветами.">Открытка идёт бесплатно?</span>
+          <span class="faq-strip-icon" aria-hidden="true">+</span>
+          <span class="faq-strip-sheen" aria-hidden="true"></span>
+        </button>
+
+        <button class="faq-strip" data-index="4" type="button">
+          <span class="faq-strip-num">05</span>
+          <span class="faq-strip-text"
+                data-question="Как оплатить заказ?"
+                data-answer="Картой на сайте, Apple/Google Pay или наличными курьеру — выбираешь на последнем шаге.">Как оплатить заказ?</span>
+          <span class="faq-strip-icon" aria-hidden="true">+</span>
+          <span class="faq-strip-sheen" aria-hidden="true"></span>
+        </button>
+
+        <button class="faq-strip" data-index="5" type="button">
+          <span class="faq-strip-num">06</span>
+          <span class="faq-strip-text"
+                data-question="Что если состав букета изменится?"
+                data-answer="Мы предупредим и подберём равноценную замену того же настроения и цвета — никогда не в минус по стоимости.">Что если состав букета изменится?</span>
+          <span class="faq-strip-icon" aria-hidden="true">+</span>
+          <span class="faq-strip-sheen" aria-hidden="true"></span>
+        </button>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-banner reveal">
+    <h2>Готовы устроить <em>цветочный шум</em>?</h2>
+    <a href="#catalog" class="btn-primary">Собрать букет сейчас →</a>
+  </section>
+
+  <footer id="contacts">
+    <div class="wrap">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="logo">
+            <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="6" fill="#E8412C"/><ellipse cx="20" cy="8" rx="6" ry="9" fill="currentColor"/><ellipse cx="20" cy="32" rx="6" ry="9" fill="currentColor"/><ellipse cx="8" cy="20" rx="9" ry="6" fill="currentColor"/><ellipse cx="32" cy="20" rx="9" ry="6" fill="currentColor"/></svg>
+            МАК
+          </a>
+          <p>Цветочная мастерская. Собираем и доставляем яркие букеты по Риге каждый день с 8:00 до 22:00.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Магазин</h4>
+          <a href="#catalog">Каталог</a>
+          <a href="#how">Доставка</a>
+          <a href="#about">О нас</a>
+        </div>
+        <div class="footer-col">
+          <h4>Контакты</h4>
+          <p>+371 20 000 000</p>
+          <p>hello@mak-flowers.lv</p>
+          <p>ул. Бривибас 12, Рига</p>
+        </div>
+        <div class="footer-col">
+          <h4>Соцсети</h4>
+          <a href="#">Instagram</a>
+          <a href="#">Telegram</a>
+          <a href="#">WhatsApp</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 МАК. Все права защищены.</span>
+        <span>Ч/Б снаружи, ярко внутри</span>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="src/main.js"></script>
+  </body>
+  </html>
