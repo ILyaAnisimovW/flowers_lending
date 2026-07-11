@@ -497,21 +497,21 @@ document.querySelectorAll('.btn-primary, .btn-ghost, .btn-ghost-dark, .nav-cta')
   });
 });
 
-/* ================= DISTRICTS LIST (each row pops out of a dot, one at a time) =================
-   Each .districts-row holds one district name. Its text gets split into
-   individual letters, each wrapped as:
-     <span class="letter"><span class="dot"></span><span class="letter-text">X</span></span>
-   letter-text starts collapsed almost to nothing at its own bottom-left
-   corner (transform-origin), the dot sits right there as a stand-in.
+/* ================= DISTRICTS LIST (letters ripple outward from 1-2 dots INSIDE the word) =================
+   For every district name: split into letters, then pick 1 seed letter
+   (short words) or 2 seed letters (longer words, roughly at the 30%/70%
+   mark) and mark those with a .seed-dot sitting on top of them, in the
+   middle of the word -- not before it. Nothing is visible at load; the
+   whole row only starts once it's scrolled to roughly the middle of the
+   screen (ScrollTrigger start: 'top 60%').
 
-   Rows are NOT all revealed together -- every row gets its OWN
-   ScrollTrigger, tuned to fire once that row is near the vertical middle
-   of the screen (start: 'top 55%'), so as the person scrolls, each
-   district appears roughly center-screen in turn -- and because rows
-   alternate .align-left / .align-right in the markup (see CSS), that
-   center-ish appearance also alternates which edge the row hugs, i.e.
-   "то слева, то справа". Once a row's letters are in, its delivery-time
-   caption fades in right after. */
+   Sequence: the seed dot(s) pop in together, then fade out right as the
+   letters nearest them begin to grow -- and every other letter follows in
+   order of its distance from the nearest seed, so the word visibly builds
+   outward from the dot(s) toward both edges rather than left-to-right.
+   Each letter's growth uses ease:'steps(5)' instead of a smooth tween, so
+   it snaps through five discrete sizes as it lands, reading as a chunky
+   jump rather than a glide. */
 function initDistrictsReveal(){
   const rows = document.querySelectorAll('.districts-row');
   if (!rows.length || !window.gsap) return;
@@ -524,48 +524,68 @@ function initDistrictsReveal(){
     if (!nameEl) return;
 
     const text = nameEl.textContent.trim();
-    nameEl.innerHTML = text
-      .split('')
-      .map(ch => ch === ' '
-        ? ' '
-        : `<span class="letter"><span class="dot"></span><span class="letter-text">${ch}</span></span>`)
-      .join('');
+    const chars = text.split('');
+    const letterCount = chars.filter(ch => ch !== ' ').length;
 
-    const dots  = nameEl.querySelectorAll('.dot');
-    const texts = nameEl.querySelectorAll('.letter-text');
+    // 1 seed for short words, 2 for longer ones -- positions given as an
+    // index among LETTERS only (spaces don't count), roughly a third and
+    // two-thirds of the way through for the 2-seed case.
+    const seedPositions = letterCount <= 6
+      ? [ Math.floor(letterCount / 2) ]
+      : [ Math.round(letterCount * 0.32), Math.round(letterCount * 0.68) ];
+
+    let letterPos = 0;
+    nameEl.innerHTML = chars.map(ch => {
+      if (ch === ' ') return ' ';
+      const isSeed = seedPositions.includes(letterPos);
+      const markup = `<span class="letter" data-pos="${letterPos}"><span class="letter-text">${ch}</span>${isSeed ? '<span class="seed-dot"></span>' : ''}</span>`;
+      letterPos++;
+      return markup;
+    }).join('');
+
+    const letterEls = [...nameEl.querySelectorAll('.letter')].map(el => ({
+      el,
+      textEl: el.querySelector('.letter-text'),
+      pos: Number(el.dataset.pos),
+      distance: Math.min(...seedPositions.map(s => Math.abs(Number(el.dataset.pos) - s))),
+    }));
+    const seedDots = nameEl.querySelectorAll('.seed-dot');
+    const maxDistance = Math.max(...letterEls.map(l => l.distance), 0);
 
     if (reduceMotion){
-      gsap.set(dots, { opacity: 0, scale: 0 });
-      gsap.set(texts, { opacity: 1, scale: 1 });
+      gsap.set(seedDots, { opacity: 0, scale: 0 });
+      gsap.set(letterEls.map(l => l.textEl), { opacity: 1, scale: 1 });
       if (timeEl) gsap.set(timeEl, { opacity: 1, y: 0 });
       return;
     }
 
-    gsap.set(dots, { opacity: 1, scale: 1 });
-    gsap.set(texts, { opacity: 0, scale: .08 });
+    gsap.set(seedDots, { opacity: 0, scale: 0 });
+    gsap.set(letterEls.map(l => l.textEl), { opacity: 0, scale: .15 });
     if (timeEl) gsap.set(timeEl, { opacity: 0, y: 6 });
+
+    const RIPPLE_STEP = .05; // seconds added per unit of distance from the nearest seed
 
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: row,
-        start: 'top 55%',
+        start: 'top 60%',
         toggleActions: 'play none none none',
       }
     });
 
-    tl.to(dots, {
-        scale: 0, opacity: 0,
-        duration: .12, ease: 'power1.in',
-        stagger: .022,
-      }, 0)
-      .to(texts, {
-        scale: 1, opacity: 1,
-        duration: .4, ease: 'back.out(2.6)',
-        stagger: .022,
-      }, .05);
+    tl.to(seedDots, { opacity: 1, scale: 1, duration: .22, ease: 'back.out(3)' }, 0)
+      .to(seedDots, { opacity: 0, scale: 0, duration: .18, ease: 'power1.in' }, .16);
+
+    letterEls.forEach(({ textEl, distance }) => {
+      tl.to(textEl, {
+        opacity: 1, scale: 1,
+        duration: .32,
+        ease: 'steps(5)',
+      }, .16 + distance * RIPPLE_STEP);
+    });
 
     if (timeEl){
-      tl.to(timeEl, { opacity: 1, y: 0, duration: .4, ease: 'power2.out' }, '-=.2');
+      tl.to(timeEl, { opacity: 1, y: 0, duration: .4, ease: 'power2.out' }, .16 + maxDistance * RIPPLE_STEP + .28);
     }
   });
 }

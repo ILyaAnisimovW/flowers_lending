@@ -305,7 +305,7 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
 }
 .showcase-arrow:hover{border-color:var(--poppy);background:rgba(232,65,44,.15);}
 
-/* ---------- districts (delivery zones, each row pops from a dot) ---------- */
+/* ---------- districts (delivery zones, each row grows out of a single dot) ---------- */
 .districts{padding:150px 32px;background:var(--ink);color:var(--paper);}
 
 .districts-intro{max-width:640px;margin:0 auto 90px;text-align:center;}
@@ -313,40 +313,36 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
 .districts-lead{font-size:1.05rem;line-height:1.6;color:rgba(250,249,245,.7);}
 
 .districts-stage{
-  max-width:920px;
+  max-width:1080px;
   margin:0 auto;
   display:flex;
   flex-direction:column;
-  gap:2px;
+  gap:44px;
 }
 
-/* Каждая строка -- отдельный .districts-row. Через align-left/align-right
-   строка прижимается то к левому, то к правому краю центральной колонки
-   (не занимает её целиком), из-за чего список читается как "то слева,
-   то справа", а не ровной колонкой. */
+/* Каждая строка сдвинута на свой собственный отступ (--indent, задаётся
+   инлайн-стилем в HTML) -- отступы подобраны вразброс, а не строгим
+   чередованием лево/право, чтобы колонка читалась неровно, как в
+   референсе. Никаких разделительных линий между строками. */
 .districts-row{
+  position:relative;
   display:flex;
   align-items:baseline;
-  gap:20px;
-  width:76%;
-  padding:24px 0;
-  border-top:1px solid rgba(250,249,245,.14);
-}
-.districts-stage .districts-row:last-child{border-bottom:1px solid rgba(250,249,245,.14);}
-.districts-row.align-left{margin-right:auto;}
-.districts-row.align-right{
-  margin-left:auto;
-  flex-direction:row-reverse;
-  text-align:right;
+  gap:18px;
+  width:fit-content;
+  margin-left:var(--indent, 0%);
 }
 
 /* Название района собирается из отдельных БУКВ (см. main.js,
-   initDistrictsReveal). Каждая буква -- это .letter, содержащий крошечную
-   .dot (стартовая точка) и .letter-text (сам символ, который стартует
-   схлопнутым в почти-точку и резко выскакивает на полный размер). Точка
-   гаснет в момент, когда буква уже начала расти -- вместе это читается
-   как "буквы вылезают из точки", бегущей волной по слову. */
+   initDistrictsReveal). 1-2 буквы внутри слова помечаются "точкой-семенем"
+   (.seed-dot) -- сама точка сидит поверх этой буквы, в середине слова
+   (или в двух точках для длинных слов). Точки коротко появляются, затем
+   гаснут ровно в момент, когда буквы вокруг них начинают расти -- и
+   дальше "рябью" расходятся к краям слова. Каждая буква растёт не плавно,
+   а через ease:'steps(5)' в JS -- прыжками по 5 фиксированным размерам,
+   а не тином. */
 .districts-name{
+  display:inline-block;
   font-family:'Space Grotesk',sans-serif;
   font-weight:700;
   font-style:normal;
@@ -361,16 +357,18 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
 }
 .districts-name .letter-text{
   display:inline-block;
-  transform-origin:0% 100%;
+  transform-origin:50% 60%;
   will-change:transform,opacity;
 }
-.districts-name .dot{
+.districts-name .seed-dot{
   position:absolute;
-  left:1px;bottom:.05em;
-  width:.12em;height:.12em;
-  min-width:5px;min-height:5px;
+  left:50%;top:38%;
+  transform:translate(-50%,-50%);
+  width:.26em;height:.26em;
+  min-width:14px;min-height:14px;
   border-radius:50%;
   background:var(--poppy);
+  pointer-events:none;
   will-change:transform,opacity;
 }
 
@@ -385,16 +383,13 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
 
 @media (max-width:700px){
   .districts{padding:110px 20px;}
-  .districts-row,
-  .districts-row.align-right{
-    width:100%;
-    flex-direction:row;
-    text-align:left;
-    margin:0;
+  .districts-row{
+    margin-left:0 !important;
     gap:14px;
   }
   .districts-name{font-size:clamp(1.9rem,8.5vw,2.6rem);}
 }
+
 
 /* ---------- advantages ---------- */
 .advantages{padding:0 32px 130px;background:var(--paper);}
