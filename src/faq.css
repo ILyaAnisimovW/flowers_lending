@@ -65,7 +65,7 @@
 .faq-strip:focus-visible::before,
 .faq-strip:focus-visible::after{opacity:1;}
 
-/* diagonal sheen that sweeps across on hover -- the "стеклянный" glint */
+/* diagonal sheen that sweeps across on hover -- the "стеклянный" глинт */
 .faq-strip-sheen{
   position:absolute;
   inset:0;

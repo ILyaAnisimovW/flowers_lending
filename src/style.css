@@ -197,6 +197,11 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
   font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.95rem;
   padding:16px 28px;border-radius:100px;
 }
+.btn-ghost-dark{
+  border:2px solid var(--ink);color:var(--ink);
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.95rem;
+  padding:16px 28px;border-radius:100px;
+}
 
 /* ---------- showcase (rotating hits, replaces hero) ---------- */
 .showcase{
@@ -299,6 +304,196 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
   transition:border-color .2s ease, background .2s ease;
 }
 .showcase-arrow:hover{border-color:var(--poppy);background:rgba(232,65,44,.15);}
+
+/* ---------- districts (delivery zones, each row pops from a dot) ---------- */
+.districts{padding:150px 32px;background:var(--ink);color:var(--paper);}
+
+.districts-intro{max-width:640px;margin:0 auto 90px;text-align:center;}
+.districts-intro .eyebrow{display:block;margin-bottom:18px;color:var(--poppy);}
+.districts-lead{font-size:1.05rem;line-height:1.6;color:rgba(250,249,245,.7);}
+
+.districts-stage{
+  max-width:920px;
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+/* Каждая строка -- отдельный .districts-row. Через align-left/align-right
+   строка прижимается то к левому, то к правому краю центральной колонки
+   (не занимает её целиком), из-за чего список читается как "то слева,
+   то справа", а не ровной колонкой. */
+.districts-row{
+  display:flex;
+  align-items:baseline;
+  gap:20px;
+  width:76%;
+  padding:24px 0;
+  border-top:1px solid rgba(250,249,245,.14);
+}
+.districts-stage .districts-row:last-child{border-bottom:1px solid rgba(250,249,245,.14);}
+.districts-row.align-left{margin-right:auto;}
+.districts-row.align-right{
+  margin-left:auto;
+  flex-direction:row-reverse;
+  text-align:right;
+}
+
+/* Название района собирается из отдельных БУКВ (см. main.js,
+   initDistrictsReveal). Каждая буква -- это .letter, содержащий крошечную
+   .dot (стартовая точка) и .letter-text (сам символ, который стартует
+   схлопнутым в почти-точку и резко выскакивает на полный размер). Точка
+   гаснет в момент, когда буква уже начала расти -- вместе это читается
+   как "буквы вылезают из точки", бегущей волной по слову. */
+.districts-name{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-style:normal;
+  letter-spacing:-.02em;
+  line-height:1;
+  text-transform:uppercase;
+  font-size:clamp(2.2rem,5.6vw,4.2rem);
+}
+.districts-name .letter{
+  position:relative;
+  display:inline-block;
+}
+.districts-name .letter-text{
+  display:inline-block;
+  transform-origin:0% 100%;
+  will-change:transform,opacity;
+}
+.districts-name .dot{
+  position:absolute;
+  left:1px;bottom:.05em;
+  width:.12em;height:.12em;
+  min-width:5px;min-height:5px;
+  border-radius:50%;
+  background:var(--poppy);
+  will-change:transform,opacity;
+}
+
+.districts-time{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:.78rem;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:rgba(250,249,245,.5);
+  white-space:nowrap;
+  will-change:transform,opacity;
+}
+
+@media (max-width:700px){
+  .districts{padding:110px 20px;}
+  .districts-row,
+  .districts-row.align-right{
+    width:100%;
+    flex-direction:row;
+    text-align:left;
+    margin:0;
+    gap:14px;
+  }
+  .districts-name{font-size:clamp(1.9rem,8.5vw,2.6rem);}
+}
+
+/* ---------- advantages ---------- */
+.advantages{padding:0 32px 130px;background:var(--paper);}
+.advantages-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:2px;
+  background:var(--gray-200);
+  border-radius:24px;overflow:hidden;
+}
+.advantage-card{
+  background:var(--paper);
+  padding:40px 30px;
+  display:flex;flex-direction:column;gap:18px;
+  transition:background .25s ease;
+}
+.advantage-card:hover{background:var(--ink);color:var(--paper);}
+.advantage-card:hover .advantage-icon{background:var(--poppy);color:var(--paper);}
+.advantage-icon{
+  width:48px;height:48px;border-radius:50%;
+  background:var(--gray-200);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  transition:background .25s ease,color .25s ease;
+}
+.advantage-icon svg{width:22px;height:22px;}
+.advantage-card h3{
+  font-family:'Space Grotesk',sans-serif;font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:.01em;
+}
+.advantage-card p{font-size:.92rem;line-height:1.6;opacity:.75;}
+
+/* ---------- reviews (social proof) ---------- */
+.reviews{padding:130px 32px;background:var(--ink);color:var(--paper);}
+.reviews .section-head h2{color:var(--paper);}
+.reviews .section-head p{color:rgba(250,249,245,.68);}
+.reviews-stats{
+  display:flex;gap:48px;flex-wrap:wrap;
+  margin-bottom:64px;
+  padding-bottom:48px;
+  border-bottom:1px solid rgba(250,249,245,.15);
+}
+.reviews-stat b{
+  display:block;font-family:'Fraunces',serif;font-size:clamp(2rem,4vw,2.8rem);font-weight:600;color:var(--poppy);
+}
+.reviews-stat span{
+  font-family:'Space Grotesk',sans-serif;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;opacity:.65;
+}
+.reviews-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+}
+.review-card{
+  background:rgba(250,249,245,.05);
+  border:1px solid rgba(250,249,245,.12);
+  border-radius:20px;padding:32px;
+  display:flex;flex-direction:column;gap:18px;
+}
+.review-stars{color:var(--poppy);font-size:.9rem;letter-spacing:2px;}
+.review-quote{font-size:.98rem;line-height:1.6;color:rgba(250,249,245,.85);}
+.review-person{display:flex;align-items:center;gap:12px;margin-top:auto;}
+.review-avatar{
+  width:40px;height:40px;border-radius:50%;
+  background:var(--poppy);color:var(--paper);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.85rem;
+}
+.review-person-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.9rem;}
+.review-person-meta{font-size:.78rem;color:rgba(250,249,245,.5);}
+
+/* ---------- pricing ---------- */
+.pricing{padding:130px 32px;background:var(--paper);}
+.pricing-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:stretch;
+}
+.pricing-card{
+  border:2px solid var(--gray-200);border-radius:24px;
+  padding:40px 32px;display:flex;flex-direction:column;gap:24px;
+  position:relative;
+}
+.pricing-card.is-popular{
+  border-color:var(--ink);background:var(--ink);color:var(--paper);
+}
+.pricing-badge{
+  position:absolute;top:-14px;right:32px;
+  background:var(--poppy);color:var(--paper);
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.7rem;
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:7px 14px;border-radius:100px;
+}
+.pricing-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.1rem;text-transform:uppercase;}
+.pricing-desc{font-size:.88rem;line-height:1.5;opacity:.65;max-width:26ch;}
+.pricing-price{font-family:'Fraunces',serif;font-size:clamp(1.9rem,3vw,2.4rem);font-weight:600;}
+.pricing-price span{font-family:'Inter',sans-serif;font-size:.85rem;font-weight:400;opacity:.6;}
+.pricing-features{display:flex;flex-direction:column;gap:12px;}
+.pricing-features li{
+  display:flex;gap:10px;align-items:flex-start;font-size:.9rem;line-height:1.5;
+}
+.pricing-features li::before{content:'✓';color:var(--poppy);font-weight:700;flex:none;}
+.pricing-card .btn-primary,.pricing-card .btn-ghost-dark{
+  margin-top:auto;justify-content:center;width:100%;
+}
+.pricing-card.is-popular .btn-primary{background:var(--poppy);}
+.pricing-card.is-popular .btn-ghost-dark{border-color:var(--paper);color:var(--paper);}
 
 /* ---------- collections ---------- */
 .collections{padding:130px 32px 0;overflow-x:hidden;position:relative;}
@@ -479,15 +674,7 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
   position:relative;
 }
 
-/* ---------- curtain transition (tile-mosaic blackout, matching the reference) ----------
-   A full-viewport grid overlay. JS sets grid-template-columns/rows
-   inline once it knows the tile count, and toggles `.is-active` only
-   while the transition is actually playing (via ScrollTrigger's
-   onEnter/onLeaveBack) -- so it isn't sitting in the render tree the
-   rest of the time. Each tile starts at scale(0) and is driven up to
-   scale(1) and back down by JS, staggered outward from the grid's
-   center so the fill/reveal reads as a rippling mosaic rather than a
-   flat wipe. */
+/* ---------- curtain transition (tile-mosaic blackout, matching the reference) ---------- */
 #curtainBars{
   position:fixed;
   inset:0;
@@ -768,11 +955,7 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
   .story-legend-item p{font-size:.88rem;line-height:1.55;color:rgba(250,249,245,.65);}
 }
 
-/* ---------- process (sticky title, scrolling steps) ----------
-   Left column is sticky -- it stays pinned in the viewport while the
-   right column (the numbered steps) scrolls past underneath it. This
-   only reads correctly if the right column is taller than the viewport,
-   which the gap between steps below is tuned to guarantee. */
+/* ---------- process (sticky title, scrolling steps) ---------- */
 .process{
   background:var(--ink);color:var(--paper);
   padding:130px 32px;
@@ -811,7 +994,7 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
   border-radius:18px;
   overflow:hidden;
   margin-bottom:28px;
-  background:var(--gray-700); /* shows while the placeholder image loads */
+  background:var(--gray-700);
 }
 .process-step-img img{
   width:100%;height:100%;object-fit:cover;
@@ -912,12 +1095,19 @@ footer{
   .footer-grid{grid-template-columns:1fr 1fr;}
   .showcase-inner{grid-template-columns:1fr;text-align:left;}
   .showcase-media{order:-1;max-width:320px;margin:0 auto 36px;}
+
+  .advantages-grid{grid-template-columns:1fr 1fr;}
+  .reviews-grid{grid-template-columns:1fr;}
+  .reviews-stats{gap:32px;}
+  .pricing-grid{grid-template-columns:1fr;}
 }
 @media (max-width:600px){
   .footer-grid{grid-template-columns:1fr;}
   .showcase{padding:180px 20px 130px;}
   .wrap,.nav-inner{padding:0 20px;}
   .carousel3d-caption-desc{max-width:22ch;}
+
+  .advantages-grid{grid-template-columns:1fr;}
 }
 
 @media (prefers-reduced-motion:reduce){

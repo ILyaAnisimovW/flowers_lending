@@ -1,4 +1,5 @@
 import './style.css';
+import { initFAQ } from './faq.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -484,7 +485,7 @@ document.querySelectorAll('#story .reveal').forEach((el, i) => {
 });
 
 /* ================= MAGNETIC BUTTONS ================= */
-document.querySelectorAll('.btn-primary, .btn-ghost, .nav-cta').forEach(btn => {
+document.querySelectorAll('.btn-primary, .btn-ghost, .btn-ghost-dark, .nav-cta').forEach(btn => {
   btn.addEventListener('mousemove', e => {
     const r = btn.getBoundingClientRect();
     const x = e.clientX - r.left - r.width / 2;
@@ -495,6 +496,83 @@ document.querySelectorAll('.btn-primary, .btn-ghost, .nav-cta').forEach(btn => {
     gsap.to(btn, { x: 0, y: 0, duration: .4, ease: 'elastic.out(1,0.4)' });
   });
 });
+
+/* ================= DISTRICTS LIST (each row pops out of a dot, one at a time) =================
+   Each .districts-row holds one district name. Its text gets split into
+   individual letters, each wrapped as:
+     <span class="letter"><span class="dot"></span><span class="letter-text">X</span></span>
+   letter-text starts collapsed almost to nothing at its own bottom-left
+   corner (transform-origin), the dot sits right there as a stand-in.
+
+   Rows are NOT all revealed together -- every row gets its OWN
+   ScrollTrigger, tuned to fire once that row is near the vertical middle
+   of the screen (start: 'top 55%'), so as the person scrolls, each
+   district appears roughly center-screen in turn -- and because rows
+   alternate .align-left / .align-right in the markup (see CSS), that
+   center-ish appearance also alternates which edge the row hugs, i.e.
+   "то слева, то справа". Once a row's letters are in, its delivery-time
+   caption fades in right after. */
+function initDistrictsReveal(){
+  const rows = document.querySelectorAll('.districts-row');
+  if (!rows.length || !window.gsap) return;
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  rows.forEach(row => {
+    const nameEl = row.querySelector('.districts-name');
+    const timeEl = row.querySelector('.districts-time');
+    if (!nameEl) return;
+
+    const text = nameEl.textContent.trim();
+    nameEl.innerHTML = text
+      .split('')
+      .map(ch => ch === ' '
+        ? ' '
+        : `<span class="letter"><span class="dot"></span><span class="letter-text">${ch}</span></span>`)
+      .join('');
+
+    const dots  = nameEl.querySelectorAll('.dot');
+    const texts = nameEl.querySelectorAll('.letter-text');
+
+    if (reduceMotion){
+      gsap.set(dots, { opacity: 0, scale: 0 });
+      gsap.set(texts, { opacity: 1, scale: 1 });
+      if (timeEl) gsap.set(timeEl, { opacity: 1, y: 0 });
+      return;
+    }
+
+    gsap.set(dots, { opacity: 1, scale: 1 });
+    gsap.set(texts, { opacity: 0, scale: .08 });
+    if (timeEl) gsap.set(timeEl, { opacity: 0, y: 6 });
+
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: row,
+        start: 'top 55%',
+        toggleActions: 'play none none none',
+      }
+    });
+
+    tl.to(dots, {
+        scale: 0, opacity: 0,
+        duration: .12, ease: 'power1.in',
+        stagger: .022,
+      }, 0)
+      .to(texts, {
+        scale: 1, opacity: 1,
+        duration: .4, ease: 'back.out(2.6)',
+        stagger: .022,
+      }, .05);
+
+    if (timeEl){
+      tl.to(timeEl, { opacity: 1, y: 0, duration: .4, ease: 'power2.out' }, '-=.2');
+    }
+  });
+}
+initDistrictsReveal();
+
+/* ================= FAQ (glass strips, scramble + scroll-invert) ================= */
+initFAQ();
 
 /* ================= STORY HOTSPOTS (bouquet breakdown) ================= */
 
@@ -627,7 +705,6 @@ function smoothClosedPath(points, tension = 6){
 }
 
 function initStoryHotspots(){
-  console.log('%c[story-shapes] script version: v4-debug', 'color:#E8412C;font-weight:bold');
   const stage = document.getElementById('story');
   const photoFrame = document.getElementById('storyPhotoFrame');
   if (!stage || !photoFrame) return;
@@ -924,5 +1001,3 @@ window.addEventListener('scroll', () => {
 
   lastScrollY = currentY;
 }, { passive: true });
-import { initFAQ } from './faq.js';
-initFAQ();
