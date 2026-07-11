@@ -364,10 +364,11 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
   position:absolute;
   left:50%;top:38%;
   transform:translate(-50%,-50%);
-  width:.26em;height:.26em;
-  min-width:14px;min-height:14px;
-  border-radius:50%;
-  background:var(--poppy);
+  width:.24em;height:.24em;
+  min-width:15px;min-height:15px;
+  border-radius:3px;
+  background:var(--ink);
+  border:1.5px solid var(--paper);
   pointer-events:none;
   will-change:transform,opacity;
 }

@@ -501,17 +501,27 @@ document.querySelectorAll('.btn-primary, .btn-ghost, .btn-ghost-dark, .nav-cta')
    For every district name: split into letters, then pick 1 seed letter
    (short words) or 2 seed letters (longer words, roughly at the 30%/70%
    mark) and mark those with a .seed-dot sitting on top of them, in the
-   middle of the word -- not before it. Nothing is visible at load; the
-   whole row only starts once it's scrolled to roughly the middle of the
-   screen (ScrollTrigger start: 'top 60%').
+   middle of the word -- not before it.
 
-   Sequence: the seed dot(s) pop in together, then fade out right as the
-   letters nearest them begin to grow -- and every other letter follows in
-   order of its distance from the nearest seed, so the word visibly builds
-   outward from the dot(s) toward both edges rather than left-to-right.
-   Each letter's growth uses ease:'steps(5)' instead of a smooth tween, so
-   it snaps through five discrete sizes as it lands, reading as a chunky
-   jump rather than a glide. */
+   Each row's animation is driven by SCRUB, not a one-shot trigger: it's
+   tied directly to that row's own position as it travels from the bottom
+   of the viewport (start) to the upper third (end). That does two things
+   at once:
+     1) It's inherently reversible -- scrolling back up runs the exact
+        same timeline backwards, no extra code needed.
+     2) Because every row is scrubbed against ITS OWN position rather than
+        a single shared trigger, several rows are mid-animation at once at
+        any given scroll position -- the row near the top of the screen is
+        fully formed, the one in the middle still has its dot(s) large and
+        its letters barely started, and the one just entering from the
+        bottom is only showing its dot(s) beginning to appear. That's the
+        cascading "wave" effect running down the list as you scroll.
+   Within each row's own timeline: the seed dot(s) pop up first, then
+   shrink away right as the nearest letters begin to grow, and every other
+   letter follows in order of its distance from the nearest seed -- so the
+   word visibly builds outward from the dot(s) toward both edges. Letter
+   growth uses ease:'steps(5)', snapping through five discrete sizes
+   instead of a smooth glide. */
 function initDistrictsReveal(){
   const rows = document.querySelectorAll('.districts-row');
   if (!rows.length || !window.gsap) return;
@@ -563,29 +573,30 @@ function initDistrictsReveal(){
     gsap.set(letterEls.map(l => l.textEl), { opacity: 0, scale: .15 });
     if (timeEl) gsap.set(timeEl, { opacity: 0, y: 6 });
 
-    const RIPPLE_STEP = .05; // seconds added per unit of distance from the nearest seed
+    const RIPPLE_STEP = .16; // "seconds" (timeline units) added per unit of distance from the nearest seed
 
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: row,
-        start: 'top 60%',
-        toggleActions: 'play none none none',
+        start: 'top 88%',
+        end: 'top 32%',
+        scrub: .5,
       }
     });
 
-    tl.to(seedDots, { opacity: 1, scale: 1, duration: .22, ease: 'back.out(3)' }, 0)
-      .to(seedDots, { opacity: 0, scale: 0, duration: .18, ease: 'power1.in' }, .16);
+    tl.to(seedDots, { opacity: 1, scale: 1, duration: .5, ease: 'power2.out' }, 0)
+      .to(seedDots, { opacity: 0, scale: 0, duration: .4, ease: 'power1.in' }, .5);
 
     letterEls.forEach(({ textEl, distance }) => {
       tl.to(textEl, {
         opacity: 1, scale: 1,
-        duration: .32,
+        duration: .5,
         ease: 'steps(5)',
-      }, .16 + distance * RIPPLE_STEP);
+      }, .5 + distance * RIPPLE_STEP);
     });
 
     if (timeEl){
-      tl.to(timeEl, { opacity: 1, y: 0, duration: .4, ease: 'power2.out' }, .16 + maxDistance * RIPPLE_STEP + .28);
+      tl.to(timeEl, { opacity: 1, y: 0, duration: .5, ease: 'power2.out' }, .5 + maxDistance * RIPPLE_STEP + .35);
     }
   });
 }
