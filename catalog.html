@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Все букеты — МАК</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Space+Grotesk:wght@300;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body class="catalog-page">
+
+<div class="petal-cursor" id="cursor"></div>
+
+<header class="nav nav--solid">
+  <div class="nav-inner">
+    <a href="index.html" class="logo">
+      <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="6" fill="#E8412C"/><ellipse cx="20" cy="8" rx="6" ry="9" fill="currentColor"/><ellipse cx="20" cy="32" rx="6" ry="9" fill="currentColor"/><ellipse cx="8" cy="20" rx="9" ry="6" fill="currentColor"/><ellipse cx="32" cy="20" rx="9" ry="6" fill="currentColor"/></svg>
+      МАК
+    </a>
+    <nav class="nav-links">
+      <a href="index.html#catalog">Каталог</a>
+      <a href="index.html#how">Как заказать</a>
+      <a href="index.html#florists">Команда</a>
+      <a href="index.html#pricing">Тарифы</a>
+      <a href="index.html#faq">Вопросы</a>
+      <a href="index.html#contacts">Контакты</a>
+    </nav>
+    <a href="index.html#contacts" class="nav-cta">Собрать букет</a>
+  </div>
+</header>
+
+<!-- ============================================================
+     ШАПКА СТРАНИЦЫ -- только ссылка назад, никакого крупного
+     заголовка "Все букеты" (убрано по просьбе -- страница сразу
+     переходит к фильтрам и сетке).
+     ============================================================ -->
+<section class="catalog-head">
+  <a href="index.html" class="catalog-back">
+    <span class="catalog-back-arrow">←</span> На главную
+  </a>
+</section>
+
+<!-- ============================================================
+     СЕТКА + ЛЕВАЯ ПАНЕЛЬ ФИЛЬТРОВ
+
+     Категории -- мультивыбор (не радио): каждая кнопка переключает
+     своё состояние независимо, можно включить сразу несколько.
+     Кнопка "Все" -- отдельный случай: клик по ней сбрасывает весь
+     выбор и возвращает в состояние "показаны все товары"; если
+     вручную выключить все выбранные категории по одной, "Все"
+     подсвечивается обратно сама (см. catalog.js).
+     ============================================================ -->
+<section class="catalog-shell wrap">
+
+  <aside class="catalog-sidebar">
+    <div class="catalog-search">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6.5" stroke="currentColor" stroke-width="1.6"/><path d="M14 14L18 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <input type="text" id="catalogSearch" placeholder="Найти букет...">
+    </div>
+
+    <nav class="catalog-category-list" id="catalogCategoryList" aria-label="Категория">
+      <button class="catalog-category-item is-active" data-category="all" type="button">
+        <span>Все</span><span class="catalog-category-count" id="count-all">0</span>
+      </button>
+      <button class="catalog-category-item" data-category="Хит недели" type="button">
+        <span>Хит недели</span><span class="catalog-category-count" id="count-hit">0</span>
+      </button>
+      <button class="catalog-category-item" data-category="Бестселлер" type="button">
+        <span>Бестселлер</span><span class="catalog-category-count" id="count-best">0</span>
+      </button>
+      <button class="catalog-category-item" data-category="Новинка" type="button">
+        <span>Новинка</span><span class="catalog-category-count" id="count-new">0</span>
+      </button>
+      <button class="catalog-category-item" data-category="Премиум" type="button">
+        <span>Премиум</span><span class="catalog-category-count" id="count-premium">0</span>
+      </button>
+      <button class="catalog-category-item" data-category="Топ подарок" type="button">
+        <span>Топ подарок</span><span class="catalog-category-count" id="count-gift">0</span>
+      </button>
+      <button class="catalog-category-item" data-category="Монобукет" type="button">
+        <span>Монобукет</span><span class="catalog-category-count" id="count-mono">0</span>
+      </button>
+    </nav>
+
+    <div class="catalog-sort-block">
+      <label class="catalog-sort-label" for="catalogSort">Сортировка</label>
+      <select id="catalogSort">
+        <option value="popular">Популярные</option>
+        <option value="new">Сначала новинки</option>
+        <option value="name-asc">По алфавиту (А-Я)</option>
+      </select>
+    </div>
+  </aside>
+
+  <div class="catalog-main">
+    <div class="catalog-count" id="catalogCount">Показано 0 из 0 букетов</div>
+    <div class="catalog-grid" id="catalogGrid"></div>
+    <div class="catalog-empty" id="catalogEmpty" hidden>
+      <p>По этим фильтрам ничего не нашлось.</p>
+      <button class="catalog-reset-btn" id="catalogResetBtn" type="button">Сбросить фильтры</button>
+    </div>
+  </div>
+
+</section>
+
+<section class="cta-banner">
+  <h2>Не нашли <em>свой букет</em>?</h2>
+  <a href="index.html#contacts" class="btn-primary">Соберём индивидуально →</a>
+</section>
+
+<footer id="contacts">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="logo">
+          <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="6" fill="#E8412C"/><ellipse cx="20" cy="8" rx="6" ry="9" fill="currentColor"/><ellipse cx="20" cy="32" rx="6" ry="9" fill="currentColor"/><ellipse cx="8" cy="20" rx="9" ry="6" fill="currentColor"/><ellipse cx="32" cy="20" rx="9" ry="6" fill="currentColor"/></svg>
+          МАК
+        </a>
+        <p>Цветочная мастерская. Собираем и доставляем яркие букеты по Риге каждый день с 8:00 до 22:00.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Магазин</h4>
+        <a href="index.html#catalog">Каталог</a>
+        <a href="index.html#pricing">Тарифы</a>
+        <a href="index.html#how">Доставка</a>
+        <a href="index.html#about">О нас</a>
+      </div>
+      <div class="footer-col">
+        <h4>Контакты</h4>
+        <p>+371 20 000 000</p>
+        <p>hello@mak-flowers.lv</p>
+        <p>ул. Бривибас 12, Рига</p>
+      </div>
+      <div class="footer-col">
+        <h4>Соцсети</h4>
+        <a href="#">Instagram</a>
+        <a href="#">Telegram</a>
+        <a href="#">WhatsApp</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 МАК. Все права защищены.</span>
+      <span>Ч/Б снаружи, ярко внутри</span>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="src/catalog.js"></script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+/* =========================================================
+   CATALOG PAGE (catalog.html) — dark theme, left sidebar filters,
+   multi-select category toggles.
+   ========================================================= */
+
+body.catalog-page{
+  background:var(--ink);
+  color:var(--paper);
+}
+
+/* ---------- head: just the back link, no big title ---------- */
+.catalog-head{
+  padding:140px 32px 30px;
+  max-width:1240px;
+  margin:0 auto;
+}
+.catalog-back{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:.82rem;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  color:rgba(250,249,245,.55);
+  padding-bottom:8px;
+  border-bottom:1px solid transparent;
+  transition:color .2s ease, border-color .2s ease;
+}
+.catalog-back-arrow{
+  display:inline-block;
+  transition:transform .2s ease;
+}
+.catalog-back:hover{
+  color:var(--paper);
+  border-color:rgba(250,249,245,.35);
+}
+.catalog-back:hover .catalog-back-arrow{transform:translateX(-4px);}
+
+/* ---------- shell: sidebar + grid ---------- */
+.catalog-shell.wrap{
+  display:grid;
+  grid-template-columns:240px 1fr;
+  gap:56px;
+  align-items:start;
+  padding-bottom:130px;
+}
+
+/* ---------- sidebar ---------- */
+.catalog-sidebar{
+  position:sticky;
+  top:110px;
+  display:flex;flex-direction:column;gap:34px;
+}
+
+.catalog-search{
+  position:relative;
+}
+.catalog-search svg{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  width:16px;height:16px;color:rgba(250,249,245,.4);
+  pointer-events:none;
+}
+.catalog-search input{
+  width:100%;
+  font-family:'Inter',sans-serif;
+  font-size:.86rem;
+  padding:12px 14px 12px 40px;
+  border:1px solid rgba(250,249,245,.2);
+  border-radius:6px;
+  background:transparent;
+  color:var(--paper);
+  transition:border-color .2s ease;
+}
+.catalog-search input:focus{border-color:var(--paper);outline:none;}
+.catalog-search input::placeholder{color:rgba(250,249,245,.4);}
+
+/* vertical category list -- multi-select toggle group. Each button
+   carries its own is-active state independently (no radio exclusivity
+   except through the "Все" reset button, handled in catalog.js). The
+   left accent bar grows in on activation as the one bit of "flourish"
+   -- subtle, but makes multi-selection legible at a glance since
+   several bars can be lit at once. */
+.catalog-category-list{
+  display:flex;flex-direction:column;
+  border-top:1px solid rgba(250,249,245,.14);
+}
+.catalog-category-item{
+  position:relative;
+  display:flex;align-items:baseline;justify-content:space-between;
+  gap:10px;
+  width:100%;
+  text-align:left;
+  padding:13px 2px 13px 14px;
+  border-bottom:1px solid rgba(250,249,245,.14);
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-size:1rem;
+  text-transform:uppercase;
+  letter-spacing:.01em;
+  color:rgba(250,249,245,.4);
+  transition:color .2s ease;
+}
+.catalog-category-item::before{
+  content:'';
+  position:absolute;left:0;top:50%;
+  width:3px;height:0;
+  background:var(--poppy);
+  transform:translateY(-50%);
+  transition:height .22s ease;
+}
+.catalog-category-item:hover{color:rgba(250,249,245,.75);}
+.catalog-category-item.is-active{color:var(--paper);}
+.catalog-category-item.is-active::before{height:62%;}
+.catalog-category-item.is-active span:first-child{color:var(--poppy);}
+.catalog-category-count{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:500;
+  font-size:.72rem;
+  color:rgba(250,249,245,.35);
+}
+.catalog-category-item.is-active .catalog-category-count{color:rgba(250,249,245,.6);}
+
+/* sort block -- plain bordered rectangle, uppercase, dropdown arrow
+   drawn via inline SVG so it stays visible on the dark background */
+.catalog-sort-block{
+  display:flex;flex-direction:column;gap:10px;
+}
+.catalog-sort-label{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:.7rem;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:rgba(250,249,245,.4);
+}
+.catalog-sort-block select{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:.82rem;font-weight:700;
+  letter-spacing:.02em;text-transform:uppercase;
+  color:var(--paper);
+  border:1px solid rgba(250,249,245,.2);
+  border-radius:6px;
+  padding:11px 34px 11px 14px;
+  background:transparent
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 8l5 5 5-5' stroke='%23FAF9F5' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat right 12px center;
+  appearance:none;
+  cursor:pointer;
+}
+.catalog-sort-block select:focus{border-color:var(--paper);outline:none;}
+.catalog-sort-block select option{background:var(--ink);color:var(--paper);}
+
+/* ---------- main / grid ---------- */
+.catalog-main{min-width:0;}
+.catalog-count{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:.78rem;font-weight:600;
+  letter-spacing:.04em;text-transform:uppercase;
+  color:rgba(250,249,245,.45);
+  margin-bottom:22px;
+}
+.catalog-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:22px;
+}
+
+.catalog-card{
+  display:flex;flex-direction:column;
+  border-radius:14px;
+  overflow:hidden;
+  background:rgba(250,249,245,.04);
+  border:1px solid rgba(250,249,245,.1);
+  opacity:0;
+  transform:translateY(20px);
+  transition:border-color .25s ease;
+}
+.catalog-card:hover{border-color:rgba(232,65,44,.5);}
+.catalog-card-media{
+  position:relative;
+  aspect-ratio:4/5;
+  overflow:hidden;
+}
+.catalog-card-media img{
+  width:100%;height:100%;object-fit:cover;
+  filter:grayscale(1) contrast(1.1) brightness(.9);
+  transition:filter .4s ease, transform .5s ease;
+}
+.catalog-card:hover .catalog-card-media img{
+  filter:grayscale(0) contrast(1.05) brightness(1);
+  transform:scale(1.05);
+}
+.catalog-card-tag{
+  position:absolute;top:12px;left:12px;z-index:2;
+  background:var(--poppy);color:var(--paper);
+  font-family:'Space Grotesk',sans-serif;
+  font-size:.64rem;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  padding:5px 10px;border-radius:100px;
+}
+.catalog-card-body{
+  padding:16px 16px 18px;
+  display:flex;flex-direction:column;gap:6px;
+  flex:1;
+}
+.catalog-card-name{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;font-size:.94rem;
+  text-transform:uppercase;letter-spacing:.01em;
+  color:var(--paper);
+}
+.catalog-card-desc{
+  font-size:.82rem;line-height:1.5;
+  color:rgba(250,249,245,.55);
+  flex:1;
+}
+.catalog-card-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:4px;
+}
+.catalog-card-price{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;font-size:.98rem;
+  color:var(--paper);
+}
+.catalog-card-cta{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:.74rem;font-weight:700;
+  color:var(--paper);
+  display:inline-flex;align-items:center;gap:5px;
+  border-bottom:1px solid rgba(250,249,245,.4);padding-bottom:2px;
+}
+.catalog-card-cta span{transition:transform .2s ease;}
+.catalog-card:hover .catalog-card-cta span{transform:translateX(3px);}
+
+/* ---------- empty state ---------- */
+.catalog-empty{
+  text-align:center;
+  padding:70px 20px;
+  display:flex;flex-direction:column;align-items:center;gap:20px;
+}
+.catalog-empty p{color:rgba(250,249,245,.6);font-size:1rem;}
+.catalog-reset-btn{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;font-size:.85rem;
+  color:var(--paper);
+  border:1px solid rgba(250,249,245,.3);
+  border-radius:100px;
+  padding:12px 24px;
+  transition:border-color .2s ease, background .2s ease;
+}
+.catalog-reset-btn:hover{border-color:var(--poppy);background:rgba(232,65,44,.15);}
+
+/* ---------- footer override for the dark catalog page ----------
+   The shared <footer> markup/classes over in style.css assume a
+   light page background (body bg = --paper, text = --ink). This
+   page's body is dark, so without this override the footer renders
+   --ink text on an --ink background and disappears completely --
+   this is what "снизу не видно" was. Selectors are scoped under
+   body.catalog-page so they only ever apply here, and the added
+   class bumps specificity enough to beat the base footer rules
+   regardless of import order. */
+body.catalog-page footer{
+  background:var(--ink);
+}
+body.catalog-page .footer-brand .logo{color:var(--paper);}
+body.catalog-page .footer-brand p{color:rgba(250,249,245,.55);}
+body.catalog-page .footer-col h4{color:rgba(250,249,245,.4);}
+body.catalog-page .footer-col a,
+body.catalog-page .footer-col p{color:rgba(250,249,245,.8);}
+body.catalog-page .footer-col a:hover{color:var(--poppy);}
+body.catalog-page .footer-grid{border-bottom-color:rgba(250,249,245,.14);}
+body.catalog-page .footer-bottom{color:rgba(250,249,245,.4);}
+
+/* ---------- responsive ----------
+   sidebar collapses into a horizontal, scrollable filter row above the
+   grid instead of a fixed-width column -- a vertical list at 240px
+   doesn't work once the layout is a single column. */
+@media (max-width:880px){
+  .catalog-shell.wrap{
+    grid-template-columns:1fr;
+    gap:28px;
+  }
+  .catalog-sidebar{
+    position:static;
+    flex-direction:column;
+    gap:20px;
+  }
+  .catalog-category-list{
+    flex-direction:row;
+    flex-wrap:wrap;
+    border-top:none;
+    gap:8px;
+  }
+  .catalog-category-item{
+    width:auto;
+    border:1px solid rgba(250,249,245,.2);
+    border-radius:100px;
+    padding:8px 16px 8px 18px;
+  }
+  .catalog-category-item::before{
+    left:6px;
+  }
+  .catalog-category-item.is-active{
+    background:rgba(250,249,245,.08);
+    border-color:var(--paper);
+  }
+  .catalog-sort-block{
+    flex-direction:row;align-items:center;
+    gap:12px;
+  }
+  .catalog-sort-block select{width:auto;flex:1;}
+}
+
+@media (max-width:700px){
+  .catalog-head{padding:110px 20px 24px;}
+  .catalog-shell.wrap{padding:0 20px 90px;}
+  .catalog-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;}
+  .catalog-card-body{padding:12px 12px 14px;gap:5px;}
+  .catalog-card-desc{display:none;}
+}

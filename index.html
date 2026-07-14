@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Space+Grotesk:wght@300;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
 </head>
 <body>
 
@@ -36,6 +37,7 @@
     <nav class="nav-links">
       <a href="#catalog">Каталог</a>
       <a href="#how">Как заказать</a>
+      <a href="#florists">Команда</a>
       <a href="#pricing">Тарифы</a>
       <a href="#faq">Вопросы</a>
       <a href="#contacts">Контакты</a>
@@ -118,31 +120,73 @@
 </section>
 
 <!-- ============================================================
-     3. ПРЕИМУЩЕСТВА
+     3. ПРЕИМУЩЕСТВА -- pinned scrollytelling (см. main.js:
+     initAdvantagesPin). Пока скроллишь эту секцию на десктопе, скролл
+     страницы "залипает" на весь блок, а предыдущая секция (#districts)
+     плавно уменьшается. Внутри показывается один текстовый слайд
+     (номер + заголовок + описание), который переключается между 4
+     состояниями по прогрессу скролла -- ровно под 4 прежние карточки.
+     На мобильных pin отключается (initAdvantagesPin делает это через
+     gsap.matchMedia), вместо него показывается .advantages-grid-mobile.
      ============================================================ -->
 <section class="advantages" id="advantages">
-  <div class="wrap">
-    <div class="advantages-grid reveal">
-      <div class="advantage-card">
-        <div class="advantage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg></div>
-        <h3>Свежая срезка</h3>
-        <p>Цветы приходят с фермы не позже чем за 48 часов до сборки — не залёживаются на складе.</p>
+
+  <div class="advantages-pin">
+
+    <!-- чисто декоративный слой: вращающееся пунктирное кольцо и пара
+         плюсиков по углам -- фон для сцены, никакого смысла в данных -->
+    <div class="advantages-decor" aria-hidden="true">
+      <span class="advantages-decor-ring"></span>
+      <span class="advantages-decor-plus advantages-decor-plus--tl">+</span>
+      <span class="advantages-decor-plus advantages-decor-plus--br">+</span>
+    </div>
+
+    <!-- огромная полупрозрачная цифра-призрак за текстом -- меняется
+         синхронно с advIndex в main.js, чисто для фактуры фона -->
+    <div class="advantages-ghost" id="advGhost" aria-hidden="true">01</div>
+
+    <div class="advantages-pin-inner">
+      <span class="eyebrow advantages-eyebrow">Почему МАК</span>
+
+      <div class="advantages-index-wrap">
+        <svg class="advantages-index-ring" viewBox="0 0 66 34" preserveAspectRatio="none" aria-hidden="true">
+          <rect class="advantages-index-ring-progress" id="advRingProgress" x="1" y="1" width="64" height="32" rx="8"></rect>
+        </svg>
+        <div class="advantages-index" id="advIndex">01</div>
       </div>
-      <div class="advantage-card">
-        <div class="advantage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
-        <h3>60 минут</h3>
-        <p>От заявки до звонка в дверь — курьер уже в пути, пока флорист довязывает бант.</p>
+
+      <h2 class="advantages-heading" id="advHeading">Свежая срезка</h2>
+      <p class="advantages-desc" id="advDesc">Цветы приходят с фермы не позже чем за 48 часов до сборки — не залёживаются на складе.</p>
+      <div class="advantages-progress" id="advProgress">
+        <span class="advantages-dot active" data-index="0"></span>
+        <span class="advantages-dot" data-index="1"></span>
+        <span class="advantages-dot" data-index="2"></span>
+        <span class="advantages-dot" data-index="3"></span>
       </div>
-      <div class="advantage-card">
-        <div class="advantage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div>
-        <h3>Честный состав</h3>
-        <p>У каждого букета — разбор по цветам и материалам. Видите, за что платите, до заказа.</p>
-      </div>
-      <div class="advantage-card">
-        <div class="advantage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21c4-8 12-8 16-16"/><path d="M14 3h4v4"/></svg></div>
-        <h3>Без слащавости</h3>
-        <p>Ни целлофана, ни рюшей — крафт-бумага, смелые сочетания и минимум декора.</p>
-      </div>
+    </div>
+  </div>
+
+  <!-- мобильный фолбэк -- обычная сетка карточек, без pin/scroll-jacking -->
+  <div class="advantages-grid-mobile">
+    <div class="advantage-card">
+      <div class="advantage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg></div>
+      <h3>Свежая срезка</h3>
+      <p>Цветы приходят с фермы не позже чем за 48 часов до сборки — не залёживаются на складе.</p>
+    </div>
+    <div class="advantage-card">
+      <div class="advantage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+      <h3>60 минут</h3>
+      <p>От заявки до звонка в дверь — курьер уже в пути, пока флорист довязывает бант.</p>
+    </div>
+    <div class="advantage-card">
+      <div class="advantage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div>
+      <h3>Честный состав</h3>
+      <p>У каждого букета — разбор по цветам и материалам. Видите, за что платите, до заказа.</p>
+    </div>
+    <div class="advantage-card">
+      <div class="advantage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21c4-8 12-8 16-16"/><path d="M14 3h4v4"/></svg></div>
+      <h3>Без слащавости</h3>
+      <p>Ни целлофана, ни рюшей — крафт-бумага, смелые сочетания и минимум декора.</p>
     </div>
   </div>
 </section>
@@ -171,6 +215,7 @@
         <span class="carousel3d-caption-desc" id="carouselCaptionDesc">Розовые и белые альстромерии в нежной упаковке</span>
       </div>
       <div class="carousel3d-bottombar" id="carousel3dBottombar">
+        <a href="catalog.html" class="carousel3d-viewall">Все букеты <span>→</span></a>
         <div class="carousel3d-select" id="carousel3dSelect"></div>
         <div class="carousel3d-controls">
           <button class="carousel3d-arrow" id="carouselPrev" aria-label="Предыдущий">‹</button>
@@ -180,91 +225,65 @@
     </div>
   </div>
   <div class="carousel3d-bg-extend" aria-hidden="true"></div>
-  <div class="curtain-bars" id="curtainBars" aria-hidden="true"></div>
 </section>
 
-<!-- разбор состава — детальное описание продукта -->
+
+<!-- откуда берём и какое качество — pinned scroll, карточки влетают
+     волной с разных сторон (см. main.js: initStoryCardsPin). Полностью
+     на scrub -- скроллишь вниз, карточки прилетают; скроллишь назад --
+     улетают обратно в том же порядке, без "одноразовых" reveal-триггеров.
+     storyFlash -- вспышка поппи-цвета в момент финального "взрыва"
+     карточек, элемент чисто декоративный (aria-hidden), заполняется
+     GSAP-таймлайном из initStoryCardsPin(). -->
 <section class="story" id="story">
+  <div class="story-pin" id="storyPin">
 
-  <div class="story-photo-frame reveal" id="storyPhotoFrame">
-    <img class="story-photo" src="images/bouquet-story.png" alt="Букет пионовидных роз в руках" loading="lazy">
-    <img class="story-photo story-photo-color" src="images/bouquet-story.png" alt="" aria-hidden="true" loading="lazy">
-    <svg class="story-shapes" id="storyShapes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
-    <div class="story-dots" id="storyDots">
-      <button class="story-dot" data-index="0" data-x="32" data-y="35" style="--x:32%; --y:35%;" aria-label="Пионовидные розы"><span>1</span></button>
-      <button class="story-dot" data-index="1" data-x="68.2" data-y="32" style="--x:68.2%; --y:32%;" aria-label="Эвкалипт"><span>2</span></button>
-      <button class="story-dot" data-index="2" data-x="27" data-y="52" style="--x:27%; --y:52%;" aria-label="Кустовые розы"><span>3</span></button>
-      <button class="story-dot" data-index="3" data-x="38.2" data-y="68" style="--x:38.2%; --y:68%;" aria-label="Упаковка"><span>4</span></button>
-      <button class="story-dot" data-index="4" data-x="46" data-y="80" style="--x:46%; --y:80%;" aria-label="Лента"><span>5</span></button>
-    </div>
-  </div>
+    <div class="story-flash" id="storyFlash" aria-hidden="true"></div>
 
-  <svg class="story-lines" id="storyLines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-    <line class="story-line" data-index="0"></line>
-    <line class="story-line" data-index="1"></line>
-    <line class="story-line" data-index="2"></line>
-    <line class="story-line" data-index="3"></line>
-    <line class="story-line" data-index="4"></line>
-  </svg>
-
-  <div class="wrap story-content">
-    <div class="story-intro section-head reveal">
-      <h2>Из чего собран этот букет</h2>
-      <p>Наведите курсор на фото или на подпись — расскажем, какие цветы внутри, откуда они и как всё собрано.</p>
+    <div class="story-intro" id="storyIntro">
+      <span class="eyebrow">Прозрачность</span>
+      <h2>Не только красиво — ещё и честно</h2>
+      <p>Пока вы читаете это, где-то в Эквадоре режут розы для завтрашней доставки. Вот из чего на самом деле складывается букет.</p>
     </div>
 
-    <div class="story-labels-col reveal" id="storyLabelsCol">
-      <div class="story-label" data-index="0">
-        <span class="story-label-num">1</span>
-        <h3 data-text="Пионовидные розы">Пионовидные розы</h3>
-        <p>Сорт David Austin — фермы Эквадора, срезка за 48 часов до сборки букета.</p>
-      </div>
-      <div class="story-label" data-index="1">
-        <span class="story-label-num">2</span>
-        <h3 data-text="Эвкалипт">Эвкалипт</h3>
-        <p>Добавляет текстуру и лёгкий аромат — привозим вместе с розами из тех же теплиц.</p>
-      </div>
-      <div class="story-label" data-index="2">
-        <span class="story-label-num">3</span>
-        <h3 data-text="Кустовые розы">Кустовые розы</h3>
-        <p>Мелкие бутоны того же сорта — заполняют букет и держат форму дольше недели.</p>
-      </div>
-      <div class="story-label" data-index="3">
-        <span class="story-label-num">4</span>
-        <h3 data-text="Упаковка">Упаковка</h3>
-        <p>Двухслойная дизайнерская бумага — матовая снаружи, влагостойкая изнутри.</p>
-      </div>
-      <div class="story-label" data-index="4">
-        <span class="story-label-num">5</span>
-        <h3 data-text="Лента">Лента</h3>
-        <p>Широкая атласная лента — бант завязываем вручную, каждый раз чуть иначе.</p>
-      </div>
+    <div class="story-timeline" id="storyTimeline">
+      <div class="story-timeline-fill" id="storyTimelineFill"></div>
     </div>
-  </div>
 
-  <div class="story-legend-mobile" id="storyLegendMobile">
-    <div class="story-legend-item" data-index="0">
-      <span class="story-legend-num">1</span>
-      <div><h4 data-text="Пионовидные розы">Пионовидные розы</h4><p>Сорт David Austin — фермы Эквадора, срезка за 48 часов до сборки букета.</p></div>
+    <div class="story-cards" id="storyCards">
+      <div class="story-card is-light" data-dir="left">
+        <div class="story-card-inner"></div>
+  <span class="story-card-num">01</span>
+  <h3>Эквадор, 2800 м</h3>
+  <p>Фермы высоко в горах — розы растут медленнее, бутон получается плотнее и держится дольше.</p>
+</div>
+</div>
+<div class="story-card is-dark" data-dir="top">
+  <div class="story-card-inner"></div>
+  <span class="story-card-num">02</span>
+  <h3>48 часов</h3>
+  <p>От срезки до сборки букета — никакого склада и никакой перележки в холодильнике.</p>
+</div>
+</div>
+<div class="story-card is-dark" data-dir="right">
+  <div class="story-card-inner"></div>
+  <span class="story-card-num">03</span>
+  <h3>Ручная сборка</h3>
+  <p>Каждый стебель осматриваем и подрезаем под углом вручную — никакого конвейера.</p>
+</div>
+</div>
+<div class="story-card is-light" data-dir="bottom">
+  <div class="story-card-inner"></div>
+  <span class="story-card-num">04</span>
+  <h3>Фейс-контроль</h3>
+  <p>Флорист лично проверяет каждый букет перед тем, как он поедет к вам.</p>
+</div>
+</div>
     </div>
-    <div class="story-legend-item" data-index="1">
-      <span class="story-legend-num">2</span>
-      <div><h4 data-text="Эвкалипт">Эвкалипт</h4><p>Добавляет текстуру и лёгкий аромат — привозим вместе с розами из тех же теплиц.</p></div>
-    </div>
-    <div class="story-legend-item" data-index="2">
-      <span class="story-legend-num">3</span>
-      <div><h4 data-text="Кустовые розы">Кустовые розы</h4><p>Мелкие бутоны того же сорта — заполняют букет и держат форму дольше недели.</p></div>
-    </div>
-    <div class="story-legend-item" data-index="3">
-      <span class="story-legend-num">4</span>
-      <div><h4 data-text="Упаковка">Упаковка</h4><p>Двухслойная дизайнерская бумага — матовая снаружи, влагостойкая изнутри.</p></div>
-    </div>
-    <div class="story-legend-item" data-index="4">
-      <span class="story-legend-num">5</span>
-      <div><h4 data-text="Лента">Лента</h4><p>Широкая атласная лента — бант завязываем вручную, каждый раз чуть иначе.</p></div>
-    </div>
+
   </div>
 </section>
+
 
 <!-- как заказать -->
 <section class="process" id="how">
@@ -322,7 +341,7 @@
     </div>
 
     <div class="reviews-grid reveal">
-      <div class="review-card">
+      <a class="review-card" href="reviews.html">
         <div class="review-stars">★★★★★</div>
         <p class="review-quote">Заказывала маме на день рождения — привезли ровно то, что было на фото, до последнего цветка. Больше никуда не пойду.</p>
         <div class="review-person">
@@ -332,8 +351,8 @@
             <div class="review-person-meta">Заказ «Ромашковое облако»</div>
           </div>
         </div>
-      </div>
-      <div class="review-card">
+      </a>
+      <a class="review-card" href="reviews.html">
         <div class="review-stars">★★★★★</div>
         <p class="review-quote">Курьер написал за 15 минут, привёз раньше срока. Букет простоял почти две недели — для Риги в +28 это космос.</p>
         <div class="review-person">
@@ -343,8 +362,8 @@
             <div class="review-person-meta">Заказ «Полевой букет»</div>
           </div>
         </div>
-      </div>
-      <div class="review-card">
+      </a>
+      <a class="review-card" href="reviews.html">
         <div class="review-stars">★★★★★</div>
         <p class="review-quote">Разбор состава на сайте — гениальная штука, видно за что платишь. Взяла «Утренний персик» вслепую и не пожалела.</p>
         <div class="review-person">
@@ -354,7 +373,11 @@
             <div class="review-person-meta">Заказ «Утренний персик»</div>
           </div>
         </div>
-      </div>
+      </a>
+    </div>
+
+    <div class="reviews-cta reveal">
+      <a href="reviews.html" class="btn-ghost">Смотреть все отзывы →</a>
     </div>
   </div>
 </section>
@@ -379,6 +402,86 @@
       <div class="about-sign">— команда МАК</div>
     </div>
   </div>
+</section>
+
+<!-- ============================================================
+     5.5. КОМАНДА — три флориста, карточки "сдаются" одна за другой
+     на фоне видео со сборкой букетов. Продолжение "about": сначала
+     манифест команды, сразу за ним — конкретные лица.
+     ============================================================ -->
+<section class="florists" id="florists">
+
+  <div class="florists-video-layer" aria-hidden="true">
+    <video class="florists-video is-active" autoplay muted loop playsinline preload="metadata">
+      <source src="videos/florists-bg-1.mp4" type="video/mp4">
+    </video>
+    <video class="florists-video" autoplay muted loop playsinline preload="metadata">
+      <source src="videos/florists-bg-2.mp4" type="video/mp4">
+    </video>
+    <video class="florists-video" autoplay muted loop playsinline preload="metadata">
+      <source src="videos/florists-bg-3.mp4" type="video/mp4">
+    </video>
+    <div class="florists-scrim"></div>
+  </div>
+
+  <div class="florists-pin">
+    <div class="florists-head">
+      <span class="eyebrow">Кто внутри МАК</span>
+      <h2>Три пары рук, три взгляда на один букет</h2>
+      <p>Мы могли написать «наша дружная команда» — но это ничего не говорит. Вот три человека, которые каждое утро решают, что из этого поедет к вам.</p>
+    </div>
+
+    <div class="florists-stack" id="floristsStack">
+
+      <article class="florist-card" data-index="0">
+        <div class="florist-card-photo">
+          <img src="images/florist-marina.jpg" alt="Марина, флорист МАК" loading="lazy">
+        </div>
+        <div class="florist-card-body">
+          <span class="florist-card-num">01</span>
+          <h3>Марина</h3>
+          <span class="florist-card-role">Флорист · 4 года в МАК</span>
+          <p class="florist-card-quote">«Если букет не хочется потрогать — я его ещё не закончила.»</p>
+          <p class="florist-card-text">Начинает сборку с самого капризного цветка — пионовидной розы — и подгоняет под неё всё остальное, а не наоборот.</p>
+        </div>
+      </article>
+
+      <article class="florist-card" data-index="1">
+        <div class="florist-card-photo">
+          <img src="images/florist-irina.jpg" alt="Ирина, флорист-декоратор МАК" loading="lazy">
+        </div>
+        <div class="florist-card-body">
+          <span class="florist-card-num">02</span>
+          <h3>Ирина</h3>
+          <span class="florist-card-role">Флорист-декоратор · 6 лет в МАК</span>
+          <p class="florist-card-quote">«Весенние цветы прощают одну ошибку. Вторую — уже нет.»</p>
+          <p class="florist-card-text">Отвечает за сезонные и кашпо-композиции: тюльпаны и нарциссы в её руках не мнутся и не летят в мусор.</p>
+        </div>
+      </article>
+
+      <article class="florist-card" data-index="2">
+        <div class="florist-card-photo">
+          <img src="images/florist-artem.jpg" alt="Артём, старший флорист МАК" loading="lazy">
+        </div>
+        <div class="florist-card-body">
+          <span class="florist-card-num">03</span>
+          <h3>Артём</h3>
+          <span class="florist-card-role">Старший флорист · 5 лет в МАК</span>
+          <p class="florist-card-quote">«Разница между "нормально" и "дорого" — два сантиметра длины стебля.»</p>
+          <p class="florist-card-text">Выверяет пропорции до миллиметра и учит новых флористов прямо в мастерской на Бривибас.</p>
+        </div>
+      </article>
+
+    </div>
+
+    <div class="florists-progress" id="floristsProgress">
+      <span class="florists-progress-dot is-active" data-index="0"></span>
+      <span class="florists-progress-dot" data-index="1"></span>
+      <span class="florists-progress-dot" data-index="2"></span>
+    </div>
+    <span class="florists-hint">Скролльте — карточки сменяют друг друга</span>
+  </div>
+
 </section>
 
 <!-- ============================================================
@@ -549,4 +652,4 @@
 
 <script type="module" src="src/main.js"></script>
 </body>
-</html> 
+</html>

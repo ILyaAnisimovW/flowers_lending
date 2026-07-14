@@ -246,6 +246,20 @@ const bouquets = [
 
 initCarousel3D(bouquets);
 
+/* "Все букеты" сидит внутри .carousel3d-wrap, который слушает
+   pointerdown/mousemove на себе (bubbling phase) для drag/tilt
+   взаимодействий. Проверка e.target.closest() внутри того обработчика
+   уже должна пропускать ссылки и кнопки, но остановка propagation прямо
+   здесь, до того как событие дойдёт до wrap, надёжнее -- обработчики
+   wrap вообще не срабатывают для этого элемента. */
+(function protectViewAllButton(){
+  const viewAllBtn = document.querySelector('.carousel3d-viewall');
+  if (!viewAllBtn) return;
+  ['pointerdown', 'mousedown', 'touchstart', 'click'].forEach(evt => {
+    viewAllBtn.addEventListener(evt, e => e.stopPropagation());
+  });
+})();
+
 function initCarousel3D(items){
   const wrap    = document.getElementById('carousel3dWrap');
   const ring    = document.getElementById('carousel3d');
@@ -427,7 +441,11 @@ function initCarousel3D(items){
   });
 
   wrap.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('button')) return;
+    // button = select thumbnails / prev-next arrows; a = "Все букеты" link
+    // и любой другой anchor внутри carousel wrap -- ни один из них
+    // не должен начинать drag, иначе его click никогда не сработает
+    // из-за preventDefault() ниже.
+    if (e.target.closest('button, a')) return;
     e.preventDefault();
     dragging = true;
     dragMoved = false;
@@ -641,19 +659,27 @@ function initAdvantagesPin(){
 
   let current = 0;
 
+  // Heading now uses the same scrambleText() glitch reveal as the
+  // showcase title / carousel captions elsewhere on the site (random
+  // Cyrillic letters + digits + symbols resolving left-to-right into
+  // the real word) instead of a plain fade -- ties the pinned slide's
+  // text swap into the same "glitch" visual language already used for
+  // text swap into the same "glitch" visual language used elsewhere on the site.
   function render(i){
     if (i === current) return;
     current = i;
     const item = items[i];
+
     gsap.timeline()
-      .to([indexEl, headingEl, descEl], { opacity: 0, y: -14, duration: .22, ease: 'power2.in' })
+      .to([indexEl, descEl], { opacity: 0, y: -14, duration: .22, ease: 'power2.in' })
       .call(() => {
         indexEl.textContent = item.num;
-        headingEl.textContent = item.title;
         descEl.textContent = item.desc;
         if (ghostEl) ghostEl.textContent = item.num;
+        scrambleText(headingEl, item.title);
       })
-      .to([indexEl, headingEl, descEl], { opacity: 1, y: 0, duration: .32, ease: 'power2.out' });
+      .to([indexEl, descEl], { opacity: 1, y: 0, duration: .32, ease: 'power2.out' });
+
     if (ghostEl){
       gsap.fromTo(ghostEl, { opacity: 0 }, { opacity: .035, duration: .5, ease: 'power2.out' });
     }
@@ -720,383 +746,200 @@ initFAQ();
 /* ================= FLORISTS (pinned card-dealing sequence + video crossfade) ================= */
 initFlorists();
 
-/* ================= STORY HOTSPOTS (bouquet breakdown) ================= */
+/* ================= STORY -- pinned wave-cards ================= */
+/* Desktop: section pins to the viewport while one scrub-driven timeline
+   flies each dark card in from its own edge (left/top/right/bottom),
+   staggered so they cascade in like a wave rather than popping in
+   together. Because it's tied to ScrollTrigger's `scrub` (not a
+   `once`-fired reveal), scrolling back up runs the exact same timeline
+   backwards -- the cards retreat off-screen in reverse order, so the
+   effect works both ways and isn't a one-time animation.
+   Mobile disables the pin via gsap.matchMedia and the cards just sit
+   in their plain stacked-card layout (see the max-width:880px rules
+   in style.css), matching the same pattern used for #advantages. */
+function initStoryCardsPin(){
+  const section = document.getElementById('story');
+  const pin = document.getElementById('storyPin');
+  const cards = document.querySelectorAll('.story-card');
+  const introEl = document.getElementById('storyIntro');
+  const timelineFill = document.getElementById('storyTimelineFill');
+  const flashEl = document.getElementById('storyFlash');
+  if (!section || !pin || !cards.length) return;
 
-function intersectSegmentWithRect(x1, y1, x2, y2, rx1, ry1, rx2, ry2){
-  const dx = x2 - x1, dy = y2 - y1;
-  let tMin = 0, tMax = 1;
-  const p = [-dx, dx, -dy, dy];
-  const q = [x1 - rx1, rx2 - x1, y1 - ry1, ry2 - y1];
-  for (let i = 0; i < 4; i++){
-    if (p[i] === 0){
-      if (q[i] < 0) return null;
-    } else {
-      const t = q[i] / p[i];
-      if (p[i] < 0){
-        if (t > tMax) return null;
-        if (t > tMin) tMin = t;
-      } else {
-        if (t < tMin) return null;
-        if (t < tMax) tMax = t;
-      }
-    }
-  }
-  return { x: x1 + tMin * dx, y: y1 + tMin * dy };
-}
+  cards.forEach(card => {
+  const inner = card.querySelector('.story-card-inner');
+  if (!inner) return;
 
-function updateStoryLines(){
-  const stage = document.getElementById('story');
-  if (!stage) return;
-  if (window.matchMedia('(max-width:880px)').matches) return;
-
-  const stageRect = stage.getBoundingClientRect();
-  if (!stageRect.width || !stageRect.height) return;
-
-  const GAP = 10;
-
-  stage.querySelectorAll('.story-line').forEach(line => {
-    const idx = line.dataset.index;
-    const dot   = stage.querySelector(`.story-dot[data-index="${idx}"]`);
-    const label = stage.querySelector(`.story-labels-col .story-label[data-index="${idx}"]`);
-    if (!dot || !label) return;
-
-    const dotRect   = dot.getBoundingClientRect();
-    const labelRect = label.getBoundingClientRect();
-
-    const dotX = dotRect.left + dotRect.width / 2;
-    const dotY = dotRect.top + dotRect.height / 2;
-    const labelCX = labelRect.left + labelRect.width / 2;
-    const labelCY = labelRect.top + labelRect.height / 2;
-
-    const hit = intersectSegmentWithRect(
-      dotX, dotY, labelCX, labelCY,
-      labelRect.left - GAP, labelRect.top - GAP,
-      labelRect.right + GAP, labelRect.bottom + GAP
-    );
-    const end = hit || { x: labelCX, y: labelCY };
-
-    const x1 = (dotX - stageRect.left) / stageRect.width * 100;
-    const y1 = (dotY - stageRect.top) / stageRect.height * 100;
-    const x2 = (end.x - stageRect.left) / stageRect.width * 100;
-    const y2 = (end.y - stageRect.top) / stageRect.height * 100;
-
-    line.setAttribute('x1', x1.toFixed(2));
-    line.setAttribute('y1', y1.toFixed(2));
-    line.setAttribute('x2', x2.toFixed(2));
-    line.setAttribute('y2', y2.toFixed(2));
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - .5;
+    const py = (e.clientY - r.top) / r.height - .5;
+    gsap.to(inner, {
+      rotateX: py * -18,
+      rotateY: px * 22,
+      z: 50,
+      scale: 1.05,
+      transformPerspective: 700,
+      duration: .5,
+      ease: 'power2.out',
+    });
   });
-}
 
-const STORY_SHAPES = {
-  0: [
-    "57.1,60.6 46.7,58.3 38.1,56.6 35.8,53.4 31.4,53.7 25.7,53.4 21.7,50.5 18.4,46.5 19.9,42.0 23.0,37.8 27.0,33.1 32.5,33.1 37.4,30.0 40.9,28.7 44.9,28.6 49.1,31.1 52.0,28.9 55.8,30.7 57.1,32.4 60.8,31.8 65.7,33.1 64.6,34.9 69.0,36.0 70.8,37.8 71.2,40.1 75.7,42.0 76.5,44.7 77.7,47.0 75.9,51.7 72.8,53.4 69.2,53.7 68.1,56.3 64.2,58.3 58.8,60.4"
-  ],
-  1: [
-    "38.3,44.2 38.1,46.2 36.1,45.6 33.8,46.2 35.6,44.2 31.9,43.8 32.5,42.9 30.5,41.6 28.8,40.0 25.2,40.0 22.1,40.4 20.4,38.9 23.9,37.8 27.2,38.6 33.2,40.4 35.4,40.4 38.1,42.7",
-    "27.2,35.8 23.7,36.9 22.6,35.1 26.3,32.4 27.2,30.8 32.1,28.8 34.5,30.4 36.7,31.5 33.8,32.2 33.2,34.6 31.0,34.9 29.9,32.6 27.2,33.1",
-    "42.0,40.5 40.0,40.0 40.0,38.4 37.8,37.8 41.4,36.9 43.6,38.0 43.4,36.6 41.2,34.0 43.1,32.8 41.4,31.5 42.5,28.9 45.6,30.6 46.9,31.3 47.6,33.7 48.2,35.5 51.8,36.9 50.0,38.6 46.7,37.5 44.2,38.4",
-    "62.4,32.0 63.9,30.2 67.9,29.1 69.2,30.4 63.3,32.8",
-    "58.4,40.4 61.5,38.9 64.8,39.6 61.7,41.1 58.6,41.1",
-    "70.4,33.8 68.4,36.7 69.2,39.6 67.7,40.9 69.0,44.2 67.7,46.3 62.8,47.4 60.4,46.3 57.7,48.5 54.9,48.3 54.6,51.4 57.7,51.1 60.4,49.4 63.9,50.9 67.3,50.1 68.8,48.7 70.8,49.1 70.4,51.8 72.6,52.3 73.9,50.3 71.9,48.5 72.1,47.4 73.5,47.2 76.8,46.9 77.2,44.9 73.0,43.8 72.6,42.5 71.7,40.5 69.9,39.5 70.6,37.5 75.2,38.2 78.5,38.4 81.6,37.3 79.6,35.5 75.7,35.5 74.1,36.9"
-  ],
-  2: [
-    "57.1,60.6 46.7,58.3 38.1,56.6 35.8,53.4 31.4,53.7 25.7,53.4 21.7,50.5 18.4,46.5 19.9,42.0 23.0,37.8 27.0,33.1 32.5,33.1 37.4,30.0 40.9,28.7 44.9,28.6 49.1,31.1 52.0,28.9 55.8,30.7 57.1,32.4 60.8,31.8 65.7,33.1 64.6,34.9 69.0,36.0 70.8,37.8 71.2,40.1 75.7,42.0 76.5,44.7 77.7,47.0 75.9,51.7 72.8,53.4 69.2,53.7 68.1,56.3 64.2,58.3 58.8,60.4"
-  ],
-  3: [
-    "62.8,90.8 63.1,89.2 62.8,86.5 62.4,83.8 61.7,80.3 60.4,77.1 59.7,74.3 58.4,72.5 61.3,71.8 67.7,69.8 70.6,65.5 76.8,62.6 81.0,44.3 78.8,40.1 76.1,38.1 72.3,35.8 71.5,37.4 74.3,40.5 77.2,44.3 78.8,49.0 73.7,54.6 66.8,58.2 57.7,60.4 49.6,58.6 43.4,58.2 38.9,58.4 33.4,57.3 26.5,54.8 22.1,52.4 18.8,49.3 17.7,42.3 15.0,46.4 19.0,53.9 22.1,59.7 25.7,64.0 27.2,65.8 30.3,67.5 28.5,68.0 21.7,80.5 21.0,85.8 24.3,88.7 28.5,90.8 28.5,93.0 49.6,95.5 52.4,95.2 55.3,94.1 56.6,91.2 59.1,90.7"
-  ],
-  4: [
-    "57.1,82.1 59.1,78.9 56.6,72.7 54.9,72.9 45.1,72.5 38.3,70.5 35.0,68.9 31.2,72.0 27.7,78.9 28.1,81.6 32.1,74.3 36.3,70.4 38.7,70.5 36.5,73.4 39.8,74.7 41.4,73.6 41.2,76.0 40.0,78.7 43.8,82.1 45.4,79.1 46.2,74.9 45.6,73.4 50.4,73.4 54.2,74.5 56.0,76.9 57.3,79.8"
-  ]
+  card.addEventListener('mouseleave', () => {
+    gsap.to(inner, {
+      rotateX: 0, rotateY: 0, z: 0, scale: 1,
+      duration: .8, ease: 'elastic.out(1,0.5)',
+    });
+  });
+});
+
+  const DIR_OFFSET = {
+    left:   { x: '-160%', y: '0%'    },
+    top:    { x: '0%',    y: '-160%' },
+    right:  { x: '160%',  y: '0%'    },
+    bottom: { x: '0%',    y: '160%'  },
+  };
+
+  // куда и как каждая карточка улетает при взрыве -- дальше и по
+  // своей диагонали, а не просто назад тем же путём, каким влетела
+  const EXPLODE = {
+  left:   { x: '-320%', y: '-90%',  z: -1300, rot: -540 },
+  top:    { x: '110%',  y: '-320%', z: -1350, rot: 480  },
+  right:  { x: '320%',  y: '100%',  z: -1300, rot: 560  },
+  bottom: { x: '-110%', y: '320%',  z: -1350, rot: -500 },
 };
 
-function smoothClosedPath(points, tension = 6){
-  const n = points.length;
-  if (n < 3) return '';
-  let d = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)} `;
-  for (let i = 0; i < n; i++){
-    const p0 = points[(i - 1 + n) % n];
-    const p1 = points[i];
-    const p2 = points[(i + 1) % n];
-    const p3 = points[(i + 2) % n];
-    const c1x = p1.x + (p2.x - p0.x) / tension;
-    const c1y = p1.y + (p2.y - p0.y) / tension;
-    const c2x = p2.x - (p3.x - p1.x) / tension;
-    const c2y = p2.y - (p3.y - p1.y) / tension;
-    d += `C ${c1x.toFixed(2)} ${c1y.toFixed(2)}, ${c2x.toFixed(2)} ${c2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} `;
-  }
-  return d + 'Z';
-}
+  const mm = gsap.matchMedia();
 
-function initStoryHotspots(){
-  const stage = document.getElementById('story');
-  const photoFrame = document.getElementById('storyPhotoFrame');
-  if (!stage || !photoFrame) return;
+  mm.add('(min-width: 881px)', () => {
+    cards.forEach(card => {
+      const dir = card.dataset.dir;
+      const offset = DIR_OFFSET[dir] || DIR_OFFSET.left;
+      const flatRot = (dir === 'left' || dir === 'bottom') ? -10 : 10;
+      const vertical = dir === 'top' || dir === 'bottom';
 
-  const dots   = stage.querySelectorAll('.story-dot');
-  const lines  = stage.querySelectorAll('.story-line');
-  const labels = stage.querySelectorAll('.story-labels-col .story-label');
-  const legendItems = document.querySelectorAll('.story-legend-item');
-
-  const shapesSvg = document.getElementById('storyShapes');
-  const shapePolys = [];
-  if (shapesSvg){
-    Object.keys(STORY_SHAPES).forEach(idx => {
-      STORY_SHAPES[idx].forEach((_, shapeIdx) => {
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.classList.add('shape-poly');
-        path.dataset.index = idx;
-        path.dataset.shapeIdx = String(shapeIdx);
-        shapesSvg.appendChild(path);
-        shapePolys.push(path);
+      gsap.set(card, {
+        xPercent: parseFloat(offset.x),
+        yPercent: parseFloat(offset.y),
+        opacity: 0,
+        rotate: flatRot,
+        rotationX: vertical ? 65 : 0,
+        rotationY: vertical ? 0 : 65,
+        z: -320,
+        scale: .6,
+        filter: 'blur(7px)',
+        transformPerspective: 1200,
       });
     });
-  }
-  let shapeFrameCoords = {};
+    if (introEl) gsap.set(introEl, { opacity: 1 });
+    if (flashEl) gsap.set(flashEl, { opacity: 0 });
 
-  function updateStoryShapes(){
-    const photo = photoFrame.querySelector('.story-photo:not(.story-photo-color)');
-    if (!photo || !photo.naturalWidth) return;
+    const tl = gsap.timeline();
 
-    const frameRect = photoFrame.getBoundingClientRect();
-    const Fw = frameRect.width, Fh = frameRect.height;
-    if (!Fw || !Fh) return;
-
-    const W = photo.naturalWidth, H = photo.naturalHeight;
-    const scale = Math.max(Fw / W, Fh / H);
-    const Ws = W * scale, Hs = H * scale;
-    const offsetX = (Fw - Ws) / 2;
-    const offsetY = (Fh - Hs) * 0.20;
-
-    shapeFrameCoords = {};
-    Object.keys(STORY_SHAPES).forEach(idx => {
-      shapeFrameCoords[idx] = STORY_SHAPES[idx].map(pointsStr =>
-        pointsStr.trim().split(/\s+/).map(pair => {
-          const [px, py] = pair.split(',').map(Number);
-          const fx = offsetX + (px / 100 * W) * scale;
-          const fy = offsetY + (py / 100 * H) * scale;
-          return { xPct: fx / Fw * 100, yPct: fy / Fh * 100 };
-        })
-      );
-    });
-
-    shapePolys.forEach(path => {
-      const coords = shapeFrameCoords[path.dataset.index]?.[Number(path.dataset.shapeIdx)];
-      if (!coords) return;
-      path.setAttribute('d', smoothClosedPath(coords.map(c => ({ x: c.xPct, y: c.yPct }))));
-    });
-  }
-
-  function applyClipPath(index){
-    const colorLayer = photoFrame.querySelector('.story-photo-color');
-    const shapes = shapeFrameCoords[index];
-    if (!colorLayer || !shapes || !shapes.length) return;
-
-    const frameRect = photoFrame.getBoundingClientRect();
-    const Fw = frameRect.width, Fh = frameRect.height;
-
-    const pathStr = shapes.map(coords =>
-      smoothClosedPath(coords.map(c => ({ x: c.xPct / 100 * Fw, y: c.yPct / 100 * Fh })))
-    ).join(' ');
-
-    colorLayer.style.clipPath = `path('${pathStr}')`;
-  }
-
-  function setActive(index){
-    updateStoryShapes();
-    dots.forEach(el => el.classList.toggle('is-active', el.dataset.index === index));
-    lines.forEach(el => el.classList.toggle('is-active', el.dataset.index === index));
-    labels.forEach(el => el.classList.toggle('is-active', el.dataset.index === index));
-    legendItems.forEach(el => el.classList.toggle('is-active', el.dataset.index === index));
-    shapePolys.forEach(el => el.classList.toggle('is-active', el.dataset.index === index));
-
-    applyClipPath(index);
-    photoFrame.classList.add('is-spotlight');
-  }
-
-  function clearActive(){
-    dots.forEach(el => el.classList.remove('is-active'));
-    lines.forEach(el => el.classList.remove('is-active'));
-    labels.forEach(el => el.classList.remove('is-active'));
-    legendItems.forEach(el => el.classList.remove('is-active'));
-    shapePolys.forEach(el => el.classList.remove('is-active'));
-    photoFrame.classList.remove('is-spotlight');
-  }
-
-  const groups = [...dots, ...labels, ...legendItems];
-  groups.forEach(el => {
-    el.addEventListener('mouseenter', () => setActive(el.dataset.index));
-    el.addEventListener('mouseleave', clearActive);
-    el.addEventListener('click', () => setActive(el.dataset.index));
-    el.addEventListener('focus', () => setActive(el.dataset.index));
-    el.addEventListener('blur', clearActive);
-  });
-
-  updateStoryLines();
-  updateStoryShapes();
-  window.addEventListener('load', () => { updateStoryLines(); updateStoryShapes(); });
-  window.addEventListener('resize', () => {
-    clearTimeout(stage._lineResizeTimer);
-    stage._lineResizeTimer = setTimeout(() => { updateStoryLines(); updateStoryShapes(); }, 120);
-  });
-  const storyPhoto = photoFrame.querySelector('.story-photo');
-  if (storyPhoto){
-    if (storyPhoto.complete) { updateStoryLines(); updateStoryShapes(); }
-    else storyPhoto.addEventListener('load', () => { updateStoryLines(); updateStoryShapes(); }, { once: true });
-  }
-  if (document.fonts && document.fonts.ready){
-    document.fonts.ready.then(() => { updateStoryLines(); updateStoryShapes(); });
-  }
-}
-initStoryHotspots();
-
-function initStoryParallax(){
-  const wrap = document.getElementById('storyPhotoFrame');
-  if (!wrap) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  if (window.matchMedia('(max-width:880px)').matches) return;
-
-  const photos = wrap.querySelectorAll('.story-photo');
-  if (!photos.length) return;
-
-  gsap.fromTo(photos,
-    { yPercent: 8 },
-    {
-      yPercent: 0,
-      ease: 'none',
-      scrollTrigger: {
-        trigger: wrap,
-        start: 'top bottom',
-        end: 'top 40%',
-        scrub: true,
-      }
+    if (introEl){
+      tl.to(introEl, { opacity: 0, ease: 'power1.in', duration: 1 }, 0.1);
     }
-  );
-}
-initStoryParallax();
 
-/* ================= CURTAIN TRANSITION -- горизонтальные шторки, честно завязанные на реальный скролл =================
-   Раньше секция сама ловила wheel/touch и вручную двигала прогресс -- это
-   было хрупко (особенно поверх Lenis, которая тоже перехватывает колесо)
-   и в итоге либо не запускалось совсем, либо тут же само себя отменяло на
-   первом же кадре.
+    // ---- ВХОД: волна с кувырком ----
+    cards.forEach((card, i) => {
+      const dir = card.dataset.dir;
+      const offset = DIR_OFFSET[dir] || DIR_OFFSET.left;
+      const horizontal = dir === 'left' || dir === 'right';
+      const bump = (i % 2 === 0 ? -1 : 1) * 22;
+      const start = i * 0.55;
 
-   Теперь используется ровно тот же приём, что уже работает в блоке
-   #advantages: секция #catalog в момент, когда её низ касается низа
-   экрана, "пинится" (GSAP ScrollTrigger pin:true) -- визуально замирает
-   на месте, а весь дальнейший скролл (ещё ~1.9 экрана) уходит не в
-   реальное движение страницы, а в прогресс gsap-таймлайна (scrub). Это и
-   есть "блокировка скролла": колесо физически продолжает работать (Lenis
-   не ломается), но на экране ничего не двигается, кроме растущих чёрных
-   полос.
+      const midVars = {
+        opacity: 1, ease: 'power2.out', duration: 0.6,
+        rotationX: horizontal ? 0 : 22,
+        rotationY: horizontal ? 22 : 0,
+        z: -90, scale: .86, filter: 'blur(2.5px)',
+      };
+      const finalVars = {
+        xPercent: 0, yPercent: 0, rotate: 0,
+        rotationX: 0, rotationY: 0, z: 0, scale: 1,
+        filter: 'blur(0px)',
+        ease: 'back.out(1.6)', duration: 0.75,
+      };
 
-   Зоны полос НЕ одинаковые: нижняя -- самая широкая, дальше вверх каждая
-   уже предыдущей (см. ZONE_WEIGHTS). Стартуют они по очереди снизу вверх,
-   внахлёст -- следующая полоса трогается ещё до того, как предыдущая
-   дошла до конца, поэтому уже в районе половины пути нижней полосы в
-   кадре одновременно "едет" ещё 2-3 соседних. Контент #story начинает
-   проявляться заметно раньше, чем экран полностью закрыт -- он идёт ПО
-   ходу перехода, а не отдельным кадром после.
+      if (horizontal){
+        midVars.xPercent = parseFloat(offset.x) * 0.32;
+        midVars.yPercent = bump;
+      } else {
+        midVars.yPercent = parseFloat(offset.y) * 0.32;
+        midVars.xPercent = bump;
+      }
 
-   #story на время перехода превращается в position:fixed оверлей
-   (.is-curtain-preview, см. style.css) -- единственный способ показать
-   секцию, которая физически ещё не доскроллена, при запиненном скролле.
-   Обратное направление (со story назад в каталог) отдельно не пишем --
-   это один и тот же scrub-таймлайн, GSAP реверсит его сам при скролле
-   вверх.
-   ============================================================ */
-function initCurtainTransition(){
-  const catalog  = document.getElementById('catalog');
-  const story    = document.getElementById('story');
-  const gridWrap = document.getElementById('curtainBars');
-  if (!catalog || !story || !gridWrap) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  if (window.matchMedia('(max-width: 880px)').matches) return; // на тач-устройствах scroll-jacking не делаем
+      tl.to(card, midVars, start)
+        .to(card, finalVars, start + 0.5);
+    });
 
-  // сверху вниз, сумма = 100 -- нижняя зона нарочно самая широкая
-  const ZONE_WEIGHTS = [9, 13, 18, 25, 35];
-  const bars = [];
-  gridWrap.innerHTML = '';
-  let cum = 0;
-  ZONE_WEIGHTS.forEach(w => {
-    const bar = document.createElement('div');
-    bar.className = 'curtain-bar';
-    bar.style.top    = cum + '%';
-    bar.style.height = w + '%';
-    gridWrap.appendChild(bar);
-    bars.push(bar);
-    cum += w;
-  });
-  // bars[0] -- верхняя (самая узкая) зона, bars[bars.length-1] -- нижняя (самая широкая)
+    // момент, когда последняя карточка долетела -- считаем динамически,
+    // чтобы не подбирать числа руками при изменении количества карточек
+    const lastCardEnd = (cards.length - 1) * 0.55 + 0.5 + 0.75;
+    const holdStart = lastCardEnd + 0.35; // короткая пауза "все на местах"
 
-  const storyReveal = story.querySelectorAll('#storyPhotoFrame, #storyIntro, #storyLabelsCol');
+    // ---- ВЗРЫВ ----
+    if (flashEl){
+      tl.to(flashEl, { opacity: .85, duration: .12, ease: 'power1.in' }, holdStart)
+        .to(flashEl, { opacity: 0, duration: .6, ease: 'power2.out' }, holdStart + .12);
+    }
 
-  const BAR_DUR     = 0.42; // рост/сдув ОДНОЙ полосы, условные единицы таймлайна
-  const BAR_STAGGER = 0.19; // сдвиг старта между соседними -- меньше BAR_DUR, поэтому есть нахлёст-волна
+    cards.forEach((card, i) => {
+  const dir = card.dataset.dir;
+  const ex = EXPLODE[dir] || EXPLODE.left;
+  const t0 = holdStart + i * 0.05;
 
-  gsap.set(bars, { scaleY: 0, transformOrigin: 'center bottom' });
-  gsap.set(storyReveal, { opacity: 0, y: 44 });
+  // короткий рывок на зрителя — "вспышка" взрыва, а не просто разъезд
+  tl.to(card, {
+    z: 180,
+    scale: 1.18,
+    filter: 'blur(0px)',
+    duration: .16,
+    ease: 'power1.out',
+  }, t0);
 
-  let previewActive = false;
-  function showPreview(){
-    if (previewActive) return;
-    previewActive = true;
-    gridWrap.classList.add('is-active');
-    story.classList.add('is-curtain-preview');
-  }
-  function hidePreview(){
-    if (!previewActive) return;
-    previewActive = false;
-    gridWrap.classList.remove('is-active');
-    story.classList.remove('is-curtain-preview');
-  }
+  // сам улёт — крутится и уходит в глубину, а не просто по плоскости
+  tl.to(card, {
+    xPercent: parseFloat(ex.x),
+    yPercent: parseFloat(ex.y),
+    z: ex.z,
+    rotate: ex.rot,
+    rotationX: gsap.utils.random(340, 760) * (i % 2 ? 1 : -1),
+    rotationY: gsap.utils.random(340, 760) * (i % 2 ? -1 : 1),
+    scale: .2,
+    opacity: 0,
+    filter: 'blur(10px)',
+    ease: 'power2.in',
+    duration: 1.35,
+  }, t0 + .16);
+});
 
-  const tl = gsap.timeline({
-    scrollTrigger: {
-      trigger: catalog,
-      start: 'bottom bottom',
-      end: () => '+=' + Math.round(window.innerHeight * 1.9),
+    gsap.set(prevSectionDummy => {}, {}); // no-op guard removed below
+
+    const pinTrigger = ScrollTrigger.create({
+      trigger: section,
+      start: 'top top',
+      end: () => '+=' + (window.innerHeight * 2.9),
       pin: true,
-      scrub: 0.3,
+      scrub: true,
       anticipatePin: 1,
       invalidateOnRefresh: true,
-      onEnter: showPreview,
-      onEnterBack: showPreview,
-      onLeave: hidePreview,
-      onLeaveBack: hidePreview,
-    }
-  });
+      animation: tl,
+      onUpdate: self => {
+        if (timelineFill) timelineFill.style.width = (self.progress * 100).toFixed(1) + '%';
+      },
+    });
 
-  // 1. полосы растут снизу вверх, зона за зоной, внахлёст
-  tl.to(bars, {
-    scaleY: 1,
-    duration: BAR_DUR,
-    ease: 'power2.out',
-    stagger: { each: BAR_STAGGER, from: 'end' }, // самая нижняя (широкая) полоса стартует первой
-  }, 0);
-
-  // 2. контент начинает проявляться ещё до того, как нижняя полоса
-  //    полностью доросла -- идёт прямо по ходу перехода, а не отдельным
-  //    кадром после того, как экран уже полностью чёрный
-  tl.to(storyReveal, {
-    opacity: 1,
-    y: 0,
-    duration: BAR_DUR * 0.9,
-    ease: 'power2.out',
-    stagger: 0.1,
-  }, BAR_DUR * 0.55);
-
-  // 3. когда все полосы выросли и экран полностью закрыт -- сдуваем их в
-  //    том же порядке волны, открывая уже полностью проявленный #story
-  tl.set(bars, { transformOrigin: 'center top' }, '+=0.1');
-  tl.to(bars, {
-    scaleY: 0,
-    duration: BAR_DUR,
-    ease: 'power2.inOut',
-    stagger: { each: BAR_STAGGER, from: 'end' },
+    return () => {
+      pinTrigger.kill();
+      gsap.set(cards, { clearProps: 'transform,opacity,filter' });
+      if (introEl) gsap.set(introEl, { clearProps: 'opacity' });
+      if (flashEl) gsap.set(flashEl, { clearProps: 'opacity' });
+      if (timelineFill) timelineFill.style.width = '0%';
+    };
   });
 }
-initCurtainTransition();
+initStoryCardsPin();
 /* ================= REVIEW CARDS: MAGNETIC 3D TILT ================= */
 document.querySelectorAll('.review-card').forEach(card => {
   card.addEventListener('mousemove', e => {
