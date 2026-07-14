@@ -1,18 +1,58 @@
 import './style.css';
 import { initFAQ } from './faq.js';
+import { initFlorists } from './florists.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
-/* Layout keeps shifting after this script first runs -- late-loading web
-   fonts change text metrics (hence section heights), and the preloader's
-   own removal flips body from a locked/hidden-overflow state back to
-   normal, both of which move where every section actually starts/ends on
-   the page. Any ScrollTrigger created before those settle is working off
-   stale coordinates -- which is exactly what causes a scroll-linked
-   effect to "sometimes" not fire: the trigger's start/end no longer
-   matches where the element really is by the time the person scrolls
-   there. Forcing a refresh once things stabilize keeps every trigger
-   accurate. */
+/* ================= LENIS SMOOTH SCROLL =================
+   Обёрнуто в try/catch: если CDN с Lenis не отдался (сеть, блокировщик,
+   упавший хостинг), сайт не должен вставать колом на прелоадере -- вместо
+   плавного скролла используется нативный window.scrollTo, а весь
+   остальной код (прелоадер, анимации, переход-жалюзи) работает как ни
+   в чём не бывало. */
+let lenis;
+try {
+  lenis = new Lenis({
+    lerp: 0.1,        // сглаживание каждый кадр, а не отдельный твин на каждый скролл -- отзывчивее, без наслоения задержек
+    wheelMultiplier: 1,
+    smoothWheel: true,
+    syncTouch: false,
+  });
+
+  lenis.on('scroll', ScrollTrigger.update);
+
+  gsap.ticker.add((time) => {
+    lenis.raf(time * 1000);
+  });
+  gsap.ticker.lagSmoothing(0);
+} catch (err) {
+  console.warn('Lenis недоступен, используется нативный скролл:', err);
+  lenis = {
+    stop(){},
+    start(){},
+    scrollTo(target, opts = {}){
+      const y = typeof target === 'number' ? target : (target?.getBoundingClientRect?.().top ?? 0) + window.scrollY;
+      window.scrollTo({ top: y, behavior: opts.immediate ? 'auto' : 'smooth' });
+    },
+  };
+}
+
+window.__lenis = lenis; // доступен из initCurtainTransition и, при желании, снаружи
+
+/* якорные ссылки (нав, кнопки "Смотреть каталог" и т.п.) теперь плавно
+   скроллит Lenis -- раньше это делал html{scroll-behavior:smooth}, но
+   его убрали из CSS, т.к. он конфликтовал с Lenis и давал тормоза */
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('a[href^="#"]');
+  if (!link) return;
+  const id = link.getAttribute('href');
+  if (!id || id === '#') return;
+  const target = document.querySelector(id);
+  if (!target) return;
+  e.preventDefault();
+  lenis.scrollTo(target, { duration: 1.1 });
+});
+
 window.addEventListener('load', () => ScrollTrigger.refresh());
 if (document.fonts && document.fonts.ready){
   document.fonts.ready.then(() => ScrollTrigger.refresh());
@@ -26,7 +66,6 @@ const counterBar = document.getElementById('counterBar');
 const preloader = document.getElementById('preloader');
 const preloaderStack = document.getElementById('preloaderStack');
 
-/* build a small overlapping stack of bouquet cards, fanned with slight rotation */
 const stackImages = [
   '/images/bouquet-flirt.png',
   '/images/bouquet-field.png',
@@ -78,7 +117,7 @@ function runIntro(){
     onComplete: () => {
       preloader.remove();
       document.body.classList.remove('is-loading');
-      ScrollTrigger.refresh(); // body just went from overflow:hidden/locked back to normal -- section positions may have shifted
+      ScrollTrigger.refresh();
     }
   });
 
@@ -93,7 +132,6 @@ function runIntro(){
     .add(playHero, '-=.2');
 }
 
-/* ================= SHOWCASE ENTRANCE (fires after preloader) ================= */
 function playHero(){
   gsap.from('.showcase-tags, .showcase-title, .showcase-desc, .showcase-meta, .showcase-see-all', {
     opacity: 0, y: 26, duration: .8, stagger: .08, ease: 'power3.out', delay: .1
@@ -102,7 +140,6 @@ function playHero(){
   gsap.delayedCall(1.1, startShowcase);
 }
 
-/* ================= SHOWCASE (rotating hits, apechain-style glitch swap) ================= */
 const showcaseItems = [
   { name:'Нежный флирт',      desc:'Розовые и белые альстромерии в нежной упаковке',       price:'2 800 ₽', img:'/images/bouquet-flirt.png',    cat:'Хит недели'  },
   { name:'Полевой букет',     desc:'Ромашки, зелень и полевые травы',                       price:'2 400 ₽', img:'/images/bouquet-field.png',    cat:'Бестселлер'  },
@@ -199,7 +236,6 @@ showcaseNext.addEventListener('click', () => goToShowcase(showcaseIndex + 1));
 showcaseSection.addEventListener('mouseenter', () => clearInterval(showcaseTimer));
 showcaseSection.addEventListener('mouseleave', resetShowcaseTimer);
 
-/* ================= BOUQUET DATA (real photos) ================= */
 const bouquets = [
   { name:'Нежный флирт',      desc:'Розовые и белые альстромерии в нежной упаковке', price:'2 800 ₽', img:'/images/bouquet-flirt.png',   accent:'#D9748F' },
   { name:'Полевой букет',     desc:'Ромашки, зелень и полевые травы',                price:'2 400 ₽', img:'/images/bouquet-field.png',   accent:'#7DAE5C' },
@@ -210,13 +246,6 @@ const bouquets = [
 
 initCarousel3D(bouquets);
 
-/* ---- Coverflow: cards sit side by side, offset from the centered one by
-   translateX + rotateY + a push back on Z. This is what apechain-style
-   showcases actually are -- flat tilted panels receding to each side, not
-   a full 360 ring. A ring only shows neighbours if the radius is huge
-   relative to card size; with 5 items that either hides them behind the
-   front card or shrinks everything. Coverflow shows exactly as many
-   neighbours as you want, at a size you control directly. ---- */
 function initCarousel3D(items){
   const wrap    = document.getElementById('carousel3dWrap');
   const ring    = document.getElementById('carousel3d');
@@ -233,9 +262,9 @@ function initCarousel3D(items){
   const cardW  = Math.round(narrow ? window.innerWidth * .58 : Math.min(520, window.innerWidth * .28));
   const cardH  = Math.round(wrapH * .74);
 
-  const SPACING = Math.round(cardW * (narrow ? .5 : .6)); // px shift per step -- controls how much of a neighbour peeks out
-  const TILT    = 34;   // deg rotateY per step away from center
-  const DEPTH   = 110;  // px pushed back (negative Z) per step away from center
+  const SPACING = Math.round(cardW * (narrow ? .5 : .6));
+  const TILT    = 34;
+  const DEPTH   = 110;
 
   wrap.style.perspective = '1700px';
   ring.style.setProperty('--card-w', cardW + 'px');
@@ -244,7 +273,7 @@ function initCarousel3D(items){
   const cardEls = [];
   let hoveredIndex = -1;
   let dragMoved = false;
-  const hoverLocal = { x: 0, y: 0 }; // cursor position within the hovered card, -0.5..0.5
+  const hoverLocal = { x: 0, y: 0 };
 
   items.forEach((b, i) => {
     const card = document.createElement('div');
@@ -263,8 +292,6 @@ function initCarousel3D(items){
       hoverLocal.x = (e.clientX - r.left) / r.width - .5;
       hoverLocal.y = (e.clientY - r.top) / r.height - .5;
     });
-    // click any card (front or side) to bring it to center -- ignored if
-    // the click was actually the tail end of a drag
     card.addEventListener('click', () => {
       if (dragMoved) return;
       goTo(i);
@@ -287,7 +314,7 @@ function initCarousel3D(items){
     wrap._resumeTimer = setTimeout(() => { paused = false; scheduleAutoAdvance(); }, 2200);
   }
 
-  let position = 0;         // continuous "current index" (float, eased)
+  let position = 0;
   let targetPosition = 0;
   let dragBasePosition = 0;
   let paused = false;
@@ -295,7 +322,7 @@ function initCarousel3D(items){
   let dragStartX = 0;
   let t = 0;
 
-  let ribbonX = 0, ribbonTargetX = 0;   // background ribbons drift slightly with the cursor
+  let ribbonX = 0, ribbonTargetX = 0;
   let ribbonY = 0, ribbonTargetY = 0;
 
   let frontIndex = -1;
@@ -310,7 +337,6 @@ function initCarousel3D(items){
     selectBtns.forEach((b, idx) => b.classList.toggle('active', idx === i));
   }
 
-  // shortest signed distance from `position` to index i, wrapped around n
   function wrappedOffset(i){
     let off = i - position;
     while (off > half)  off -= n;
@@ -337,16 +363,12 @@ function initCarousel3D(items){
       let rotX = 0;
       let scale = Math.max(1 - abs * .16, .5);
       let opacity = Math.max(1 - abs * .38, 0);
-      // the closer a card sits to dead center, the more colour it keeps --
-      // fully colour at abs=0, fully grayscale by the time it's a step away
       let grayscale = Math.min(abs / .85, 1);
       let brightness = Math.max(1 - abs * .3, .55);
 
       if (index === hoveredIndex){
-        // hovered card: full colour, a touch bigger, nudged toward the
-        // cursor position within it (a light magnetic/parallax tilt)
         scale += .1;
-        x += hoverLocal.x * 26 + 10;   // +10 = the small constant rightward nudge on hover
+        x += hoverLocal.x * 26 + 10;
         const yShift = hoverLocal.y * 16;
         rotY += hoverLocal.x * 12;
         rotX = hoverLocal.y * -10;
@@ -380,8 +402,6 @@ function initCarousel3D(items){
     targetPosition += dir;
   }
 
-  /* auto-advance: waits 7s, then steps one card, then waits again --
-     any interaction resets the clock */
   function scheduleAutoAdvance(){
     clearTimeout(wrap._autoTimer);
     wrap._autoTimer = setTimeout(() => {
@@ -406,11 +426,9 @@ function initCarousel3D(items){
     ribbonTargetY = ((e.clientY - r.top) / r.height - .5) * 26;
   });
 
-  // Ignore drags that start on the arrow buttons -- setPointerCapture below
-  // would otherwise swallow their click event entirely.
   wrap.addEventListener('pointerdown', (e) => {
     if (e.target.closest('button')) return;
-    e.preventDefault(); // stops the browser's own "drag this image" / text-selection gesture
+    e.preventDefault();
     dragging = true;
     dragMoved = false;
     dragStartX = e.clientX;
@@ -445,7 +463,6 @@ function initCarousel3D(items){
   document.getElementById('carouselNext').addEventListener('click', () => clickStep(1));
 }
 
-/* ================= CUSTOM CURSOR ================= */
 const cursor = document.getElementById('cursor');
 if (matchMedia('(pointer:fine)').matches) {
   window.addEventListener('mousemove', e => {
@@ -461,22 +478,14 @@ if (matchMedia('(pointer:fine)').matches) {
   cursor.style.display = 'none';
 }
 
-/* ================= SCROLL REVEALS ================= */
 document.querySelectorAll('.reveal').forEach(el => {
-  if (el.closest('#story')) return; // story gets its own faster fly-in below
+  if (el.closest('#story')) return;
   gsap.to(el, {
     opacity: 1, y: 0, duration: .9, ease: 'power3.out',
     scrollTrigger: { trigger: el, start: 'top 85%' }
   });
 });
 
-/* Story content flies in via its own independent scroll trigger. Since
-   the curtain jumps the scroll position straight to #story's top while
-   the tiles are fully covering the screen, this trigger fires right as
-   the tiles start opening -- so the content is already rising into
-   place by the time the mosaic reveals it. Shorter duration, steeper
-   ease, bigger starting offset than the rest of the page's reveals, so
-   it reads as "flying up" into frame rather than gently fading in. */
 document.querySelectorAll('#story .reveal').forEach((el, i) => {
   gsap.to(el, {
     opacity: 1, y: 0, duration: .45, ease: 'power4.out', delay: i * .05,
@@ -484,7 +493,6 @@ document.querySelectorAll('#story .reveal').forEach((el, i) => {
   });
 });
 
-/* ================= MAGNETIC BUTTONS ================= */
 document.querySelectorAll('.btn-primary, .btn-ghost, .btn-ghost-dark, .nav-cta').forEach(btn => {
   btn.addEventListener('mousemove', e => {
     const r = btn.getBoundingClientRect();
@@ -497,49 +505,18 @@ document.querySelectorAll('.btn-primary, .btn-ghost, .btn-ghost-dark, .nav-cta')
   });
 });
 
-/* ================= DISTRICTS LIST (letters ripple outward from 1-2 dots INSIDE the word) =================
-   For every district name: split into letters, then pick 1 seed letter
-   (short words) or 2 seed letters (longer words, roughly at the 30%/70%
-   mark) and mark those with a .seed-dot sitting on top of them, in the
-   middle of the word -- not before it.
-
-   Each row's animation is driven by SCRUB, not a one-shot trigger: it's
-   tied directly to that row's own position as it travels from the bottom
-   of the viewport (start) to the upper third (end). That does two things
-   at once:
-     1) It's inherently reversible -- scrolling back up runs the exact
-        same timeline backwards, no extra code needed.
-     2) Because every row is scrubbed against ITS OWN position rather than
-        a single shared trigger, several rows are mid-animation at once at
-        any given scroll position -- the row near the top of the screen is
-        fully formed, the one in the middle still has its dot(s) large and
-        its letters barely started, and the one just entering from the
-        bottom is only showing its dot(s) beginning to appear. That's the
-        cascading "wave" effect running down the list as you scroll.
-   Within each row's own timeline: the seed dot(s) pop up first, then
-   shrink away right as the nearest letters begin to grow, and every other
-   letter follows in order of its distance from the nearest seed -- so the
-   word visibly builds outward from the dot(s) toward both edges. Letter
-   growth uses ease:'steps(5)', snapping through five discrete sizes
-   instead of a smooth glide. */
 function initDistrictsReveal(){
   const rows = document.querySelectorAll('.districts-row');
   if (!rows.length || !window.gsap) return;
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const RIPPLE_STEP = .09;
 
-  rows.forEach(row => {
-    const nameEl = row.querySelector('.districts-name');
-    const timeEl = row.querySelector('.districts-time');
-    if (!nameEl) return;
-
+  function splitName(nameEl){
     const text = nameEl.textContent.trim();
     const chars = text.split('');
     const letterCount = chars.filter(ch => ch !== ' ').length;
 
-    // 1 seed for short words, 2 for longer ones -- positions given as an
-    // index among LETTERS only (spaces don't count), roughly a third and
-    // two-thirds of the way through for the 2-seed case.
     const seedPositions = letterCount <= 6
       ? [ Math.floor(letterCount / 2) ]
       : [ Math.round(letterCount * 0.32), Math.round(letterCount * 0.68) ];
@@ -554,64 +531,197 @@ function initDistrictsReveal(){
     }).join('');
 
     const letterEls = [...nameEl.querySelectorAll('.letter')].map(el => ({
-      el,
       textEl: el.querySelector('.letter-text'),
-      pos: Number(el.dataset.pos),
       distance: Math.min(...seedPositions.map(s => Math.abs(Number(el.dataset.pos) - s))),
     }));
     const seedDots = nameEl.querySelectorAll('.seed-dot');
     const maxDistance = Math.max(...letterEls.map(l => l.distance), 0);
 
+    return { letterEls, seedDots, maxDistance };
+  }
+
+  rows.forEach(row => {
+    const nameEls  = row.querySelectorAll('.districts-name');
+    const photoEls = row.querySelectorAll('.districts-photo');
+    const timeEl   = row.querySelector('.districts-time');
+    if (!nameEls.length) return;
+
+    const parts = [...nameEls].map(splitName);
+    const allLetterEls = parts.flatMap(p => p.letterEls);
+    const allSeedDots  = parts.flatMap(p => [...p.seedDots]);
+    const overallMaxDistance = Math.max(...parts.map(p => p.maxDistance), 0);
+
     if (reduceMotion){
-      gsap.set(seedDots, { opacity: 0, scale: 0 });
-      gsap.set(letterEls.map(l => l.textEl), { opacity: 1, scale: 1 });
+      gsap.set(allSeedDots, { opacity: 0, scale: 0 });
+      gsap.set(allLetterEls.map(l => l.textEl), { opacity: 1, scale: 1 });
+      gsap.set(photoEls, { opacity: 1, scale: 1 });
       if (timeEl) gsap.set(timeEl, { opacity: 1, y: 0 });
       return;
     }
 
-    gsap.set(seedDots, { opacity: 0, scale: 0 });
-    gsap.set(letterEls.map(l => l.textEl), { opacity: 0, scale: .15 });
+    gsap.set(allSeedDots, { opacity: 0, scale: 0 });
+    gsap.set(allLetterEls.map(l => l.textEl), { opacity: 0, scale: .15 });
+    gsap.set(photoEls, { opacity: 0, scale: .8 });
     if (timeEl) gsap.set(timeEl, { opacity: 0, y: 6 });
-
-    const RIPPLE_STEP = .16; // "seconds" (timeline units) added per unit of distance from the nearest seed
 
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: row,
-        start: 'top 88%',
-        end: 'top 32%',
+        start: 'top 92%',
+        end:   'top 58%',
         scrub: .5,
       }
     });
 
-    tl.to(seedDots, { opacity: 1, scale: 1, duration: .5, ease: 'power2.out' }, 0)
-      .to(seedDots, { opacity: 0, scale: 0, duration: .4, ease: 'power1.in' }, .5);
+    tl.to(allSeedDots, { opacity: 1, scale: 1, duration: .4, ease: 'power2.out' }, 0)
+      .to(allSeedDots, { opacity: 0, scale: 0, duration: .35, ease: 'power1.in' }, .55);
 
-    letterEls.forEach(({ textEl, distance }) => {
+    allLetterEls.forEach(({ textEl, distance }) => {
       tl.to(textEl, {
         opacity: 1, scale: 1,
-        duration: .5,
+        duration: .4,
         ease: 'steps(5)',
-      }, .5 + distance * RIPPLE_STEP);
+      }, .95 + distance * RIPPLE_STEP);
     });
 
+    if (photoEls.length){
+      tl.to(photoEls, { opacity: 1, scale: 1, duration: .6, ease: 'power2.out' }, .9);
+    }
+
     if (timeEl){
-      tl.to(timeEl, { opacity: 1, y: 0, duration: .5, ease: 'power2.out' }, .5 + maxDistance * RIPPLE_STEP + .35);
+      tl.to(timeEl, { opacity: 1, y: 0, duration: .5, ease: 'power2.out' }, .95 + overallMaxDistance * RIPPLE_STEP + .3);
     }
   });
 }
 initDistrictsReveal();
 
+/* ================= ADVANTAGES -- pinned scrollytelling =================
+   Desktop only (via gsap.matchMedia): while #advantages is scrolled
+   through, the section pins to the viewport (scroll is "locked" to it
+   for the length of the pin) and ONE big text slide -- index badge,
+   heading, description -- swaps between 4 states as the scroll
+   progresses, matching the 4 old advantage cards 1:1.
+
+   Just before the pin engages, #districts (the section right above)
+   is scaled down a touch, driven purely by how close #advantages is to
+   the top of the viewport -- so it visibly "shrinks back" to make room
+   instead of just being covered up by the next section.
+
+   On mobile/touch (<=880px) none of this runs: gsap.matchMedia only
+   registers the query below >880px, so on small screens the section
+   just falls back to the plain .advantages-grid-mobile markup already
+   sitting in the HTML (scroll-jacking on touch devices is bad UX and
+   fights native momentum scrolling). */
+function initAdvantagesPin(){
+  const section = document.getElementById('advantages');
+  const prevSection = document.getElementById('districts');
+  const indexEl = document.getElementById('advIndex');
+  const headingEl = document.getElementById('advHeading');
+  const descEl = document.getElementById('advDesc');
+  const ghostEl = document.getElementById('advGhost');
+  const ringEl = document.getElementById('advRingProgress');
+  const dots = document.querySelectorAll('.advantages-dot');
+  if (!section || !prevSection || !indexEl || !headingEl || !descEl) return;
+
+  const items = [
+    { num:'01', title:'Свежая срезка',    desc:'Цветы приходят с фермы не позже чем за 48 часов до сборки — не залёживаются на складе.' },
+    { num:'02', title:'60 минут',         desc:'От заявки до звонка в дверь — курьер уже в пути, пока флорист довязывает бант.' },
+    { num:'03', title:'Честный состав',   desc:'У каждого букета — разбор по цветам и материалам. Видите, за что платите, до заказа.' },
+    { num:'04', title:'Без слащавости',   desc:'Ни целлофана, ни рюшей — крафт-бумага, смелые сочетания и минимум декора.' },
+  ];
+
+  // exact perimeter of the rounded-rect outline, read straight from the
+  // SVG geometry -- works regardless of the badge's actual pixel size,
+  // since rect implements SVGGeometryElement same as path/circle do
+  const ringLength = ringEl ? ringEl.getTotalLength() : 0;
+  if (ringEl){
+    ringEl.style.strokeDasharray = ringLength;
+    ringEl.style.strokeDashoffset = ringLength;
+  }
+
+  let current = 0;
+
+  function render(i){
+    if (i === current) return;
+    current = i;
+    const item = items[i];
+    gsap.timeline()
+      .to([indexEl, headingEl, descEl], { opacity: 0, y: -14, duration: .22, ease: 'power2.in' })
+      .call(() => {
+        indexEl.textContent = item.num;
+        headingEl.textContent = item.title;
+        descEl.textContent = item.desc;
+        if (ghostEl) ghostEl.textContent = item.num;
+      })
+      .to([indexEl, headingEl, descEl], { opacity: 1, y: 0, duration: .32, ease: 'power2.out' });
+    if (ghostEl){
+      gsap.fromTo(ghostEl, { opacity: 0 }, { opacity: .035, duration: .5, ease: 'power2.out' });
+    }
+    dots.forEach((d, idx) => d.classList.toggle('active', idx === i));
+  }
+
+  const mm = gsap.matchMedia();
+
+  mm.add('(min-width: 881px)', () => {
+    gsap.set(prevSection, { transformOrigin: '50% 100%' });
+    const shrinkTween = gsap.to(prevSection, {
+      scale: .92,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: section,
+        start: 'top bottom',
+        end: 'top top',
+        scrub: true,
+      }
+    });
+
+    // one full viewport height of scroll PER state (4 states -> 4 equal
+    // segments), instead of 3 crossfade transitions across the total --
+    // this is what lets the badge outline reset and redraw once per
+    // segment rather than tracing once across the entire pin
+    const segments = items.length;
+    const pinTrigger = ScrollTrigger.create({
+      trigger: section,
+      start: 'top top',
+      end: () => '+=' + (window.innerHeight * segments),
+      pin: true,
+      scrub: true,
+      anticipatePin: 1,
+      invalidateOnRefresh: true,
+      onUpdate: self => {
+        const scaled = self.progress * segments;
+        const idx = Math.min(segments - 1, Math.floor(scaled));
+        render(idx);
+
+        // local progress WITHIN the current segment (0 -> 1), so the
+        // outline fills over the course of that one state and snaps
+        // back to empty the moment the next state begins -- 4 separate
+        // draws instead of one continuous draw over the whole scroll
+        if (ringEl && ringLength){
+          const localProgress = scaled - idx;
+          ringEl.style.strokeDashoffset = ringLength * (1 - localProgress);
+        }
+      }
+    });
+
+    return () => {
+      pinTrigger.kill();
+      shrinkTween.kill();
+      gsap.set(prevSection, { clearProps: 'transform' });
+      if (ringEl && ringLength) ringEl.style.strokeDashoffset = ringLength;
+    };
+  });
+}
+initAdvantagesPin();
+
 /* ================= FAQ (glass strips, scramble + scroll-invert) ================= */
 initFAQ();
 
+/* ================= FLORISTS (pinned card-dealing sequence + video crossfade) ================= */
+initFlorists();
+
 /* ================= STORY HOTSPOTS (bouquet breakdown) ================= */
 
-/* Clip a segment (x1,y1)-(x2,y2) against an axis-aligned rectangle and
-   return the point where it enters the rectangle (closest to point 1).
-   Uses the Liang-Barsky algorithm. Returns null if the segment never
-   touches the rectangle. All coordinates are in the same space (here:
-   viewport px). */
 function intersectSegmentWithRect(x1, y1, x2, y2, rx1, ry1, rx2, ry2){
   const dx = x2 - x1, dy = y2 - y1;
   let tMin = 0, tMax = 1;
@@ -619,7 +729,7 @@ function intersectSegmentWithRect(x1, y1, x2, y2, rx1, ry1, rx2, ry2){
   const q = [x1 - rx1, rx2 - x1, y1 - ry1, ry2 - y1];
   for (let i = 0; i < 4; i++){
     if (p[i] === 0){
-      if (q[i] < 0) return null; // parallel and outside
+      if (q[i] < 0) return null;
     } else {
       const t = q[i] / p[i];
       if (p[i] < 0){
@@ -634,11 +744,6 @@ function intersectSegmentWithRect(x1, y1, x2, y2, rx1, ry1, rx2, ry2){
   return { x: x1 + tMin * dx, y: y1 + tMin * dy };
 }
 
-/* Recompute every SVG line so it starts at the dot and stops right at the
-   edge of its label's bounding box (plus a small gap) -- this guarantees
-   the line never overlaps the label text, regardless of text length,
-   font, or viewport width. Runs on load and on resize. Desktop only --
-   on mobile the lines are hidden entirely (legend list is used instead). */
 function updateStoryLines(){
   const stage = document.getElementById('story');
   if (!stage) return;
@@ -647,7 +752,7 @@ function updateStoryLines(){
   const stageRect = stage.getBoundingClientRect();
   if (!stageRect.width || !stageRect.height) return;
 
-  const GAP = 10; // px breathing room between line end and label box
+  const GAP = 10;
 
   stage.querySelectorAll('.story-line').forEach(line => {
     const idx = line.dataset.index;
@@ -682,19 +787,11 @@ function updateStoryLines(){
   });
 }
 
-/* ================= STORY SHAPES (traced outlines, not circles) =================
-   Each entry is one label's set of outline(s), as percentages of the RAW
-   photo file (bouquet-story.png) -- exactly what the shape-picker tool
-   exports. Эвкалипт has several disconnected leaf clusters, so it's an
-   array of several point-strings; everything else is a single outline.
-   Розы (index 0 и 2) currently share one combined outline since tracing
-   each rose individually was impractical -- both labels light up the
-   same area until/unless they're split into two separate traces. */
 const STORY_SHAPES = {
-  0: [ // Пионовидные розы (shared outline, see note above)
+  0: [
     "57.1,60.6 46.7,58.3 38.1,56.6 35.8,53.4 31.4,53.7 25.7,53.4 21.7,50.5 18.4,46.5 19.9,42.0 23.0,37.8 27.0,33.1 32.5,33.1 37.4,30.0 40.9,28.7 44.9,28.6 49.1,31.1 52.0,28.9 55.8,30.7 57.1,32.4 60.8,31.8 65.7,33.1 64.6,34.9 69.0,36.0 70.8,37.8 71.2,40.1 75.7,42.0 76.5,44.7 77.7,47.0 75.9,51.7 72.8,53.4 69.2,53.7 68.1,56.3 64.2,58.3 58.8,60.4"
   ],
-  1: [ // Эвкалипт -- 6 отдельных пучков листьев
+  1: [
     "38.3,44.2 38.1,46.2 36.1,45.6 33.8,46.2 35.6,44.2 31.9,43.8 32.5,42.9 30.5,41.6 28.8,40.0 25.2,40.0 22.1,40.4 20.4,38.9 23.9,37.8 27.2,38.6 33.2,40.4 35.4,40.4 38.1,42.7",
     "27.2,35.8 23.7,36.9 22.6,35.1 26.3,32.4 27.2,30.8 32.1,28.8 34.5,30.4 36.7,31.5 33.8,32.2 33.2,34.6 31.0,34.9 29.9,32.6 27.2,33.1",
     "42.0,40.5 40.0,40.0 40.0,38.4 37.8,37.8 41.4,36.9 43.6,38.0 43.4,36.6 41.2,34.0 43.1,32.8 41.4,31.5 42.5,28.9 45.6,30.6 46.9,31.3 47.6,33.7 48.2,35.5 51.8,36.9 50.0,38.6 46.7,37.5 44.2,38.4",
@@ -702,21 +799,17 @@ const STORY_SHAPES = {
     "58.4,40.4 61.5,38.9 64.8,39.6 61.7,41.1 58.6,41.1",
     "70.4,33.8 68.4,36.7 69.2,39.6 67.7,40.9 69.0,44.2 67.7,46.3 62.8,47.4 60.4,46.3 57.7,48.5 54.9,48.3 54.6,51.4 57.7,51.1 60.4,49.4 63.9,50.9 67.3,50.1 68.8,48.7 70.8,49.1 70.4,51.8 72.6,52.3 73.9,50.3 71.9,48.5 72.1,47.4 73.5,47.2 76.8,46.9 77.2,44.9 73.0,43.8 72.6,42.5 71.7,40.5 69.9,39.5 70.6,37.5 75.2,38.2 78.5,38.4 81.6,37.3 79.6,35.5 75.7,35.5 74.1,36.9"
   ],
-  2: [ // Кустовые розы (тот же контур, что и index 0 -- см. примечание выше)
+  2: [
     "57.1,60.6 46.7,58.3 38.1,56.6 35.8,53.4 31.4,53.7 25.7,53.4 21.7,50.5 18.4,46.5 19.9,42.0 23.0,37.8 27.0,33.1 32.5,33.1 37.4,30.0 40.9,28.7 44.9,28.6 49.1,31.1 52.0,28.9 55.8,30.7 57.1,32.4 60.8,31.8 65.7,33.1 64.6,34.9 69.0,36.0 70.8,37.8 71.2,40.1 75.7,42.0 76.5,44.7 77.7,47.0 75.9,51.7 72.8,53.4 69.2,53.7 68.1,56.3 64.2,58.3 58.8,60.4"
   ],
-  3: [ // Упаковка
+  3: [
     "62.8,90.8 63.1,89.2 62.8,86.5 62.4,83.8 61.7,80.3 60.4,77.1 59.7,74.3 58.4,72.5 61.3,71.8 67.7,69.8 70.6,65.5 76.8,62.6 81.0,44.3 78.8,40.1 76.1,38.1 72.3,35.8 71.5,37.4 74.3,40.5 77.2,44.3 78.8,49.0 73.7,54.6 66.8,58.2 57.7,60.4 49.6,58.6 43.4,58.2 38.9,58.4 33.4,57.3 26.5,54.8 22.1,52.4 18.8,49.3 17.7,42.3 15.0,46.4 19.0,53.9 22.1,59.7 25.7,64.0 27.2,65.8 30.3,67.5 28.5,68.0 21.7,80.5 21.0,85.8 24.3,88.7 28.5,90.8 28.5,93.0 49.6,95.5 52.4,95.2 55.3,94.1 56.6,91.2 59.1,90.7"
   ],
-  4: [ // Лента
+  4: [
     "57.1,82.1 59.1,78.9 56.6,72.7 54.9,72.9 45.1,72.5 38.3,70.5 35.0,68.9 31.2,72.0 27.7,78.9 28.1,81.6 32.1,74.3 36.3,70.4 38.7,70.5 36.5,73.4 39.8,74.7 41.4,73.6 41.2,76.0 40.0,78.7 43.8,82.1 45.4,79.1 46.2,74.9 45.6,73.4 50.4,73.4 54.2,74.5 56.0,76.9 57.3,79.8"
   ]
 };
 
-/* Turns a closed loop of points into a smooth SVG path (cubic Beziers via
-   Catmull-Rom), instead of the straight-line segments a raw polygon draws
-   between hand-traced points -- removes the "zig-zag" look without
-   needing to re-trace with more/fewer points. */
 function smoothClosedPath(points, tension = 6){
   const n = points.length;
   if (n < 3) return '';
@@ -745,9 +838,6 @@ function initStoryHotspots(){
   const labels = stage.querySelectorAll('.story-labels-col .story-label');
   const legendItems = document.querySelectorAll('.story-legend-item');
 
-  /* ---- build the outline <path> elements once, one per traced shape
-     (eucalyptus needs several) -- their "d" gets filled in by
-     updateStoryShapes() once we know the photo's real render box ---- */
   const shapesSvg = document.getElementById('storyShapes');
   const shapePolys = [];
   if (shapesSvg){
@@ -762,14 +852,8 @@ function initStoryHotspots(){
       });
     });
   }
-  let shapeFrameCoords = {}; // cache: index -> [ [ {xPct,yPct}, ... ], ... ] in FRAME percentage
+  let shapeFrameCoords = {};
 
-  /* Converts the raw-photo percentages in STORY_SHAPES into percentages of
-     the visibly rendered frame, replicating exactly what
-     object-fit:cover; object-position:center 20% does to the image --
-     otherwise outlines would drift off their real target since cover
-     crops part of the photo away. Recomputed on load/resize since the
-     crop depends on the frame's current on-screen aspect ratio. */
   function updateStoryShapes(){
     const photo = photoFrame.querySelector('.story-photo:not(.story-photo-color)');
     if (!photo || !photo.naturalWidth) return;
@@ -781,8 +865,8 @@ function initStoryHotspots(){
     const W = photo.naturalWidth, H = photo.naturalHeight;
     const scale = Math.max(Fw / W, Fh / H);
     const Ws = W * scale, Hs = H * scale;
-    const offsetX = (Fw - Ws) / 2;     // object-position: center (horizontal)
-    const offsetY = (Fh - Hs) * 0.20;  // object-position: 20% (vertical)
+    const offsetX = (Fw - Ws) / 2;
+    const offsetY = (Fh - Hs) * 0.20;
 
     shapeFrameCoords = {};
     Object.keys(STORY_SHAPES).forEach(idx => {
@@ -803,9 +887,6 @@ function initStoryHotspots(){
     });
   }
 
-  /* Cuts the colour reveal layer to the same traced shape(s) as the
-     active label, in on-screen pixels (clip-path needs px, not %) --
-     smoothed the same way as the visible outline so both match. */
   function applyClipPath(index){
     const colorLayer = photoFrame.querySelector('.story-photo-color');
     const shapes = shapeFrameCoords[index];
@@ -822,7 +903,7 @@ function initStoryHotspots(){
   }
 
   function setActive(index){
-    updateStoryShapes(); // recompute fresh -- layout may have shifted since last calc (e.g. web fonts swapping in)
+    updateStoryShapes();
     dots.forEach(el => el.classList.toggle('is-active', el.dataset.index === index));
     lines.forEach(el => el.classList.toggle('is-active', el.dataset.index === index));
     labels.forEach(el => el.classList.toggle('is-active', el.dataset.index === index));
@@ -851,7 +932,6 @@ function initStoryHotspots(){
     el.addEventListener('blur', clearActive);
   });
 
-  // initial placement + keep in sync with layout changes
   updateStoryLines();
   updateStoryShapes();
   window.addEventListener('load', () => { updateStoryLines(); updateStoryShapes(); });
@@ -870,11 +950,6 @@ function initStoryHotspots(){
 }
 initStoryHotspots();
 
-/* Photo rushes into place slightly faster than the normal scroll as the
-   section enters view (classic parallax), settling back to its natural
-   spot well before it's fully on screen -- so by the time the annotation
-   overlay is allowed to appear (see below), the dots/lines are already
-   sitting exactly where updateStoryLines() expects them. */
 function initStoryParallax(){
   const wrap = document.getElementById('storyPhotoFrame');
   if (!wrap) return;
@@ -900,122 +975,157 @@ function initStoryParallax(){
 }
 initStoryParallax();
 
-/* ================= CURTAIN TRANSITION =================
-   A tile-mosaic blackout transition, matching the reference: a grid of
-   small rounded tiles scales in with a center-out stagger until they
-   fully cover the screen, then the same grid scales back out the same
-   way, revealing whatever's now underneath. It's a real one-shot event
-   -- scrolling is briefly locked while it plays, on its own clock, not
-   tied to scroll distance -- because that's what makes it read as a
-   clean cut rather than something you can scrub back and forth through.
+/* ================= CURTAIN TRANSITION -- горизонтальные шторки, честно завязанные на реальный скролл =================
+   Раньше секция сама ловила wheel/touch и вручную двигала прогресс -- это
+   было хрупко (особенно поверх Lenis, которая тоже перехватывает колесо)
+   и в итоге либо не запускалось совсем, либо тут же само себя отменяло на
+   первом же кадре.
 
-   Since this page has no real routes to swap between (unlike the
-   reference, which is cutting between two pages), the "swap" here is a
-   straight jump of the scroll position to #story's top, done in the one
-   instant the tiles are fully covering the screen -- invisible, exactly
-   like a page-swap would be. */
+   Теперь используется ровно тот же приём, что уже работает в блоке
+   #advantages: секция #catalog в момент, когда её низ касается низа
+   экрана, "пинится" (GSAP ScrollTrigger pin:true) -- визуально замирает
+   на месте, а весь дальнейший скролл (ещё ~1.9 экрана) уходит не в
+   реальное движение страницы, а в прогресс gsap-таймлайна (scrub). Это и
+   есть "блокировка скролла": колесо физически продолжает работать (Lenis
+   не ломается), но на экране ничего не двигается, кроме растущих чёрных
+   полос.
+
+   Зоны полос НЕ одинаковые: нижняя -- самая широкая, дальше вверх каждая
+   уже предыдущей (см. ZONE_WEIGHTS). Стартуют они по очереди снизу вверх,
+   внахлёст -- следующая полоса трогается ещё до того, как предыдущая
+   дошла до конца, поэтому уже в районе половины пути нижней полосы в
+   кадре одновременно "едет" ещё 2-3 соседних. Контент #story начинает
+   проявляться заметно раньше, чем экран полностью закрыт -- он идёт ПО
+   ходу перехода, а не отдельным кадром после.
+
+   #story на время перехода превращается в position:fixed оверлей
+   (.is-curtain-preview, см. style.css) -- единственный способ показать
+   секцию, которая физически ещё не доскроллена, при запиненном скролле.
+   Обратное направление (со story назад в каталог) отдельно не пишем --
+   это один и тот же scrub-таймлайн, GSAP реверсит его сам при скролле
+   вверх.
+   ============================================================ */
 function initCurtainTransition(){
   const catalog  = document.getElementById('catalog');
   const story    = document.getElementById('story');
   const gridWrap = document.getElementById('curtainBars');
   if (!catalog || !story || !gridWrap) return;
-
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (window.matchMedia('(max-width: 880px)').matches) return; // на тач-устройствах scroll-jacking не делаем
 
-  const COLS = 12;
-  const ROWS = 7;
-  const tiles = [];
+  // сверху вниз, сумма = 100 -- нижняя зона нарочно самая широкая
+  const ZONE_WEIGHTS = [9, 13, 18, 25, 35];
+  const bars = [];
+  gridWrap.innerHTML = '';
+  let cum = 0;
+  ZONE_WEIGHTS.forEach(w => {
+    const bar = document.createElement('div');
+    bar.className = 'curtain-bar';
+    bar.style.top    = cum + '%';
+    bar.style.height = w + '%';
+    gridWrap.appendChild(bar);
+    bars.push(bar);
+    cum += w;
+  });
+  // bars[0] -- верхняя (самая узкая) зона, bars[bars.length-1] -- нижняя (самая широкая)
 
-  gridWrap.style.display = 'grid';
-  gridWrap.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
-  gridWrap.style.gridTemplateRows = `repeat(${ROWS}, 1fr)`;
+  const storyReveal = story.querySelectorAll('#storyPhotoFrame, #storyIntro, #storyLabelsCol');
 
-  for (let i = 0; i < COLS * ROWS; i++){
-    const tile = document.createElement('div');
-    tile.className = 'curtain-tile';
-    gridWrap.appendChild(tile);
-    tiles.push(tile);
-  }
+  const BAR_DUR     = 0.42; // рост/сдув ОДНОЙ полосы, условные единицы таймлайна
+  const BAR_STAGGER = 0.19; // сдвиг старта между соседними -- меньше BAR_DUR, поэтому есть нахлёст-волна
 
-  gsap.set(tiles, { scale: 0 });
+  gsap.set(bars, { scaleY: 0, transformOrigin: 'center bottom' });
+  gsap.set(storyReveal, { opacity: 0, y: 44 });
 
-  const TILE_DUR   = .5;   // real seconds -- own clock, not scrubbed
-  const TILE_STAGGER_TOTAL = .45; // spread of the center-out ripple across all tiles
-
-  let played = false;
-  let locked = false;
-
-  function preventKey(e){
-    const blocked = ['ArrowDown','ArrowUp','PageDown','PageUp','Space',' ','End','Home'];
-    if (blocked.includes(e.key)) e.preventDefault();
-  }
-  function preventScroll(e){ e.preventDefault(); }
-
-  function lockScroll(){
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('wheel', preventScroll, { passive: false });
-    window.addEventListener('touchmove', preventScroll, { passive: false });
-    window.addEventListener('keydown', preventKey, { passive: false });
-  }
-  function unlockScroll(){
-    document.documentElement.style.overflow = '';
-    document.body.style.overflow = '';
-    window.removeEventListener('wheel', preventScroll, { passive: false });
-    window.removeEventListener('touchmove', preventScroll, { passive: false });
-    window.removeEventListener('keydown', preventKey, { passive: false });
-  }
-
-  function playTransition(){
-    if (played || locked) return;
-    locked = true;
+  let previewActive = false;
+  function showPreview(){
+    if (previewActive) return;
+    previewActive = true;
     gridWrap.classList.add('is-active');
-    lockScroll();
-
-    gsap.timeline({
-      onComplete: () => {
-        unlockScroll();
-        gridWrap.classList.remove('is-active');
-        gsap.set(tiles, { scale: 0 }); // reset for a possible replay later
-        locked = false;
-        played = true;
-        ScrollTrigger.refresh();
-      }
-    })
-    .to(tiles, {
-      scale: 1,
-      duration: TILE_DUR,
-      ease: 'power2.out',
-      stagger: { grid: [ROWS, COLS], from: 'center', amount: TILE_STAGGER_TOTAL },
-    })
-    .add(() => {
-      // fully covered here -- jump straight to #story's real position
-      // while nothing is visible, so there's nothing to see jump
-      const storyTop = story.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo(0, storyTop);
-    })
-    .to(tiles, {
-      scale: 0,
-      duration: TILE_DUR,
-      ease: 'power2.in',
-      stagger: { grid: [ROWS, COLS], from: 'center', amount: TILE_STAGGER_TOTAL },
-    });
+    story.classList.add('is-curtain-preview');
+  }
+  function hidePreview(){
+    if (!previewActive) return;
+    previewActive = false;
+    gridWrap.classList.remove('is-active');
+    story.classList.remove('is-curtain-preview');
   }
 
-  ScrollTrigger.create({
-    trigger: catalog,
-    start: 'bottom bottom', // fires once the carousel has fully scrolled into view
-    onEnter: playTransition,
-    onLeaveBack: () => { played = false; }, // scrolled back up above the catalog -- allow it to play again if they scroll down a second time
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: catalog,
+      start: 'bottom bottom',
+      end: () => '+=' + Math.round(window.innerHeight * 1.9),
+      pin: true,
+      scrub: 0.3,
+      anticipatePin: 1,
+      invalidateOnRefresh: true,
+      onEnter: showPreview,
+      onEnterBack: showPreview,
+      onLeave: hidePreview,
+      onLeaveBack: hidePreview,
+    }
+  });
+
+  // 1. полосы растут снизу вверх, зона за зоной, внахлёст
+  tl.to(bars, {
+    scaleY: 1,
+    duration: BAR_DUR,
+    ease: 'power2.out',
+    stagger: { each: BAR_STAGGER, from: 'end' }, // самая нижняя (широкая) полоса стартует первой
+  }, 0);
+
+  // 2. контент начинает проявляться ещё до того, как нижняя полоса
+  //    полностью доросла -- идёт прямо по ходу перехода, а не отдельным
+  //    кадром после того, как экран уже полностью чёрный
+  tl.to(storyReveal, {
+    opacity: 1,
+    y: 0,
+    duration: BAR_DUR * 0.9,
+    ease: 'power2.out',
+    stagger: 0.1,
+  }, BAR_DUR * 0.55);
+
+  // 3. когда все полосы выросли и экран полностью закрыт -- сдуваем их в
+  //    том же порядке волны, открывая уже полностью проявленный #story
+  tl.set(bars, { transformOrigin: 'center top' }, '+=0.1');
+  tl.to(bars, {
+    scaleY: 0,
+    duration: BAR_DUR,
+    ease: 'power2.inOut',
+    stagger: { each: BAR_STAGGER, from: 'end' },
   });
 }
 initCurtainTransition();
+/* ================= REVIEW CARDS: MAGNETIC 3D TILT ================= */
+document.querySelectorAll('.review-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - .5;
+    const py = (e.clientY - r.top) / r.height - .5;
+    gsap.to(card, {
+      rotateX: py * -9,
+      rotateY: px * 11,
+      y: -6,
+      scale: 1.02,
+      transformPerspective: 700,
+      duration: .45,
+      ease: 'power2.out'
+    });
+  });
+  card.addEventListener('mouseleave', () => {
+    gsap.to(card, {
+      rotateX: 0, rotateY: 0, y: 0, scale: 1,
+      duration: .7, ease: 'elastic.out(1,0.5)'
+    });
+  });
+});
 
 /* ================= NAV: TRANSPARENT AT TOP, HIDE ON SCROLL DOWN,
    SOLID BLACK ON SCROLL BACK UP ================= */
 const siteNav = document.querySelector('.nav');
 let lastScrollY = window.scrollY;
-const NAV_TOP_THRESHOLD = 40; // пока страница почти вверху -- навбар прозрачный
+const NAV_TOP_THRESHOLD = 40;
 
 window.addEventListener('scroll', () => {
   const currentY = window.scrollY;

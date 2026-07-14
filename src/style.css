@@ -308,39 +308,41 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
 /* ---------- districts (delivery zones, each row grows out of a single dot) ---------- */
 .districts{padding:150px 32px;background:var(--ink);color:var(--paper);}
 
-.districts-intro{max-width:640px;margin:0 auto 90px;text-align:center;}
-.districts-intro .eyebrow{display:block;margin-bottom:18px;color:var(--poppy);}
-.districts-lead{font-size:1.05rem;line-height:1.6;color:rgba(250,249,245,.7);}
-
 .districts-stage{
   max-width:1080px;
   margin:0 auto;
   display:flex;
   flex-direction:column;
-  gap:44px;
+  gap:0; /* было 44px -- строки должны идти впритык, как в референсе, line-height:1 сам даёт нужный интервал */
 }
 
 /* Каждая строка сдвинута на свой собственный отступ (--indent, задаётся
    инлайн-стилем в HTML) -- отступы подобраны вразброс, а не строгим
    чередованием лево/право, чтобы колонка читалась неровно, как в
-   референсе. Никаких разделительных линий между строками. */
+   референсе. Никаких разделительных линий между строками.
+   align-items:flex-end -- подпись улицы сидит по нижнему краю букв
+   (там, где кончается строка строчных без выносных элементов), а не
+   болтается по центру строки. */
 .districts-row{
   position:relative;
   display:flex;
-  align-items:baseline;
-  gap:18px;
+  align-items:flex-end;
+  gap:20px;
   width:fit-content;
   margin-left:var(--indent, 0%);
 }
 
-/* Название района собирается из отдельных БУКВ (см. main.js,
+/* Название района/города собирается из отдельных БУКВ (см. main.js,
    initDistrictsReveal). 1-2 буквы внутри слова помечаются "точкой-семенем"
    (.seed-dot) -- сама точка сидит поверх этой буквы, в середине слова
    (или в двух точках для длинных слов). Точки коротко появляются, затем
    гаснут ровно в момент, когда буквы вокруг них начинают расти -- и
    дальше "рябью" расходятся к краям слова. Каждая буква растёт не плавно,
    а через ease:'steps(5)' в JS -- прыжками по 5 фиксированным размерам,
-   а не тином. */
+   а не тином. Строка "Санкт [фото] Петербург" содержит ДВА .districts-name
+   -- каждый получает свои собственные точки-семена независимо.
+   Регистр — как в разметке (Рига, Москва, Санкт, Петербург), без
+   принудительного капса: капсом остаётся только мелкая подпись улицы. */
 .districts-name{
   display:inline-block;
   font-family:'Space Grotesk',sans-serif;
@@ -348,8 +350,7 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
   font-style:normal;
   letter-spacing:-.02em;
   line-height:1;
-  text-transform:uppercase;
-  font-size:clamp(2.2rem,5.6vw,4.2rem);
+  font-size:clamp(2.6rem,6.4vw,5.2rem);
 }
 .districts-name .letter{
   position:relative;
@@ -373,11 +374,37 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
   will-change:transform,opacity;
 }
 
+/* Фото-вставка (сейчас используется только в строке "Санкт [фото]
+   Петербург") -- сидит между двумя .districts-name как отдельное слово,
+   по высоте подстроена под кегль строки. Проявляется мягким плавным
+   тином (не "прыжками", в отличие от букв -- у фото рывками смотрелось
+   бы дёшево). */
+.districts-photo{
+  display:inline-flex;
+  flex:none;
+  will-change:transform,opacity;
+}
+.districts-photo img{
+  display:block;
+  height:clamp(48px,8.2vw,84px);
+  width:auto;
+  border-radius:12px;
+  object-fit:cover;
+  filter:grayscale(.15) contrast(1.05);
+  box-shadow:0 16px 38px rgba(0,0,0,.5);
+}
+
+/* Подпись под названием -- улица + страна, в две строки, узким тонким
+   капсом, как в референсе ("ONTARIO, CANADA"). Вес 300 -- реально
+   тонкая начертка Space Grotesk, а не подделанная браузером. Мельче,
+   чем у самого слова, и садится по нижнему краю строки за счёт
+   align-items:flex-end на .districts-row -- а не висит по центру. */
 .districts-time{
   font-family:'Space Grotesk',sans-serif;
-  font-size:.78rem;font-weight:600;
-  letter-spacing:.1em;text-transform:uppercase;
-  color:rgba(250,249,245,.5);
+  font-size:.6rem;font-weight:300;
+  letter-spacing:.08em;text-transform:uppercase;
+  line-height:1.4;
+  color:rgba(250,249,245,.45);
   white-space:nowrap;
   will-change:transform,opacity;
 }
@@ -387,8 +414,10 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
   .districts-row{
     margin-left:0 !important;
     gap:14px;
+    flex-wrap:wrap;
   }
-  .districts-name{font-size:clamp(1.9rem,8.5vw,2.6rem);}
+  .districts-name{font-size:clamp(2.3rem,10vw,3.2rem);}
+  .districts-photo img{height:clamp(34px,13vw,48px);}
 }
 
 
