@@ -12,7 +12,7 @@
   background:var(--ink);
   color:var(--paper);
   overflow:hidden;
-  min-height:100vh;
+  height:100vh;
 }
 
 /* ---- looping background video, one per florist, cross-fading ---- */
@@ -163,7 +163,7 @@
 
 /* ---- mobile: no pin, no dealing animation -- plain vertical stack ---- */
 @media (max-width:880px){
-  .florists{min-height:0;}
+  .florists{height:auto;} 
   .florists-pin{height:auto;padding:100px 20px 70px;min-height:0;}
   .florists-head{margin-bottom:40px;}
   .florists-stack{

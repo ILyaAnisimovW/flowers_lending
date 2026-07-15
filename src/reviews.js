@@ -1,5 +1,13 @@
 import './style.css';
-
+import { initBrandBanner } from './brand-banner.js';
+if (typeof gsap === 'undefined') {
+  console.warn('GSAP не загрузился — анимации отключены, но контент должен отрисоваться.');
+  window.gsap = {
+    to: () => {},
+    timeline: () => ({ to: () => ({ set: () => ({ to: () => {} }) }), set: () => ({ to: () => {} }) }),
+    set: () => {},
+  };
+}
 /* ================= CUSTOM CURSOR (same as main page) ================= */
 const cursor = document.getElementById('cursor');
 if (matchMedia('(pointer:fine)').matches) {
@@ -312,6 +320,7 @@ function initReviewWall(){
   });
 }
 initReviewWall();
+initBrandBanner();
 
 /* ================= NAV: stays solid on this page (single dark section
    above a light footer, no need for the scroll-hide dance used on the

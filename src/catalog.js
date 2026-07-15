@@ -1,3 +1,4 @@
+import { initBrandBanner } from './brand-banner.js';
 /* =========================================================
    CATALOG PAGE — data + filter/sort/render logic for catalog.html.
 
@@ -105,6 +106,16 @@ function sortItems(items){
   return sorted;
 }
 
+/* экранирует значения, которые попадают в HTML-атрибуты data-checkout-*,
+   чтобы кавычки/амперсанды в названии или описании товара не сломали
+   разметку карточки */
+function escapeAttr(str){
+  return String(str)
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 function render(){
   const filtered = sortItems(PRODUCTS.filter(matchesFilters));
 
@@ -121,7 +132,12 @@ function render(){
         <p class="catalog-card-desc">${item.desc}</p>
         <div class="catalog-card-footer">
           <span class="catalog-card-price">${item.price.toLocaleString('ru-RU')} ₽</span>
-          <a href="index.html#contacts" class="catalog-card-cta">Заказать <span>→</span></a>
+          <button type="button"
+                  class="catalog-card-cta"
+                  data-checkout-name="${escapeAttr(item.name)}"
+                  data-checkout-price="${item.price}"
+                  data-checkout-desc="${escapeAttr(item.desc)}"
+                  data-checkout-img="${escapeAttr(item.img)}">Заказать <span>→</span></button>
         </div>
       </div>
     </article>
@@ -201,3 +217,4 @@ if (cursor){
 updateCategoryActiveStates();
 renderCategoryCounts();
 render();
+initBrandBanner();

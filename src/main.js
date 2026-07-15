@@ -1,8 +1,13 @@
 import './style.css';
 import { initFAQ } from './faq.js';
 import { initFlorists } from './florists.js';
+import { initBrandBanner } from './brand-banner.js'; 
 
 gsap.registerPlugin(ScrollTrigger);
+ScrollTrigger.config({
+  ignoreMobileResize: true, // игнорит "resize" от появления/скрытия адресбара на мобильных
+  autoRefreshEvents: 'DOMContentLoaded,load', // убрали 'resize' и 'visibilitychange' из дефолтного списка
+});
 
 /* ================= LENIS SMOOTH SCROLL =================
    Обёрнуто в try/catch: если CDN с Lenis не отдался (сеть, блокировщик,
@@ -10,34 +15,40 @@ gsap.registerPlugin(ScrollTrigger);
    плавного скролла используется нативный window.scrollTo, а весь
    остальной код (прелоадер, анимации, переход-жалюзи) работает как ни
    в чём не бывало. */
-let lenis;
-try {
-  lenis = new Lenis({
-    lerp: 0.1,        // сглаживание каждый кадр, а не отдельный твин на каждый скролл -- отзывчивее, без наслоения задержек
-    wheelMultiplier: 1,
-    smoothWheel: true,
-    syncTouch: false,
-  });
+window.__lenis = {
+  scrollTo(target, opts = {}) {
+    const y = typeof target === 'number'
+      ? target
+      : (target?.getBoundingClientRect?.().top ?? 0) + window.scrollY;
+    window.scrollTo({ top: y, behavior: opts.immediate ? 'auto' : 'smooth' });
+  },
+};
+ // доступен из initCurtainTransition и, при желании, снаружи
 
-  lenis.on('scroll', ScrollTrigger.update);
+/* ================= LENIS <-> SCROLLTRIGGER SYNC =================
+   Причина "телепортов" при скролле: Lenis при инициализации считает
+   свой внутренний `limit` (высота документа минус высота вьюпорта) и
+   дальше клэмпит/лерпит скролл относительно этого числа. Но реальная
+   высота документа продолжает меняться уже ПОСЛЕ первого рендера --
+   догружаются видео (.florists-video), lazy-картинки (districts,
+   florist-card-photo, process-step-img с внешнего picsum.photos), а
+   также сами GSAP-пины (#advantages, #story, #florists) добавляют
+   pin-spacer'ы, которые дополнительно увеличивают scrollHeight.
 
-  gsap.ticker.add((time) => {
-    lenis.raf(time * 1000);
-  });
-  gsap.ticker.lagSmoothing(0);
-} catch (err) {
-  console.warn('Lenis недоступен, используется нативный скролл:', err);
-  lenis = {
-    stop(){},
-    start(){},
-    scrollTo(target, opts = {}){
-      const y = typeof target === 'number' ? target : (target?.getBoundingClientRect?.().top ?? 0) + window.scrollY;
-      window.scrollTo({ top: y, behavior: opts.immediate ? 'auto' : 'smooth' });
-    },
-  };
-}
+   ScrollTrigger.refresh() эти изменения учитывает (пересчитывает
+   триггеры), а вот Lenis -- нет, если явно не вызвать lenis.resize().
+   В момент, когда реальная высота документа расходится с тем, что
+   Lenis посчитал при старте, скролл колесом мыши упирается в старый
+   `limit` и резко "перескакивает" -- это и есть баг с телепортами.
 
-window.__lenis = lenis; // доступен из initCurtainTransition и, при желании, снаружи
+   Фикс: 1) любой ScrollTrigger.refresh() досчитывает lenis.resize();
+         2) ResizeObserver на <body> ловит любое изменение реальной
+            высоты документа (видео/картинки/пин-спейсеры) и сам
+            вызывает ScrollTrigger.refresh() (а тот, по цепочке из
+            пункта 1, дёрнет lenis.resize());
+         3) на всякий случай -- отдельные слушатели на загрузку видео
+            и lazy-картинок, чтобы не полагаться только на резайз-обсёрвер. */
+
 
 /* якорные ссылки (нав, кнопки "Смотреть каталог" и т.п.) теперь плавно
    скроллит Lenis -- раньше это делал html{scroll-behavior:smooth}, но
@@ -50,13 +61,49 @@ document.addEventListener('click', (e) => {
   const target = document.querySelector(id);
   if (!target) return;
   e.preventDefault();
-  lenis.scrollTo(target, { duration: 1.1 });
+  window.__lenis.scrollTo(target);
 });
 
-window.addEventListener('load', () => ScrollTrigger.refresh());
-if (document.fonts && document.fonts.ready){
-  document.fonts.ready.then(() => ScrollTrigger.refresh());
+const __pageReady = Promise.all([
+  document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve(),
+  document.readyState === 'complete'
+    ? Promise.resolve()
+    : new Promise(res => window.addEventListener('load', res, { once: true })),
+]);
+
+__pageReady.then(() => {
+  // единственный "официальный" refresh за всю жизнь страницы после старта
+  ScrollTrigger.refresh();
+});
+
+/* ================= РЕАЛЬНАЯ синхронизация ScrollTrigger с late-loading
+   контентом (видео флористов, lazy-картинки, pin-spacer'ы) —
+   то, что было только в комментарии выше, но не было написано. */
+let __stRefreshPending = false;
+function requestSTRefresh(){
+  if (__stRefreshPending) return;
+  __stRefreshPending = true;
+  requestAnimationFrame(() => {
+    __stRefreshPending = false;
+    ScrollTrigger.refresh();
+  });
 }
+
+// ловит ЛЮБОЕ изменение реальной высоты body: догрузку видео,
+// картинок, появление/исчезание pin-spacer'ов
+new ResizeObserver(requestSTRefresh).observe(document.body);
+
+// на всякий случай отдельно — видео и lazy-картинки часто
+// резолвятся не через resize body синхронно, а с задержкой кадра
+document.querySelectorAll('video').forEach(v => {
+  if (v.readyState >= 1) return; // metadata уже есть
+  v.addEventListener('loadedmetadata', requestSTRefresh, { once: true });
+});
+
+document.querySelectorAll('img[loading="lazy"]').forEach(img => {
+  if (img.complete) return;
+  img.addEventListener('load', requestSTRefresh, { once: true });
+});
 
 document.body.classList.add('is-loading');
 
@@ -99,6 +146,13 @@ gsap.to(cards, {
 });
 
 const counterObj = { val: 0 };
+let __counterDone = false;
+let __pageReadyDone = false;
+
+function __maybeRunIntro(){
+  if (__counterDone && __pageReadyDone) runIntro();
+}
+
 gsap.to(counterObj, {
   val: 100,
   duration: 1.35,
@@ -109,7 +163,13 @@ gsap.to(counterObj, {
     counterNum.textContent = v;
     counterBar.style.width = v + '%';
   },
-  onComplete: runIntro
+  onComplete: () => { __counterDone = true; __maybeRunIntro(); }
+});
+
+__pageReady.then(() => {
+  __pageReadyDone = true;
+  ScrollTrigger.refresh();
+  __maybeRunIntro();
 });
 
 function runIntro(){
@@ -939,7 +999,7 @@ function initStoryCardsPin(){
     };
   });
 }
-initStoryCardsPin();
+//initStoryCardsPin();
 /* ================= REVIEW CARDS: MAGNETIC 3D TILT ================= */
 document.querySelectorAll('.review-card').forEach(card => {
   card.addEventListener('mousemove', e => {
@@ -985,3 +1045,4 @@ window.addEventListener('scroll', () => {
 
   lastScrollY = currentY;
 }, { passive: true });
+initBrandBanner();
