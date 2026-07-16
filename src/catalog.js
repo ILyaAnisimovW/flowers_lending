@@ -1,4 +1,5 @@
 import { initBrandBanner } from './brand-banner.js';
+import { initMouseTrail } from './mouse-trail.js';
 /* =========================================================
    CATALOG PAGE — data + filter/sort/render logic for catalog.html.
 
@@ -23,15 +24,15 @@ const PRODUCTS = [
   { id:'cloud',   name:'Ромашковое облако', desc:'Огромная шапка хризантем с гипсофилой',          price:4500, img:'images/bouquet-cloud.png',   tags:['Премиум'],               isNew:false },
   { id:'whisper', name:'Тихий шёпот',       desc:'Эустома, гвоздика и пастельные тона',            price:2200, img:'images/bouquet-whisper.png', tags:['Топ подарок'],           isNew:false },
 
-  { id:'scarlet', name:'Алый скандал',      desc:'25 красных роз, минимум зелени, максимум драмы', price:3900, img:'https://picsum.photos/seed/mak-scarlet/600/750',   tags:['Хит недели','Монобукет'], isNew:false },
-  { id:'ivory',   name:'Слоновая кость',    desc:'Кремовые пионовидные розы и эвкалипт',           price:4200, img:'https://picsum.photos/seed/mak-ivory/600/750',     tags:['Премиум','Топ подарок'],  isNew:false },
-  { id:'citrus',  name:'Цитрусовый заряд',  desc:'Оранжевые ранункулюсы и жёлтые тюльпаны',        price:2600, img:'https://picsum.photos/seed/mak-citrus/600/750',    tags:['Новинка'],                isNew:true  },
-  { id:'mono',    name:'Моно тюльпан',      desc:'25 тюльпанов одного оттенка, без декора',        price:1900, img:'https://picsum.photos/seed/mak-mono/600/750',      tags:['Монобукет','Бестселлер'], isNew:false },
-  { id:'wild',    name:'Дикий сад',         desc:'Смесь садовых трав, маков и васильков',          price:2500, img:'https://picsum.photos/seed/mak-wild/600/750',      tags:['Бестселлер'],             isNew:false },
-  { id:'noir',    name:'Ночной карнавал',   desc:'Тёмно-бордовые розы и чёрный ранункулюс',        price:4700, img:'https://picsum.photos/seed/mak-noir/600/750',      tags:['Премиум'],                isNew:false },
-  { id:'peony',   name:'Пионовый час',      desc:'Сезонные пионы, розовые и коралловые',           price:3600, img:'https://picsum.photos/seed/mak-peony/600/750',     tags:['Хит недели','Новинка'],   isNew:true  },
-  { id:'mint',    name:'Мятная свежесть',   desc:'Белые розы, мята и серебристая зелень',          price:3300, img:'https://picsum.photos/seed/mak-mint/600/750',      tags:['Топ подарок'],            isNew:false },
-  { id:'sunset',  name:'Закатный микс',     desc:'Гвоздики, розы и хризантемы тёплых тонов',       price:2900, img:'https://picsum.photos/seed/mak-sunset/600/750',    tags:['Бестселлер'],             isNew:false },
+  { id:'scarlet', name:'Алый скандал',      desc:'25 красных роз, минимум зелени, максимум драмы', price:3900, img:'images/bouquet-scarlet.jpg', tags:['Хит недели','Монобукет'], isNew:false },
+  { id:'ivory',   name:'Слоновая кость',    desc:'Кремовые пионовидные розы и эвкалипт',           price:4200, img:'images/bouquet-ivory.jpg',   tags:['Премиум','Топ подарок'],  isNew:false },
+  { id:'citrus',  name:'Цитрусовый заряд',  desc:'Оранжевые ранункулюсы и жёлтые тюльпаны',        price:2600, img:'images/bouquet-citrus.jpg',  tags:['Новинка'],                isNew:true  },
+  { id:'mono',    name:'Моно тюльпан',      desc:'25 тюльпанов одного оттенка, без декора',        price:1900, img:'images/bouquet-mono.jpg',    tags:['Монобукет','Бестселлер'], isNew:false },
+  { id:'wild',    name:'Дикий сад',         desc:'Смесь садовых трав, маков и васильков',          price:2500, img:'images/bouquet-wild.jpg',    tags:['Бестселлер'],             isNew:false },
+  { id:'noir',    name:'Ночной карнавал',   desc:'Тёмно-бордовые розы и чёрный ранункулюс',        price:4700, img:'images/bouquet-noir.jpg',    tags:['Премиум'],                isNew:false },
+  { id:'peony',   name:'Пионовый час',      desc:'Сезонные пионы, розовые и коралловые',           price:3600, img:'images/bouquet-peony.jpg',   tags:['Хит недели','Новинка'],   isNew:true  },
+  { id:'mint',    name:'Мятная свежесть',   desc:'Белые розы, мята и серебристая зелень',          price:3300, img:'images/bouquet-mint.jpg',    tags:['Топ подарок'],            isNew:false },
+  { id:'sunset',  name:'Закатный микс',     desc:'Гвоздики, розы и хризантемы тёплых тонов',       price:2900, img:'images/bouquet-sunset.jpg',  tags:['Бестселлер'],             isNew:false },
 ];
 
 const CATEGORY_COUNT_IDS = {
@@ -218,3 +219,4 @@ updateCategoryActiveStates();
 renderCategoryCounts();
 render();
 initBrandBanner();
+initMouseTrail();

@@ -1,7 +1,8 @@
 import './style.css';
 import { initFAQ } from './faq.js';
 import { initFlorists } from './florists.js';
-import { initBrandBanner } from './brand-banner.js'; 
+import { initBrandBanner } from './brand-banner.js';
+import { initMouseTrail } from './mouse-trail.js';
 
 gsap.registerPlugin(ScrollTrigger);
 ScrollTrigger.config({
@@ -406,7 +407,13 @@ function initCarousel3D(items){
     scrambleText(capPrice, item.price);
     scrambleText(capDesc, item.desc);
 
-    ribbons.style.setProperty('--ribbon-color', item.accent);
+    // Пишем переменную на :root, а не на сам SVG-узел ribbons -- так
+    // её подхватывает и .carousel3d-ribbons path (fill), и мягкое
+    // цветовое "послесвечение" под каруселью (.carousel3d-bg-extend::before,
+    // см. style.css) -- оба должны переливаться в один и тот же акцент
+    // синхронно, а bg-extend лежит вне .collections как соседняя секция,
+    // так что запись на сам ribbons-узел до него бы не докаскадилась.
+    document.documentElement.style.setProperty('--ribbon-color', item.accent);
 
     selectBtns.forEach((b, idx) => b.classList.toggle('active', idx === i));
   }
@@ -673,23 +680,7 @@ function initDistrictsReveal(){
 }
 initDistrictsReveal();
 
-/* ================= ADVANTAGES -- pinned scrollytelling =================
-   Desktop only (via gsap.matchMedia): while #advantages is scrolled
-   through, the section pins to the viewport (scroll is "locked" to it
-   for the length of the pin) and ONE big text slide -- index badge,
-   heading, description -- swaps between 4 states as the scroll
-   progresses, matching the 4 old advantage cards 1:1.
-
-   Just before the pin engages, #districts (the section right above)
-   is scaled down a touch, driven purely by how close #advantages is to
-   the top of the viewport -- so it visibly "shrinks back" to make room
-   instead of just being covered up by the next section.
-
-   On mobile/touch (<=880px) none of this runs: gsap.matchMedia only
-   registers the query below >880px, so on small screens the section
-   just falls back to the plain .advantages-grid-mobile markup already
-   sitting in the HTML (scroll-jacking on touch devices is bad UX and
-   fights native momentum scrolling). */
+/* ================= ADVANTAGES -- pinned scrollytelling ================= */
 function initAdvantagesPin(){
   const section = document.getElementById('advantages');
   const prevSection = document.getElementById('districts');
@@ -708,9 +699,6 @@ function initAdvantagesPin(){
     { num:'04', title:'Без слащавости',   desc:'Ни целлофана, ни рюшей — крафт-бумага, смелые сочетания и минимум декора.' },
   ];
 
-  // exact perimeter of the rounded-rect outline, read straight from the
-  // SVG geometry -- works regardless of the badge's actual pixel size,
-  // since rect implements SVGGeometryElement same as path/circle do
   const ringLength = ringEl ? ringEl.getTotalLength() : 0;
   if (ringEl){
     ringEl.style.strokeDasharray = ringLength;
@@ -719,12 +707,6 @@ function initAdvantagesPin(){
 
   let current = 0;
 
-  // Heading now uses the same scrambleText() glitch reveal as the
-  // showcase title / carousel captions elsewhere on the site (random
-  // Cyrillic letters + digits + symbols resolving left-to-right into
-  // the real word) instead of a plain fade -- ties the pinned slide's
-  // text swap into the same "glitch" visual language already used for
-  // text swap into the same "glitch" visual language used elsewhere on the site.
   function render(i){
     if (i === current) return;
     current = i;
@@ -761,10 +743,6 @@ function initAdvantagesPin(){
       }
     });
 
-    // one full viewport height of scroll PER state (4 states -> 4 equal
-    // segments), instead of 3 crossfade transitions across the total --
-    // this is what lets the badge outline reset and redraw once per
-    // segment rather than tracing once across the entire pin
     const segments = items.length;
     const pinTrigger = ScrollTrigger.create({
       trigger: section,
@@ -779,10 +757,6 @@ function initAdvantagesPin(){
         const idx = Math.min(segments - 1, Math.floor(scaled));
         render(idx);
 
-        // local progress WITHIN the current segment (0 -> 1), so the
-        // outline fills over the course of that one state and snaps
-        // back to empty the moment the next state begins -- 4 separate
-        // draws instead of one continuous draw over the whole scroll
         if (ringEl && ringLength){
           const localProgress = scaled - idx;
           ringEl.style.strokeDashoffset = ringLength * (1 - localProgress);
@@ -800,206 +774,144 @@ function initAdvantagesPin(){
 }
 initAdvantagesPin();
 
+/* ================= STORY -- pinned card-dealing sequence + взрыв =================
+   Тот же безопасный паттерн, что и в advantages/florists: end как
+   функция + invalidateOnRefresh + anticipatePin -- чтобы не вернуть
+   баг с телепортацией скролла (см. комментарий про Lenis-синк выше).
+
+   Порядок фаз внутри пина:
+   1. intro (заголовок/текст) полностью гаснет, пока карточки летят
+      к своим местам в сетке 2x2.
+   2. Карточки долетают, собираются, задерживаются на месте (hold).
+   3. "Взрыв": карточки резко разлетаются ДАЛЬШЕ своих исходных
+      офсетов (в ту же сторону, откуда прилетели), с утроенным
+      вращением и затуханием, синхронно со вспышкой storyFlash. */
+function initStoryCardsPin(){
+  const section = document.getElementById('story');
+  const intro   = document.getElementById('storyIntro');
+  const fill    = document.getElementById('storyTimelineFill');
+  const flash   = document.getElementById('storyFlash');
+  const cards   = [...document.querySelectorAll('.story-card')];
+  if (!section || !cards.length) return;
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  // откуда карточка "прилетает", по data-dir
+  const OFFSET = {
+    left:   { x: -760, y: 0    },
+    top:    { x: 0,    y: -560 },
+    right:  { x: 760,  y: 0    },
+    bottom: { x: 0,    y: 560  },
+  };
+  const ROTATE = { left: -10, top: 6, right: 10, bottom: -6 };
+
+  const mm = gsap.matchMedia();
+
+  mm.add('(min-width: 881px)', () => {
+    // перспектива нужна родителю, иначе translateZ ("разлёт назад")
+    // у карточек будет просто невидим -- preserve-3d на самих карточках
+    // без perspective на контейнере ничего не даёт
+    const storyPin = section.querySelector('.story-pin') || section;
+    gsap.set(storyPin, { perspective: 1400 });
+    gsap.set(cards, { transformPerspective: 900, transformOrigin: '50% 50%' });
+
+    // для каждой карточки заранее считаем случайные "хаотичные" параметры
+    // взрыва -- один раз при инициализации, чтобы при скролле туда-обратно
+    // разлёт был одинаковым, а не рандомился на каждый кадр
+    const explodeParams = cards.map(card => {
+      const off = OFFSET[card.dataset.dir] || { x: 0, y: 0 };
+      return {
+        x: off.x * (1.5 + Math.random() * .5),
+        y: off.y * (1.5 + Math.random() * .5) + gsap.utils.random(-140, 140),
+        z: gsap.utils.random(-900, -500), // "назад" -- вглубь экрана
+        rotationX: gsap.utils.random(-260, 260),
+        rotationY: gsap.utils.random(-260, 260),
+        rotationZ: (ROTATE[card.dataset.dir] || 0) * gsap.utils.random(2.5, 4) * (Math.random() < .5 ? -1 : 1),
+      };
+    });
+
+    cards.forEach(card => {
+      const off = OFFSET[card.dataset.dir] || { x: 0, y: 0 };
+      gsap.set(card, {
+        x: off.x, y: off.y, z: 0,
+        rotate: ROTATE[card.dataset.dir] || 0,
+        rotationX: 0, rotationY: 0,
+        opacity: 0,
+        scale: .82,
+      });
+    });
+    gsap.set(fill, { width: '0%' });
+    gsap.set(flash, { opacity: 0 });
+    gsap.set(intro, { opacity: 1, y: 0 });
+
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: section,
+        start: 'top top',
+        end: () => '+=' + (window.innerHeight * 2.8), // чуть длиннее -- на фазу взрыва нужна своя дистанция
+        pin: true,
+        scrub: .6,
+        anticipatePin: 1,
+        invalidateOnRefresh: true, // <-- та же фиксация, что спасла advantages/florists от телепорта
+      }
+    });
+
+    // интро полностью гаснет (а не просто тускнеет), пока карточки летят
+    tl.to(intro, { opacity: 0, y: -20, duration: .5, ease: 'power2.in' }, .05);
+
+    // карточки собираются в сетку 2x2
+    cards.forEach((card, i) => {
+      tl.to(card, {
+        x: 0, y: 0, z: 0, rotate: 0, rotationX: 0, rotationY: 0,
+        opacity: 1, scale: 1,
+        duration: 1, ease: 'power3.out',
+      }, .15 + i * .18);
+    });
+
+    tl.to(fill, { width: '55%', duration: cards.length * .18 + .3, ease: 'none' }, .1);
+
+    // пауза, чтобы собранное состояние успело "прочитаться" перед взрывом
+    const holdStart = .15 + (cards.length - 1) * .18 + 1 + .2;
+
+    // ВЗРЫВ: карточки разлетаются в стороны И вглубь экрана (z), с
+    // хаотичным кувырканием по всем трём осям -- вспышка синхронно
+    // с началом разлёта
+    tl.to(flash, { opacity: .6, duration: .12, ease: 'power2.out' }, holdStart)
+      .to(cards, {
+        x: (i) => explodeParams[i].x,
+        y: (i) => explodeParams[i].y,
+        z: (i) => explodeParams[i].z,
+        rotationX: (i) => explodeParams[i].rotationX,
+        rotationY: (i) => explodeParams[i].rotationY,
+        rotate: (i) => explodeParams[i].rotationZ,
+        scale: .55,
+        opacity: 0,
+        duration: 1.1,
+        ease: 'power2.in',
+        stagger: .04,
+      }, holdStart)
+      .to(flash, { opacity: 0, duration: .5, ease: 'power2.in' }, holdStart + .3)
+      .to(fill, { width: '100%', duration: 1.1, ease: 'power2.in' }, holdStart);
+
+    return () => {
+      tl.scrollTrigger && tl.scrollTrigger.kill();
+      tl.kill();
+      gsap.set(storyPin, { clearProps: 'perspective' });
+    };
+  });
+
+  // мобилка: там уже CSS форсит фолбэк (статичный стек, opacity:1,
+  // transform:none) через (max-width:880px) в style.css — JS-пин
+  // там не нужен, ровно как в advantages/florists.
+}
+initStoryCardsPin();
+
 /* ================= FAQ (glass strips, scramble + scroll-invert) ================= */
 initFAQ();
 
 /* ================= FLORISTS (pinned card-dealing sequence + video crossfade) ================= */
 initFlorists();
 
-/* ================= STORY -- pinned wave-cards ================= */
-/* Desktop: section pins to the viewport while one scrub-driven timeline
-   flies each dark card in from its own edge (left/top/right/bottom),
-   staggered so they cascade in like a wave rather than popping in
-   together. Because it's tied to ScrollTrigger's `scrub` (not a
-   `once`-fired reveal), scrolling back up runs the exact same timeline
-   backwards -- the cards retreat off-screen in reverse order, so the
-   effect works both ways and isn't a one-time animation.
-   Mobile disables the pin via gsap.matchMedia and the cards just sit
-   in their plain stacked-card layout (see the max-width:880px rules
-   in style.css), matching the same pattern used for #advantages. */
-function initStoryCardsPin(){
-  const section = document.getElementById('story');
-  const pin = document.getElementById('storyPin');
-  const cards = document.querySelectorAll('.story-card');
-  const introEl = document.getElementById('storyIntro');
-  const timelineFill = document.getElementById('storyTimelineFill');
-  const flashEl = document.getElementById('storyFlash');
-  if (!section || !pin || !cards.length) return;
-
-  cards.forEach(card => {
-  const inner = card.querySelector('.story-card-inner');
-  if (!inner) return;
-
-  card.addEventListener('mousemove', e => {
-    const r = card.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - .5;
-    const py = (e.clientY - r.top) / r.height - .5;
-    gsap.to(inner, {
-      rotateX: py * -18,
-      rotateY: px * 22,
-      z: 50,
-      scale: 1.05,
-      transformPerspective: 700,
-      duration: .5,
-      ease: 'power2.out',
-    });
-  });
-
-  card.addEventListener('mouseleave', () => {
-    gsap.to(inner, {
-      rotateX: 0, rotateY: 0, z: 0, scale: 1,
-      duration: .8, ease: 'elastic.out(1,0.5)',
-    });
-  });
-});
-
-  const DIR_OFFSET = {
-    left:   { x: '-160%', y: '0%'    },
-    top:    { x: '0%',    y: '-160%' },
-    right:  { x: '160%',  y: '0%'    },
-    bottom: { x: '0%',    y: '160%'  },
-  };
-
-  // куда и как каждая карточка улетает при взрыве -- дальше и по
-  // своей диагонали, а не просто назад тем же путём, каким влетела
-  const EXPLODE = {
-  left:   { x: '-320%', y: '-90%',  z: -1300, rot: -540 },
-  top:    { x: '110%',  y: '-320%', z: -1350, rot: 480  },
-  right:  { x: '320%',  y: '100%',  z: -1300, rot: 560  },
-  bottom: { x: '-110%', y: '320%',  z: -1350, rot: -500 },
-};
-
-  const mm = gsap.matchMedia();
-
-  mm.add('(min-width: 881px)', () => {
-    cards.forEach(card => {
-      const dir = card.dataset.dir;
-      const offset = DIR_OFFSET[dir] || DIR_OFFSET.left;
-      const flatRot = (dir === 'left' || dir === 'bottom') ? -10 : 10;
-      const vertical = dir === 'top' || dir === 'bottom';
-
-      gsap.set(card, {
-        xPercent: parseFloat(offset.x),
-        yPercent: parseFloat(offset.y),
-        opacity: 0,
-        rotate: flatRot,
-        rotationX: vertical ? 65 : 0,
-        rotationY: vertical ? 0 : 65,
-        z: -320,
-        scale: .6,
-        filter: 'blur(7px)',
-        transformPerspective: 1200,
-      });
-    });
-    if (introEl) gsap.set(introEl, { opacity: 1 });
-    if (flashEl) gsap.set(flashEl, { opacity: 0 });
-
-    const tl = gsap.timeline();
-
-    if (introEl){
-      tl.to(introEl, { opacity: 0, ease: 'power1.in', duration: 1 }, 0.1);
-    }
-
-    // ---- ВХОД: волна с кувырком ----
-    cards.forEach((card, i) => {
-      const dir = card.dataset.dir;
-      const offset = DIR_OFFSET[dir] || DIR_OFFSET.left;
-      const horizontal = dir === 'left' || dir === 'right';
-      const bump = (i % 2 === 0 ? -1 : 1) * 22;
-      const start = i * 0.55;
-
-      const midVars = {
-        opacity: 1, ease: 'power2.out', duration: 0.6,
-        rotationX: horizontal ? 0 : 22,
-        rotationY: horizontal ? 22 : 0,
-        z: -90, scale: .86, filter: 'blur(2.5px)',
-      };
-      const finalVars = {
-        xPercent: 0, yPercent: 0, rotate: 0,
-        rotationX: 0, rotationY: 0, z: 0, scale: 1,
-        filter: 'blur(0px)',
-        ease: 'back.out(1.6)', duration: 0.75,
-      };
-
-      if (horizontal){
-        midVars.xPercent = parseFloat(offset.x) * 0.32;
-        midVars.yPercent = bump;
-      } else {
-        midVars.yPercent = parseFloat(offset.y) * 0.32;
-        midVars.xPercent = bump;
-      }
-
-      tl.to(card, midVars, start)
-        .to(card, finalVars, start + 0.5);
-    });
-
-    // момент, когда последняя карточка долетела -- считаем динамически,
-    // чтобы не подбирать числа руками при изменении количества карточек
-    const lastCardEnd = (cards.length - 1) * 0.55 + 0.5 + 0.75;
-    const holdStart = lastCardEnd + 0.35; // короткая пауза "все на местах"
-
-    // ---- ВЗРЫВ ----
-    if (flashEl){
-      tl.to(flashEl, { opacity: .85, duration: .12, ease: 'power1.in' }, holdStart)
-        .to(flashEl, { opacity: 0, duration: .6, ease: 'power2.out' }, holdStart + .12);
-    }
-
-    cards.forEach((card, i) => {
-  const dir = card.dataset.dir;
-  const ex = EXPLODE[dir] || EXPLODE.left;
-  const t0 = holdStart + i * 0.05;
-
-  // короткий рывок на зрителя — "вспышка" взрыва, а не просто разъезд
-  tl.to(card, {
-    z: 180,
-    scale: 1.18,
-    filter: 'blur(0px)',
-    duration: .16,
-    ease: 'power1.out',
-  }, t0);
-
-  // сам улёт — крутится и уходит в глубину, а не просто по плоскости
-  tl.to(card, {
-    xPercent: parseFloat(ex.x),
-    yPercent: parseFloat(ex.y),
-    z: ex.z,
-    rotate: ex.rot,
-    rotationX: gsap.utils.random(340, 760) * (i % 2 ? 1 : -1),
-    rotationY: gsap.utils.random(340, 760) * (i % 2 ? -1 : 1),
-    scale: .2,
-    opacity: 0,
-    filter: 'blur(10px)',
-    ease: 'power2.in',
-    duration: 1.35,
-  }, t0 + .16);
-});
-
-    gsap.set(prevSectionDummy => {}, {}); // no-op guard removed below
-
-    const pinTrigger = ScrollTrigger.create({
-      trigger: section,
-      start: 'top top',
-      end: () => '+=' + (window.innerHeight * 2.9),
-      pin: true,
-      scrub: true,
-      anticipatePin: 1,
-      invalidateOnRefresh: true,
-      animation: tl,
-      onUpdate: self => {
-        if (timelineFill) timelineFill.style.width = (self.progress * 100).toFixed(1) + '%';
-      },
-    });
-
-    return () => {
-      pinTrigger.kill();
-      gsap.set(cards, { clearProps: 'transform,opacity,filter' });
-      if (introEl) gsap.set(introEl, { clearProps: 'opacity' });
-      if (flashEl) gsap.set(flashEl, { clearProps: 'opacity' });
-      if (timelineFill) timelineFill.style.width = '0%';
-    };
-  });
-}
-//initStoryCardsPin();
 /* ================= REVIEW CARDS: MAGNETIC 3D TILT ================= */
 document.querySelectorAll('.review-card').forEach(card => {
   card.addEventListener('mousemove', e => {
@@ -1046,3 +958,4 @@ window.addEventListener('scroll', () => {
   lastScrollY = currentY;
 }, { passive: true });
 initBrandBanner();
+initMouseTrail();

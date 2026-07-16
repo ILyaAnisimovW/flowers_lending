@@ -2,6 +2,11 @@
    Токены — взяты один в один из src/style.css сайта Bloomly,
    ничего не придумываем заново: это окно должно выглядеть как
    родная часть того же продукта, а не отдельный виджет.
+
+   Тема окна теперь тёмная (ink/paper поменялись местами)
+   -- тот же язык, что у .catalog-page, .showcase, .nav--solid
+   и прочих тёмных секций сайта: тёмный фон, paper-текст,
+   рамки/подписи через rgba(250,249,245, X) вместо gray-*.
    ========================================================= */
 :root{
   --poppy:#E8412C;
@@ -22,15 +27,12 @@ body{
   min-height:100vh;
 }
 button{font-family:inherit;border:none;background:none;cursor:pointer;}
-input,textarea{font-family:inherit;}
+input,textarea,select{font-family:inherit;}
 :focus-visible{outline:2.5px solid var(--poppy);outline-offset:2px;}
 
 /* ---------------------------------------------------------
-   ФОН-ДЕМО: просто чтобы было на чём показать окно. Пока окно
-   оплаты открыто, страница за ним уходит в ч/б и притемняется —
-   обыгрываем собственный слоган сайта «ч/б снаружи, ярко
-   внутри» тем, что при открытии оплаты всё внешнее гаснет, а
-   цвет остаётся только в окне.
+   ФОН-ДЕМО: только для отдельного демо-файла checkout.html,
+   на catalog.html/index.html этих классов просто нет в разметке.
    --------------------------------------------------------- */
 .demo-page{ transition:filter .5s ease; }
 .demo-page.is-dimmed{ filter:grayscale(1) brightness(.75); }
@@ -61,14 +63,12 @@ input,textarea{font-family:inherit;}
 .demo-card-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.98rem;}
 .demo-card-desc{font-size:.84rem;color:var(--gray-500);margin-top:3px;}
 .demo-card-price{font-family:'Space Grotesk',sans-serif;font-weight:700;margin-left:auto;white-space:nowrap;}
-.demo-open-btn,
-.checkout-btn-solid{
+.demo-open-btn{
   background:var(--ink);color:var(--paper);
   font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.95rem;
   padding:17px 30px;border-radius:100px;
 }
-.demo-open-btn:hover,
-.checkout-btn-solid:hover{background:var(--poppy);}
+.demo-open-btn:hover{background:var(--poppy);}
 
 /* =========================================================
    ОВЕРЛЕЙ
@@ -77,7 +77,7 @@ input,textarea{font-family:inherit;}
   position:fixed;inset:0;z-index:500;
   display:flex;align-items:center;justify-content:center;
   padding:32px;
-  background:rgba(13,13,13,.6);
+  background:rgba(13,13,13,.7);
   backdrop-filter:blur(6px);
   opacity:0;pointer-events:none;
   transition:opacity .3s ease;
@@ -85,18 +85,19 @@ input,textarea{font-family:inherit;}
 .checkout-overlay.is-open{opacity:1;pointer-events:auto;}
 
 /* =========================================================
-   МОДАЛКА
+   МОДАЛКА -- тёмная поверхность (var(--ink)), как showcase/nav--solid
    ========================================================= */
 .checkout-modal{
   width:100%;max-width:480px;max-height:88vh;
-  background:var(--paper);color:var(--ink);
+  background:var(--ink);color:var(--paper);
   border-radius:24px;
   display:flex;flex-direction:column;
   overflow:hidden;
   transform:translateY(24px) scale(.98);
   opacity:0;
   transition:transform .35s cubic-bezier(.2,.8,.2,1), opacity .3s ease;
-  box-shadow:0 60px 120px rgba(0,0,0,.5);
+  box-shadow:0 60px 120px rgba(0,0,0,.6);
+  border:1px solid rgba(250,249,245,.08);
 }
 .checkout-overlay.is-open .checkout-modal{
   transform:translateY(0) scale(1);
@@ -106,7 +107,7 @@ input,textarea{font-family:inherit;}
 .checkout-head{
   position:relative;
   padding:26px 60px 20px 28px;
-  border-bottom:1px solid var(--gray-200);
+  border-bottom:1px solid rgba(250,249,245,.14);
   flex:none;
 }
 .checkout-eyebrow{
@@ -116,26 +117,33 @@ input,textarea{font-family:inherit;}
 .checkout-head h2{
   font-family:'Fraunces',serif;font-weight:600;font-style:italic;
   font-size:1.5rem;margin-top:8px;
+  color:var(--paper);
 }
 .checkout-close{
   position:absolute;top:20px;right:20px;
   width:36px;height:36px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-size:1.3rem;color:var(--gray-500);
+  font-size:1.3rem;color:rgba(250,249,245,.5);
   transition:background .2s ease,color .2s ease;
 }
-.checkout-close:hover{background:var(--gray-200);color:var(--ink);}
+.checkout-close:hover{background:rgba(250,249,245,.1);color:var(--paper);}
 
+/* overflow-x:hidden убирает призрачный горизонтальный скроллбар:
+   если задать только overflow-y:auto, браузер по спеке CSS сам
+   переводит overflow-x в auto тоже -- и стоит контенту хоть на
+   пиксель вылезти за край (например ряду из инпутов), внизу
+   появляется уродливая горизонтальная полоса прокрутки, хотя
+   скроллить в стороны здесь никогда не нужно. */
 .checkout-body{
-  flex:1;overflow-y:auto;
+  flex:1;overflow-y:auto;overflow-x:hidden;
   padding:24px 28px 8px;
   display:flex;flex-direction:column;gap:26px;
 }
-.checkout-body::-webkit-scrollbar{width:6px;}
-.checkout-body::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:3px;}
+.checkout-body::-webkit-scrollbar{width:6px;height:0;}
+.checkout-body::-webkit-scrollbar-thumb{background:rgba(250,249,245,.2);border-radius:3px;}
 
 /* ---- сводка по товару: ч/б превью, цветное только пока сфокусировано
-   окно оплаты — тот же hover-приём, что и .catalog-card-media img на
+   окно оплаты -- тот же hover-приём, что и .catalog-card-media img на
    основном сайте, только запускается не по hover, а сразу при открытии ---- */
 .checkout-summary-item{
   display:flex;align-items:center;gap:14px;
@@ -149,37 +157,39 @@ input,textarea{font-family:inherit;}
   transition:filter .5s ease .1s;
 }
 .checkout-overlay.is-open .checkout-thumb img{filter:grayscale(0) contrast(1.02);}
-.checkout-summary-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.92rem;}
-.checkout-summary-sub{font-size:.78rem;color:var(--gray-500);margin-top:2px;}
+.checkout-summary-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.92rem;color:var(--paper);}
+.checkout-summary-sub{font-size:.78rem;color:rgba(250,249,245,.5);margin-top:2px;}
 .checkout-summary-price{
   margin-left:auto;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.92rem;
-  white-space:nowrap;
+  white-space:nowrap;color:var(--paper);
 }
 
 .checkout-label{
   display:block;
   font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.72rem;
-  letter-spacing:.08em;text-transform:uppercase;color:var(--gray-500);
+  letter-spacing:.08em;text-transform:uppercase;color:rgba(250,249,245,.45);
   margin-bottom:10px;
 }
 
 /* ---- сегментированный переключатель: доставка/самовывоз, оплата ----
-   Пилюльная форма — тот же язык, что у btn-primary/nav-cta на сайте
-   (border-radius:100px), а не отдельный придуманный компонент. */
+   Пилюльная форма -- тот же язык, что у btn-primary/nav-cta на сайте
+   (border-radius:100px). Активный сегмент выделен поппи-акцентом --
+   тем же цветом, каким на тёмных секциях сайта уже подсвечивают
+   активное состояние (tag-hot, catalog-card-tag, showcase-dot.active). */
 .checkout-segment{
   display:flex;gap:4px;
-  background:var(--gray-200);
+  background:rgba(250,249,245,.07);
   border-radius:100px;padding:4px;
 }
 .checkout-segment-btn{
   flex:1;text-align:center;
   padding:11px 12px;border-radius:100px;
   font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.84rem;
-  color:var(--gray-700);
+  color:rgba(250,249,245,.55);
   transition:background .25s ease,color .25s ease;
 }
 .checkout-segment-btn.is-active{
-  background:var(--ink);color:var(--paper);
+  background:var(--poppy);color:var(--paper);
 }
 
 .checkout-fields{
@@ -194,26 +204,44 @@ input,textarea{font-family:inherit;}
 }
 
 .checkout-row-2{display:flex;gap:12px;}
-.checkout-field{flex:1;display:flex;flex-direction:column;gap:7px;}
+.checkout-field{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;}
 .checkout-field--narrow{flex:0 0 92px;}
 .checkout-field label{
-  font-size:.78rem;font-weight:600;color:var(--gray-700);
+  font-size:.78rem;font-weight:600;color:rgba(250,249,245,.6);
 }
 .checkout-field input,
+.checkout-field select,
 .checkout-field textarea,
 .checkout-textarea{
-  border:1.5px solid var(--gray-300);border-radius:10px;
-  padding:12px 14px;font-size:.9rem;color:var(--ink);
-  background:var(--paper);
+  width:100%;
+  border:1.5px solid rgba(250,249,245,.2);border-radius:10px;
+  padding:12px 14px;font-size:.9rem;color:var(--paper);
+  background:transparent;
   transition:border-color .2s ease;
 }
 .checkout-field input:focus,
-.checkout-textarea:focus{border-color:var(--ink);outline:none;}
+.checkout-field select:focus,
+.checkout-textarea:focus{border-color:var(--paper);outline:none;}
 .checkout-field input::placeholder,
-.checkout-textarea::placeholder{color:var(--gray-500);}
-.checkout-textarea{width:100%;min-height:68px;resize:vertical;font-family:inherit;}
+.checkout-textarea::placeholder{color:rgba(250,249,245,.4);}
+.checkout-textarea{min-height:68px;resize:vertical;font-family:inherit;}
 
-.checkout-field.has-error input{border-color:var(--poppy);}
+/* select -- та же тёмная стрелка, что уже используется в
+   .catalog-sort-block select (сайдбар каталога), просто перенесена
+   сюда, а не придумана заново */
+.checkout-field select{
+  appearance:none;
+  cursor:pointer;
+  padding-right:36px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 8l5 5 5-5' stroke='%23FAF9F5' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+}
+.checkout-field select option{background:var(--ink);color:var(--paper);}
+.checkout-field select:invalid{color:rgba(250,249,245,.4);}
+
+.checkout-field.has-error input,
+.checkout-field.has-error select{border-color:var(--poppy);}
 .checkout-error-msg{
   font-size:.74rem;color:var(--poppy);display:none;
 }
@@ -222,31 +250,31 @@ input,textarea{font-family:inherit;}
 /* ---- карточка адреса самовывоза ---- */
 .checkout-pickup-info{
   display:flex;flex-direction:column;gap:4px;
-  border:1.5px dashed var(--gray-300);border-radius:14px;
+  border:1.5px dashed rgba(250,249,245,.25);border-radius:14px;
   padding:16px 16px;
-  font-size:.86rem;color:var(--gray-700);
+  font-size:.86rem;color:rgba(250,249,245,.65);
   transition:max-height .4s ease, opacity .3s ease;
 }
-.checkout-pickup-info b{color:var(--ink);}
+.checkout-pickup-info b{color:var(--paper);}
 .checkout-pickup-info[hidden]{display:none;}
 
 .checkout-section{display:flex;flex-direction:column;}
 
 /* ---- итог заказа ---- */
 .checkout-foot{
-  flex:none;border-top:1px solid var(--gray-200);
+  flex:none;border-top:1px solid rgba(250,249,245,.14);
   padding:20px 28px 26px;
   display:flex;flex-direction:column;gap:14px;
 }
 .checkout-totals{display:flex;flex-direction:column;gap:8px;}
 .checkout-totals-row{
   display:flex;justify-content:space-between;
-  font-size:.86rem;color:var(--gray-700);
+  font-size:.86rem;color:rgba(250,249,245,.6);
 }
 .checkout-totals-row span:last-child{font-variant-numeric:tabular-nums;}
 .checkout-totals-total{
-  padding-top:10px;margin-top:2px;border-top:1px solid var(--gray-200);
-  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.05rem;color:var(--ink);
+  padding-top:10px;margin-top:2px;border-top:1px solid rgba(250,249,245,.14);
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.05rem;color:var(--paper);
 }
 .checkout-cta{
   width:100%;
@@ -257,31 +285,9 @@ input,textarea{font-family:inherit;}
   transition:background .2s ease;
 }
 .checkout-cta:hover{background:var(--poppy-dark);}
-.checkout-cta:disabled{background:var(--gray-300);color:var(--gray-500);cursor:not-allowed;}
+.checkout-cta:disabled{background:rgba(250,249,245,.12);color:rgba(250,249,245,.35);cursor:not-allowed;}
 .checkout-trust{
-  text-align:center;font-size:.74rem;color:var(--gray-500);line-height:1.5;
-}
-
-/* ---- экран успеха: заменяет тело модалки после отправки ---- */
-.checkout-success{
-  display:none;
-  flex:1;flex-direction:column;align-items:center;justify-content:center;
-  text-align:center;padding:50px 32px 40px;gap:14px;
-}
-.checkout-success.is-visible{display:flex;}
-.checkout-success-mark{
-  width:60px;height:60px;border-radius:50%;
-  background:var(--poppy);color:var(--paper);
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.6rem;margin-bottom:6px;
-}
-.checkout-success h3{
-  font-family:'Fraunces',serif;font-weight:600;font-style:italic;font-size:1.4rem;
-}
-.checkout-success p{color:var(--gray-700);font-size:.92rem;line-height:1.6;max-width:34ch;}
-.checkout-success-num{
-  font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--ink);
-  letter-spacing:.02em;
+  text-align:center;font-size:.74rem;color:rgba(250,249,245,.4);line-height:1.5;
 }
 
 /* =========================================================

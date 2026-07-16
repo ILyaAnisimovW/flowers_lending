@@ -134,3 +134,20 @@
   .faq-strip{opacity:1 !important;transform:none !important;}
   .faq-strip-sheen{display:none;}
 }
+
+.faq-title{
+  display:block;
+  font-family:'Space Grotesk', sans-serif;
+  font-weight:700;
+  font-size:clamp(7rem, 16vw, 15rem);
+  line-height:.82;
+  letter-spacing:-.03em;
+  color:var(--poppy);
+  margin:0 0 32px;
+}
+
+@media (max-width:640px){
+  .faq-title{
+    font-size:clamp(4.5rem, 24vw, 7rem);
+  }
+}

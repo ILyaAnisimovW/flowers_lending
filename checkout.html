@@ -70,6 +70,18 @@
 
       <!-- поля адреса: видны только для доставки -->
       <div class="checkout-fields" id="deliveryFields">
+        <div class="checkout-field" id="cityField">
+          <label>Город</label>
+          <select id="citySelect" required>
+            <option value="" disabled selected>Выберите город</option>
+            <option value="riga">Рига</option>
+            <option value="moscow">Москва</option>
+            <option value="spb">Санкт-Петербург</option>
+            <option value="kazan">Казань</option>
+            <option value="jurmala">Юрмала</option>
+          </select>
+          <span class="checkout-error-msg">Выберите город доставки</span>
+        </div>
         <div class="checkout-row-2">
           <div class="checkout-field" id="streetField">
             <label>Улица, дом</label>
@@ -104,22 +116,10 @@
       <!-- контакты -->
       <div class="checkout-section">
         <label class="checkout-label">Контакты</label>
-        <div class="checkout-row-2">
-          <div class="checkout-field">
-            <label>Имя</label>
-            <input type="text" id="nameInput" placeholder="Как к вам обращаться">
-          </div>
-          <div class="checkout-field">
-            <label>Телефон</label>
-            <input type="tel" id="phoneInput" placeholder="+371 20 000 000">
-          </div>
+        <div class="checkout-field">
+          <label>Телефон</label>
+          <input type="tel" id="phoneInput" placeholder="+371 20 000 000">
         </div>
-      </div>
-
-      <!-- открытка -->
-      <div class="checkout-section">
-        <label class="checkout-label">Открытка (бесплатно)</label>
-        <textarea class="checkout-textarea" placeholder="Пара тёплых слов от руки — впишем на карточку"></textarea>
       </div>
 
       <!-- оплата -->
@@ -142,14 +142,6 @@
       </div>
       <button class="checkout-cta" id="checkoutCta">Оплатить 3 100 ₽ →</button>
       <p class="checkout-trust" id="checkoutTrust">Оплата картой защищена. Нажимая «Оплатить», вы соглашаетесь с условиями доставки.</p>
-    </div>
-
-    <!-- экран успеха -->
-    <div class="checkout-success" id="checkoutSuccess">
-      <div class="checkout-success-mark">✓</div>
-      <h3>Заказ принят</h3>
-      <p id="successText">Курьер выедет в течение 60 минут. Номер заказа — <span class="checkout-success-num" id="orderNumber">#0000</span></p>
-      <button class="checkout-btn-solid" id="checkoutDone">Готово</button>
     </div>
 
   </div>

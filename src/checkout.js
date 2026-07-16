@@ -1,18 +1,19 @@
 /* =========================================================
    Окно оплаты — переиспользуемый модуль.
 
-   Раньше товар был зашит в HTML намертво ("Нежный флирт", 2800 ₽),
-   поэтому окно можно было открыть только одной хардкодной кнопкой
-   с id="openCheckout" — на catalog.html и index.html такой кнопки
-   нет, там свои "Заказать", и клик по ним ничего не открывал.
+   Открывается для любого элемента с data-checkout-name на странице
+   (см. catalog.js render()) — конкретный товар передаётся через
+   data-атрибуты кнопки, по которой кликнули, и подставляется в
+   сводку заказа.
 
-   Теперь окно слушает КЛИК НА ВСЁМ ДОКУМЕНТЕ и открывается для
-   любого элемента с data-checkout-name (см. catalog.js) — конкретный
-   товар просто передаётся через data-атрибуты кнопки, по которой
-   кликнули, и подставляется в сводку заказа.
+   По нажатию "Оплатить"/"Подтвердить заказ" — простая валидация
+   (для доставки: город + улица, всегда: телефон) и переход на
+   каталог (никакого экрана "заказ принят" внутри окна — по месту
+   так и просили).
    ========================================================= */
 
 const DELIVERY_FEE = 300;
+const CATALOG_URL = 'catalog.html';
 
 const state = {
   fulfillment: 'delivery',
@@ -27,10 +28,6 @@ if (overlay) {
 
   const demoPage        = document.getElementById('demoPage'); // есть только в демо-файле
   const closeBtn        = document.getElementById('checkoutClose');
-  const doneBtn         = document.getElementById('checkoutDone');
-  const bodyEl          = document.getElementById('checkoutBody');
-  const foot            = document.getElementById('checkoutFoot');
-  const success         = document.getElementById('checkoutSuccess');
 
   const deliveryFields  = document.getElementById('deliveryFields');
   const pickupInfo      = document.getElementById('pickupInfo');
@@ -41,10 +38,12 @@ if (overlay) {
   const totalValue      = document.getElementById('totalValue');
   const cta             = document.getElementById('checkoutCta');
   const trust           = document.getElementById('checkoutTrust');
+
+  const cityField       = document.getElementById('cityField');
+  const citySelect       = document.getElementById('citySelect');
   const streetField     = document.getElementById('streetField');
   const streetInput     = document.getElementById('streetInput');
   const phoneInput      = document.getElementById('phoneInput');
-  const successText     = document.getElementById('successText');
 
   const summaryName  = document.getElementById('checkoutSummaryName');
   const summaryDesc  = document.getElementById('checkoutSummaryDesc');
@@ -122,8 +121,10 @@ if (overlay) {
     });
   });
 
-  /* самовывоз убирает строчки адреса и переименовывает "наличными курьеру"
-     в "наличными на месте" */
+  /* самовывоз убирает поля адреса (город/улица/кв./когда привезти) и
+     переименовывает "наличными курьеру" в "наличными на месте" --
+     самовывоз пока возможен только из мастерской на ул. Бривибас,
+     поэтому городом можно не спрашивать */
   function applyFulfillment(){
     const isPickup = state.fulfillment === 'pickup';
 
@@ -132,8 +133,10 @@ if (overlay) {
 
     cashSegmentBtn.textContent = isPickup ? 'Наличными на месте' : 'Наличными курьеру';
 
-    // поле "улица, дом" обязательно только для доставки
+    // город и улица обязательны только при доставке
+    citySelect.required = !isPickup;
     streetInput.required = !isPickup;
+    cityField.classList.remove('has-error');
     streetField.classList.remove('has-error');
   }
 
@@ -171,24 +174,17 @@ if (overlay) {
     overlay.classList.remove('is-open');
     if (demoPage) demoPage.classList.remove('is-dimmed');
     document.body.style.overflow = '';
-    setTimeout(() => {
-      bodyEl.style.display = '';
-      foot.style.display = '';
-      success.classList.remove('is-visible');
-    }, 300);
   }
 
   closeBtn.addEventListener('click', closeCheckout);
-  doneBtn.addEventListener('click', closeCheckout);
   overlay.addEventListener('click', e => { if (e.target === overlay) closeCheckout(); });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && overlay.classList.contains('is-open')) closeCheckout();
   });
 
   /* ---- любая кнопка "Заказать" на странице открывает окно ----
-     main.js / catalog.js помечают такие кнопки атрибутом
-     data-checkout-name (см. catalog.js render()) вместо обычной
-     ссылки на index.html#contacts, которая никак не была связана
+     catalog.js помечает такие кнопки атрибутом data-checkout-name
+     вместо обычной ссылки на index.html#contacts, никак не связанной
      с этим окном. */
   document.addEventListener('click', e => {
     const trigger = e.target.closest('[data-checkout-name]');
@@ -202,10 +198,16 @@ if (overlay) {
     });
   });
 
-  /* ---- отправка заказа: простая валидация + экран успеха ---- */
+  /* ---- отправка заказа: валидация, затем переход в каталог ---- */
   cta.addEventListener('click', () => {
     let valid = true;
 
+    if (state.fulfillment === 'delivery' && !citySelect.value){
+      cityField.classList.add('has-error');
+      valid = false;
+    } else {
+      cityField.classList.remove('has-error');
+    }
     if (state.fulfillment === 'delivery' && !streetInput.value.trim()){
       streetField.classList.add('has-error');
       valid = false;
@@ -220,16 +222,7 @@ if (overlay) {
     }
     if (!valid) return;
 
-    const orderNum = '#' + Math.floor(1000 + Math.random() * 9000);
-    const isPickup = state.fulfillment === 'pickup';
-
-    successText.innerHTML = isPickup
-      ? `Ждём вас на ул. Бривибас, 12. Номер заказа — <span class="checkout-success-num">${orderNum}</span>`
-      : `Курьер выедет в течение 60 минут. Номер заказа — <span class="checkout-success-num">${orderNum}</span>`;
-
-    bodyEl.style.display = 'none';
-    foot.style.display = 'none';
-    success.classList.add('is-visible');
+    window.location.href = CATALOG_URL;
   });
 
   // экспортируем на случай, если понадобится открыть окно программно
