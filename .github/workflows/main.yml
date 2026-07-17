@@ -1,18 +1,18 @@
-name: Frontend CI
+name: Frontend CI/CD
 
-# Пайплайн будет запускаться при каждом пуше в ветки main и full
 on:
   push:
-    branches: [ "main", "full" ]
-  pull_request:
-    branches: [ "main", "full" ]
+    branches: [ "main" ] # Деплой будет происходить только при пуше в ветку main
+
+permissions:
+  contents: write # Даем пайплайну право записывать код в ветку gh-pages
 
 jobs:
-  build-and-test:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Скачиваем код репозитория на виртуальную машину GitHub
+    # 1. Скачиваем код репозитория
     - name: Checkout repository
       uses: actions/checkout@v4
 
@@ -20,17 +20,25 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-node: '20' # ставим стабильную 20-ю версию
-        cache: 'npm'    # кэшируем зависимости для быстрой сборки
+        node-version: '20'
+        cache: 'npm'
 
-    # 3. Устанавливаем пакеты из package.json
+    # 3. Устанавливаем зависимости
     - name: Install dependencies
       run: npm ci
 
-    # 4. Запускаем проверку кода (ESLint), так как у вас есть eslint.config.js
+    # 4. Проверяем код линтером
     - name: Run linter
       run: npm run lint --if-present
 
-    # 5. Собираем проект (если в package.json настроен скрипт build)
+    # 5. Собираем проект (если в package.json есть скрипт build)
+    # Если сборки нет и у вас просто готовые HTML-файлы, этот шаг автоматически пропустится
     - name: Build project
       run: npm run build --if-present
+
+    # 6. Автоматический деплой
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: . # Если проект собирается в папку dist или build, замените точку на имя папки (например: dist)
+        branch: gh-pages # Ветка, куда зальется готовый сайт
