@@ -166,12 +166,12 @@ function setProgress(fraction){
 
 // реальные критичные ассеты, без которых первый экран не имеет смысла показывать
 const criticalImages = [
-  '/images/logo.png',
-  '/images/bouquet-flirt.png',
-  '/images/bouquet-field.png',
-  '/images/bouquet-peach.png',
-  '/images/bouquet-cloud.png',
-  '/images/bouquet-whisper.png',
+  'images/logo.png',
+  'images/bouquet-flirt.png',
+  'images/bouquet-field.png',
+  'images/bouquet-peach.png',
+  'images/bouquet-cloud.png',
+  'images/bouquet-whisper.png',
 ];
 const totalTasks = criticalImages.length + 1; // +1 за шрифты
 let doneCount = 0;
@@ -228,11 +228,11 @@ function playHero(){
 }
 
 const showcaseItems = [
-  { name:'Нежный флирт',      desc:'Розовые и белые альстромерии в нежной упаковке',       price:'2 800 ₽', img:'/images/bouquet-flirt.png',    cat:'Хит недели'  },
-  { name:'Полевой букет',     desc:'Ромашки, зелень и полевые травы',                       price:'2 400 ₽', img:'/images/bouquet-field.png',    cat:'Бестселлер'  },
-  { name:'Утренний персик',   desc:'Пионовидные розы, ромашки и гвоздика',                  price:'3 100 ₽', img:'/images/bouquet-peach.png',    cat:'Новинка'     },
-  { name:'Ромашковое облако', desc:'Огромная шапка хризантем с гипсофилой',                 price:'4 500 ₽', img:'/images/bouquet-cloud.png',    cat:'Премиум'     },
-  { name:'Тихий шёпот',       desc:'Эустома, гвоздика и пастельные тона',                   price:'2 200 ₽', img:'/images/bouquet-whisper.png',  cat:'Топ подарок' },
+  { name:'Нежный флирт',      desc:'Розовые и белые альстромерии в нежной упаковке',       price:'2 800 ₽', img:'images/bouquet-flirt.png',    cat:'Хит недели'  },
+  { name:'Полевой букет',     desc:'Ромашки, зелень и полевые травы',                       price:'2 400 ₽', img:'images/bouquet-field.png',    cat:'Бестселлер'  },
+  { name:'Утренний персик',   desc:'Пионовидные розы, ромашки и гвоздика',                  price:'3 100 ₽', img:'images/bouquet-peach.png',    cat:'Новинка'     },
+  { name:'Ромашковое облако', desc:'Огромная шапка хризантем с гипсофилой',                 price:'4 500 ₽', img:'images/bouquet-cloud.png',    cat:'Премиум'     },
+  { name:'Тихий шёпот',       desc:'Эустома, гвоздика и пастельные тона',                   price:'2 200 ₽', img:'images/bouquet-whisper.png',  cat:'Топ подарок' },
 ];
 
 const showcaseTitle   = document.getElementById('showcaseTitle');
@@ -324,11 +324,11 @@ showcaseSection.addEventListener('mouseenter', () => clearInterval(showcaseTimer
 showcaseSection.addEventListener('mouseleave', resetShowcaseTimer);
 
 const bouquets = [
-  { name:'Нежный флирт',      desc:'Розовые и белые альстромерии в нежной упаковке', price:'2 800 ₽', img:'/images/bouquet-flirt.png',   accent:'#D9748F' },
-  { name:'Полевой букет',     desc:'Ромашки, зелень и полевые травы',                price:'2 400 ₽', img:'/images/bouquet-field.png',   accent:'#7DAE5C' },
-  { name:'Утренний персик',   desc:'Пионовидные розы, ромашки и гвоздика',           price:'3 100 ₽', img:'/images/bouquet-peach.png',   accent:'#E39A5D' },
-  { name:'Ромашковое облако', desc:'Огромная шапка хризантем с гипсофилой',          price:'4 500 ₽', img:'/images/bouquet-cloud.png',   accent:'#E8A9C4' },
-  { name:'Тихий шёпот',       desc:'Эустома, гвоздика и пастельные тона',            price:'2 200 ₽', img:'/images/bouquet-whisper.png', accent:'#D98CA3' },
+  { name:'Нежный флирт',      desc:'Розовые и белые альстромерии в нежной упаковке', price:'2 800 ₽', img:'images/bouquet-flirt.png',   accent:'#D9748F' },
+  { name:'Полевой букет',     desc:'Ромашки, зелень и полевые травы',                price:'2 400 ₽', img:'images/bouquet-field.png',   accent:'#7DAE5C' },
+  { name:'Утренний персик',   desc:'Пионовидные розы, ромашки и гвоздика',           price:'3 100 ₽', img:'images/bouquet-peach.png',   accent:'#E39A5D' },
+  { name:'Ромашковое облако', desc:'Огромная шапка хризантем с гипсофилой',          price:'4 500 ₽', img:'images/bouquet-cloud.png',   accent:'#E8A9C4' },
+  { name:'Тихий шёпот',       desc:'Эустома, гвоздика и пастельные тона',            price:'2 200 ₽', img:'images/bouquet-whisper.png', accent:'#D98CA3' },
 ];
 
 initCarousel3D(bouquets);
