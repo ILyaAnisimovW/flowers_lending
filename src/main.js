@@ -3,6 +3,7 @@ import { initFAQ } from './faq.js';
 import { initFlorists } from './florists.js';
 import { initBrandBanner } from './brand-banner.js';
 import { initMouseTrail } from './mouse-trail.js';
+import { initContactPanel } from './contact-panel.js';
 
 gsap.registerPlugin(ScrollTrigger);
 ScrollTrigger.config({
@@ -109,71 +110,89 @@ document.querySelectorAll('img[loading="lazy"]').forEach(img => {
 document.body.classList.add('is-loading');
 
 /* ================= PRELOADER ================= */
-const counterNum = document.getElementById('counterNum');
-const counterBar = document.getElementById('counterBar');
 const preloader = document.getElementById('preloader');
-const preloaderStack = document.getElementById('preloaderStack');
+const preloaderLogo = document.getElementById('preloaderLogo');
+const preloaderRing = document.getElementById('preloaderRing');
+const preloaderRingSvg = document.querySelector('.preloader-logo-ring');
+const preloaderPercent = document.getElementById('preloaderPercent');
+const preloaderLabel = document.getElementById('preloaderLabel');
+const preloaderBarFill = document.getElementById('preloaderBarFill');
+const preloaderBarTrack = document.querySelector('.preloader-bar-track');
+const preloaderFlash = document.getElementById('preloaderFlash');
 
-const stackImages = [
+document.body.classList.add('is-loading');
+
+const ringLength = preloaderRing.getTotalLength();
+preloaderRing.style.strokeDasharray = ringLength;
+preloaderRing.style.strokeDashoffset = ringLength;
+
+// фразы, которыми лейбл скрэмблится по мере прогресса —
+// scrambleText объявлена ниже по файлу через function-декларацию,
+// поэтому она захостится и доступна уже здесь
+const LOADING_PHRASES = [
+  'Собираем цветы',
+  'Подрезаем стебли',
+  'Заворачиваем в крафт',
+  'Почти готово',
+];
+let __lastPhraseIndex = -1;
+
+const progressObj = { val: 0 };
+let displayedPercent = 0;
+function setProgress(fraction){
+  gsap.to(progressObj, {
+    val: Math.min(fraction, 1) * 100,
+    duration: .45, ease: 'power2.out',
+    onUpdate: () => {
+      const v = Math.round(progressObj.val);
+      if (v !== displayedPercent){
+        displayedPercent = v;
+        preloaderPercent.firstChild.textContent = v;
+      }
+      preloaderRing.style.strokeDashoffset = ringLength * (1 - progressObj.val / 100);
+      if (preloaderBarFill) preloaderBarFill.style.width = progressObj.val + '%';
+
+      const phraseIndex = Math.min(
+        LOADING_PHRASES.length - 1,
+        Math.floor((progressObj.val / 100) * LOADING_PHRASES.length)
+      );
+      if (phraseIndex !== __lastPhraseIndex){
+        __lastPhraseIndex = phraseIndex;
+        scrambleText(preloaderLabel, LOADING_PHRASES[phraseIndex]);
+      }
+    }
+  });
+}
+
+// реальные критичные ассеты, без которых первый экран не имеет смысла показывать
+const criticalImages = [
+  '/images/logo.png',
   '/images/bouquet-flirt.png',
   '/images/bouquet-field.png',
   '/images/bouquet-peach.png',
   '/images/bouquet-cloud.png',
   '/images/bouquet-whisper.png',
 ];
-const stackRot   = [-11, 7, -5, 12, -3];
-const stackShift = [[-7,-5], [6,-3], [-4,6], [8,3], [-2,-8]];
+const totalTasks = criticalImages.length + 1; // +1 за шрифты
+let doneCount = 0;
+function taskDone(){ doneCount++; setProgress(doneCount / totalTasks); }
 
-stackImages.forEach(src => {
-  const card = document.createElement('div');
-  card.className = 'preloader-card';
-  card.innerHTML = `<img src="${src}" alt="">`;
-  preloaderStack.appendChild(card);
-});
+const fontsPromise = (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(taskDone);
+const imagePromises = criticalImages.map(src => new Promise(resolve => {
+  const img = new Image();
+  img.onload = img.onerror = () => { taskDone(); resolve(); };
+  img.src = src;
+}));
 
-const cards = preloaderStack.querySelectorAll('.preloader-card');
-
-gsap.set(cards, { opacity: 0, scale: .3, y: 26, rotate: 0 });
-gsap.to(cards, {
-  opacity: 1,
-  scale: 1,
-  y: (i) => stackShift[i][1],
-  x: (i) => stackShift[i][0],
-  rotate: (i) => stackRot[i],
-  duration: .5,
-  stagger: .07,
-  ease: 'back.out(2.2)',
-  delay: .05
-});
-
-const counterObj = { val: 0 };
-let __counterDone = false;
+let __assetsLoaded = false;
 let __pageReadyDone = false;
-
-function __maybeRunIntro(){
-  if (__counterDone && __pageReadyDone) runIntro();
-}
-
-gsap.to(counterObj, {
-  val: 100,
-  duration: 1.35,
-  delay: .15,
-  ease: 'power1.inOut',
-  onUpdate: () => {
-    const v = Math.round(counterObj.val);
-    counterNum.textContent = v;
-    counterBar.style.width = v + '%';
-  },
-  onComplete: () => { __counterDone = true; __maybeRunIntro(); }
-});
-
-__pageReady.then(() => {
-  __pageReadyDone = true;
-  ScrollTrigger.refresh();
-  __maybeRunIntro();
-});
+Promise.all([fontsPromise, ...imagePromises]).then(() => { __assetsLoaded = true; maybeRunIntro(); });
+__pageReady.then(() => { __pageReadyDone = true; ScrollTrigger.refresh(); maybeRunIntro(); });
+function maybeRunIntro(){ if (__assetsLoaded && __pageReadyDone) runIntro(); }
 
 function runIntro(){
+  preloaderLogo.style.animation = 'none'; // снимаем CSS keyframes перед тем как их место займёт GSAP
+
   const tl = gsap.timeline({
     onComplete: () => {
       preloader.remove();
@@ -182,22 +201,29 @@ function runIntro(){
     }
   });
 
-  tl.to(cards, {
-      opacity: 0, scale: .35, y: '-=18',
-      duration: .3, stagger: .025, ease: 'power3.in'
+  // 1. UI-обвес (кольцо/процент/бар/лейбл) быстро гаснет и уезжает вверх
+  tl.to([preloaderRingSvg, preloaderPercent, preloaderBarTrack, preloaderLabel], {
+      opacity: 0, y: -10, duration: .22, ease: 'power2.in', stagger: .03
     })
-    .to('.preloader-meta, .preloader-bar, .preloader-label', {
-      opacity: 0, y: -6, duration: .25, ease: 'power2.in'
-    }, '<')
-    .to('.preloader', { opacity: 0, duration: .3, ease: 'power2.out' }, '-=.12')
-    .add(playHero, '-=.2');
+    // 2. логотип делает акцентирующий "удар" перед стартом перехода
+    .to(preloaderLogo, { scale: 1.3, duration: .16, ease: 'power2.out' }, '-=.05')
+    // 3. poppy-вспышка раскрывается из центра — на долю секунды экран
+    //    целиком заливает акцентный цвет бренда
+    .to(preloaderFlash, { clipPath: 'circle(140% at 50% 50%)', duration: .55, ease: 'power4.inOut' }, '-=.02')
+    // 4. чёрный слой прелоадера схлопывается ровно в момент, когда
+    //    вспышка уже раскрылась — получается "flash cut", а не дыра в черноте
+    .to(preloader, { clipPath: 'circle(0% at 50% 50%)', duration: .85, ease: 'power4.inOut' }, '-=.3')
+    .to(preloaderLogo, { scale: 22, opacity: 0, duration: .85, ease: 'power3.in' }, '<')
+    // 5. вспышка сама уходит чуть позже, вымывая под собой hero
+    .to(preloaderFlash, { opacity: 0, duration: .4, ease: 'power2.in' }, '-=.35')
+    .add(playHero, '-=.55');
 }
 
 function playHero(){
   gsap.from('.showcase-tags, .showcase-title, .showcase-desc, .showcase-meta, .showcase-see-all', {
-    opacity: 0, y: 26, duration: .8, stagger: .08, ease: 'power3.out', delay: .1
+    opacity: 0, y: 26, duration: .8, stagger: .08, ease: 'power3.out'
   });
-  gsap.from('.showcase-media', { opacity: 0, scale: .92, duration: 1, ease: 'power2.out', delay: .18 });
+  gsap.from('.showcase-media', { opacity: 0, scale: .92, duration: 1, ease: 'power2.out', delay: .08 });
   gsap.delayedCall(1.1, startShowcase);
 }
 
@@ -959,3 +985,4 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 initBrandBanner();
 initMouseTrail();
+initContactPanel();

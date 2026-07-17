@@ -1,5 +1,6 @@
 import './style.css';
 import { initBrandBanner } from './brand-banner.js';
+import { initContactPanel } from './contact-panel.js';
 if (typeof gsap === 'undefined') {
   console.warn('GSAP не загрузился — анимации отключены, но контент должен отрисоваться.');
   window.gsap = {
@@ -321,6 +322,7 @@ function initReviewWall(){
 }
 initReviewWall();
 initBrandBanner();
+initContactPanel();
 
 /* ================= NAV: stays solid on this page (single dark section
    above a light footer, no need for the scroll-hide dance used on the

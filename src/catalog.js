@@ -1,5 +1,6 @@
 import { initBrandBanner } from './brand-banner.js';
 import { initMouseTrail } from './mouse-trail.js';
+import { initContactPanel } from './contact-panel.js';
 /* =========================================================
    CATALOG PAGE — data + filter/sort/render logic for catalog.html.
 
@@ -220,3 +221,4 @@ renderCategoryCounts();
 render();
 initBrandBanner();
 initMouseTrail();
+initContactPanel();

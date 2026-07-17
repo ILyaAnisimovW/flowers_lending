@@ -14,14 +14,20 @@
 
 <!-- ================= PRELOADER ================= -->
 <div class="preloader" id="preloader">
+  <div class="preloader-flash" id="preloaderFlash" aria-hidden="true"></div>
   <div class="preloader-content">
-    <div class="preloader-stack" id="preloaderStack"></div>
-    <div class="preloader-meta">
-      <svg class="preloader-mark" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="6" fill="#E8412C"/><ellipse cx="20" cy="8" rx="6" ry="9" fill="currentColor"/><ellipse cx="20" cy="32" rx="6" ry="9" fill="currentColor"/><ellipse cx="8" cy="20" rx="9" ry="6" fill="currentColor"/><ellipse cx="32" cy="20" rx="9" ry="6" fill="currentColor"/></svg>
-      <div class="preloader-count"><span id="counterNum">0</span><span class="preloader-percent-sign">%</span></div>
+    <div class="preloader-logo-wrap">
+      <svg class="preloader-logo-ring" viewBox="0 0 104 104">
+        <circle class="preloader-logo-ring-bg" cx="52" cy="52" r="48"></circle>
+        <circle class="preloader-logo-ring-progress" id="preloaderRing" cx="52" cy="52" r="48"></circle>
+      </svg>
+      <img src="/images/logo.png" alt="Bloomly" class="preloader-logo-mark" id="preloaderLogo">
     </div>
-    <div class="preloader-bar"><div class="preloader-bar-fill" id="counterBar"></div></div>
-    <div class="preloader-label">Собираем витрину</div>
+    <div class="preloader-percent" id="preloaderPercent">0<span>%</span></div>
+    <div class="preloader-bar-track">
+      <div class="preloader-bar-fill" id="preloaderBarFill"></div>
+    </div>
+    <div class="preloader-label" id="preloaderLabel">Собираем цветы</div>
   </div>
 </div>
 
@@ -34,14 +40,12 @@
   Bloomly
 </a>
     <nav class="nav-links">
-      <a href="#catalog">Каталог</a>
-      <a href="#how">Как заказать</a>
-      <a href="#florists">Команда</a>
-      <a href="#pricing">Тарифы</a>
-      <a href="#faq">Вопросы</a>
-      <a href="#contacts">Контакты</a>
-    </nav>
-    <a href="#catalog" class="nav-cta">Собрать букет</a>
+  <a href="catalog.html">Каталог</a>
+  <a href="#how">Как заказать</a>
+  <a href="#pricing">Тарифы</a>
+  <a href="#" class="nav-contact-trigger" data-contact-trigger>Контакты</a>
+</nav>
+<a href="catalog.html" class="nav-cta">Собрать букет</a>
   </div>
 </header>
 
@@ -668,6 +672,54 @@
     <span class="brand-banner-layer brand-banner-layer--base">BLOOMLY</span>
   </div>
 </section>
+
+<div class="contact-overlay" id="contactOverlay">
+  <div class="contact-modal" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
+    <div class="contact-head">
+      <span class="contact-eyebrow">Bloomly</span>
+      <h2 id="contactTitle">Как с нами связаться</h2>
+      <button class="contact-close" id="contactClose" aria-label="Закрыть">×</button>
+    </div>
+    <div class="contact-body">
+      <a href="tel:+37120000000" class="contact-row">
+        <span class="contact-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 2 6a2 2 0 0 1 2-2Z"/></svg></span>
+        <span class="contact-row-text">
+          <span class="contact-row-label">Телефон</span>
+          <span class="contact-row-value">+371 20 000 000</span>
+        </span>
+      </a>
+      <a href="mailto:hello@mak-flowers.lv" class="contact-row">
+        <span class="contact-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 5h18v14H3z"/><path d="m3 6 9 7 9-7"/></svg></span>
+        <span class="contact-row-text">
+          <span class="contact-row-label">Email</span>
+          <span class="contact-row-value">hello@mak-flowers.lv</span>
+        </span>
+      </a>
+      <a href="https://maps.google.com/?q=ул.+Бривибас+12,+Рига" target="_blank" rel="noopener" class="contact-row">
+        <span class="contact-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-6.6 7-12a7 7 0 0 0-14 0c0 5.4 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg></span>
+        <span class="contact-row-text">
+          <span class="contact-row-label">Мастерская</span>
+          <span class="contact-row-value">ул. Бривибас 12, Рига</span>
+        </span>
+      </a>
+      <div class="contact-row contact-row--static">
+        <span class="contact-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
+        <span class="contact-row-text">
+          <span class="contact-row-label">Часы работы</span>
+          <span class="contact-row-value">Ежедневно, 8:00–22:00</span>
+        </span>
+      </div>
+
+      <div class="contact-divider"></div>
+
+      <div class="contact-socials">
+        <a href="#" class="contact-social">Instagram</a>
+        <a href="#" class="contact-social">Telegram</a>
+        <a href="#" class="contact-social">WhatsApp</a>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script type="module" src="src/main.js"></script>
 </body>

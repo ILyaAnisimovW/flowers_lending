@@ -3,6 +3,7 @@
 @import './catalog.css';
 @import './brand-banner.css';
 @import './mouse-trail.css';
+@import './contact-panel.css';
 
 :root{
   --poppy:#E8412C;
@@ -60,70 +61,69 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
   z-index:10000;
   background:var(--ink);
   display:flex;align-items:center;justify-content:center;
+  clip-path:circle(150% at 50% 50%);
+  will-change:clip-path;
 }
 .preloader-content{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:16px;
-  color:var(--paper);
-}
-
-/* ---- overlapping card stack ---- */
-.preloader-stack{
+  gap:26px;color:var(--paper);
   position:relative;
-  width:clamp(130px,22vw,190px);
-  height:clamp(168px,29vw,246px);
+  z-index:2; /* выше .preloader-flash */
 }
-.preloader-card{
-  position:absolute;inset:0;
-  background:var(--paper);
-  padding:7px 7px 22px;
-  border-radius:4px;
-  box-shadow:0 22px 46px rgba(0,0,0,.5);
-  will-change:transform,opacity;
+.preloader-logo-wrap{ position:relative; width:104px;height:104px; display:flex;align-items:center;justify-content:center; }
+.preloader-logo-ring{ position:absolute;inset:0; width:100%;height:100%; transform:rotate(-90deg); }
+.preloader-logo-ring-bg{ fill:none; stroke:rgba(250,249,245,.12); stroke-width:1.4; }
+.preloader-logo-ring-progress{ fill:none; stroke:var(--poppy); stroke-width:2.2; stroke-linecap:round; }
+.preloader-logo-mark{
+  position:relative;z-index:1;
+  width:58px;height:58px;object-fit:contain;
+  animation:preloader-breathe 2.4s ease-in-out infinite;
 }
-.preloader-card img{
-  width:100%;height:100%;
-  object-fit:cover;display:block;
-}
-
-.preloader-meta{
-  display:flex;align-items:center;gap:10px;
-}
-.preloader-mark{
-  width:26px;height:26px;
-  animation:spin-mark 1.8s linear infinite;
-}
-@keyframes spin-mark{ to{ transform:rotate(360deg); } }
-.preloader-count{
+@keyframes preloader-breathe{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.06);} }
+.preloader-percent{
   font-family:'Fraunces',serif;
-  font-weight:700;
-  font-size:clamp(1.4rem,3.4vw,1.9rem);
-  letter-spacing:-.01em;
+  font-weight:600;
+  font-size:clamp(3.2rem,9vw,5.4rem);
   line-height:1;
+  letter-spacing:-.02em;
+  display:flex;align-items:flex-start;gap:3px;
   font-variant-numeric:tabular-nums;
-  color:var(--paper);
 }
-.preloader-percent-sign{
-  font-size:.6em;
+.preloader-percent span{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-size:.34em;
+  margin-top:.3em;
   color:var(--poppy);
-  margin-left:1px;
 }
-.preloader-bar{
-  width:min(38vw,150px);height:2px;
-  background:rgba(255,249,240,.2);
+.preloader-flash{
+  position:absolute;
+  inset:0;
+  background:var(--poppy);
+  clip-path:circle(0% at 50% 50%);
+  z-index:1;
+  pointer-events:none;
+  will-change:clip-path, opacity;
+}
+.preloader-bar-track{
+  width:220px;height:2px;
+  border-radius:2px;
+  background:rgba(250,249,245,.14);
   overflow:hidden;
 }
 .preloader-bar-fill{
   width:0%;height:100%;
   background:var(--poppy);
-}
-.preloader-label{
-  font-family:'Space Grotesk',sans-serif;
-  font-size:.68rem;font-weight:500;
-  letter-spacing:.14em;text-transform:uppercase;
-  opacity:.55;
+  border-radius:2px;
+  will-change:width;
 }
 
+.preloader-label{
+  font-family:'Fraunces',serif;font-weight:600;font-style:italic;
+  font-size:.95rem;letter-spacing:.02em;color:rgba(250,249,245,.55);
+  min-width:200px; /* чтобы скрэмбл-текст не дёргал layout */
+  text-align:center;
+}
 /* ---------- custom cursor ---------- */
 .petal-cursor{
   position:fixed;
@@ -188,6 +188,8 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
 }
 .nav-cta:hover{background:var(--paper);color:var(--ink);}
 
+.nav-links a.is-current{ color: var(--poppy); }
+.nav-links a.is-current::after{ width:100%; }
 /* nav states, toggled from JS depending on scroll */
 .nav.nav--solid{
   background:var(--ink);
@@ -572,7 +574,8 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
   font-variant-numeric:tabular-nums;
 }
 .advantages-heading{
-  font-family:'Fraunces',serif;
+  font-family:'Space Grotesk',sans-serif;
+  font-style:normal;
   font-weight:600;
   font-size:clamp(2.6rem,7.2vw,5.6rem);
   line-height:1.03;
@@ -715,8 +718,10 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
   margin-bottom:64px;
 }
 .section-head h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-style:normal;
   font-size:clamp(2.1rem,4.4vw,3.4rem);
-  font-weight:600;font-style:italic;
+  font-weight:600;
   max-width:14ch;
 }
 .section-head p{
@@ -1033,8 +1038,10 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
 }
 .story-intro .eyebrow{color:var(--poppy);display:block;margin-bottom:18px;}
 .story-intro h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-style:normal;
   font-size:clamp(2rem,4.4vw,3.2rem);
-  font-weight:600;font-style:italic;
+  font-weight:600;
   margin-bottom:16px;
 }
 .story-intro p{
@@ -1044,10 +1051,14 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
 
 /* center scrubber line -- a thin progress rail sitting mid-screen,
    filled/moved from main.js in lockstep with the pin's scroll
-   progress, so it visually reads as "how far into the effect we are" */
+   progress, so it visually reads as "how far into the effect we are".
+   Смещена ниже центра .story-intro (было top:50%, совпадало с центром
+   интро-блока и физически резало текст заголовка/буквы "ё" по средней
+   линии) -- теперь сидит под текстом, а не поверх него. */
 .story-timeline{
   position:absolute;
-  top:50%;left:50%;
+  top:calc(50% + 108px);
+  left:50%;
   transform:translate(-50%,-50%);
   width:min(640px, 82vw);
   height:1px;
@@ -1177,7 +1188,9 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
 }
 .process-sticky .eyebrow{color:var(--poppy);}
 .process-sticky h2{
-  font-size:clamp(2rem,4vw,3rem);font-weight:600;font-style:italic;
+  font-family:'Space Grotesk',sans-serif;
+  font-style:normal;
+  font-size:clamp(2rem,4vw,3rem);font-weight:600;
   margin:18px 0 20px;max-width:14ch;
 }
 .process-sticky-desc{
@@ -1355,8 +1368,10 @@ footer.footer-dark .footer-bottom{ color:rgba(250,249,245,.4); }
 }
 .reviews-wall-head .eyebrow{color:var(--poppy);}
 .reviews-wall-head h1{
+  font-family:'Space Grotesk',sans-serif;
+  font-style:normal;
   font-size:clamp(2.4rem,5.2vw,4rem);
-  font-weight:600;font-style:italic;
+  font-weight:600;
   margin:16px 0 14px;
 }
 .reviews-wall-head p{

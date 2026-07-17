@@ -12,6 +12,13 @@
    scrubbable both directions and never fights the browser's own
    scroll/trackpad handling.
 
+   Just before the next section (#pricing) scrolls up over it, the
+   florists section itself shrinks slightly (scale, anchored at its
+   own bottom edge) so it visibly "sinks away" instead of cutting
+   off abruptly the moment the pin releases -- same shrink language
+   already used for #districts right before #advantages pins in
+   main.js.
+
    Mobile (<=880px -- the same breakpoint the "story" bouquet
    breakdown section already uses for its own fallback): pinning
    three autoplaying videos is expensive for very little payoff on
@@ -117,7 +124,36 @@ export function initFlorists(){
       // so the section doesn't feel like it cuts off mid-read
       tl.to({}, { duration: .4 });
 
-      return () => { tl.scrollTrigger && tl.scrollTrigger.kill(); tl.kill(); };
+      // ---- "уезжает вниз" перед следующей секцией -------------------
+      // Тот же приём, что и districts -> advantages в main.js: пока
+      // следующая секция (#pricing) подъезжает снизу, сама секция
+      // florists плавно уменьшается (scale, transformOrigin снизу),
+      // визуально "проваливаясь" под неё, вместо жёсткого обрыва пина.
+      let shrinkTween = null;
+      const nextSection = document.getElementById('pricing');
+      if (nextSection){
+        gsap.set(section, { transformOrigin: '50% 100%' });
+        shrinkTween = gsap.to(section, {
+          scale: .92,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: nextSection,
+            start: 'top bottom',
+            end: 'top top',
+            scrub: true,
+          }
+        });
+      }
+
+      return () => {
+        tl.scrollTrigger && tl.scrollTrigger.kill();
+        tl.kill();
+        if (shrinkTween){
+          shrinkTween.scrollTrigger && shrinkTween.scrollTrigger.kill();
+          shrinkTween.kill();
+          gsap.set(section, { clearProps: 'transform' });
+        }
+      };
     },
 
     /* ---- mobile: plain vertical reveal, one ambient video ---- */
