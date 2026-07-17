@@ -40,5 +40,5 @@ jobs:
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@v4
       with:
-        folder: . # Если проект собирается в папку dist или build, замените точку на имя папки (например: dist)
+        folder: dist
         branch: gh-pages # Ветка, куда зальется готовый сайт
