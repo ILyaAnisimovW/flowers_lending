@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Оформление заказа — Bloomly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/flowers_lending/assets/modulepreload-polyfill-Dezn_h7o.js"></script>
+  <script type="module" crossorigin src="/flowers_lending/assets/checkout-BU-0x6VP.js"></script>
+  <link rel="stylesheet" crossorigin href="/flowers_lending/assets/checkout-DIV6APG1.css">
+</head>
+<body>
+
+<!-- ================= ДЕМО-ФОН ================= -->
+<div class="demo-page" id="demoPage">
+  <header class="demo-nav">
+    <span class="demo-logo">Bloomly</span>
+  </header>
+  <section class="demo-hero">
+    <span class="demo-eyebrow">Оформление заказа</span>
+    <h1>Осталось нажать одну кнопку</h1>
+    <p>Ниже — окно оплаты: выбираешь доставку или самовывоз, способ оплаты — и поля сами подстраиваются под выбор.</p>
+
+    <div class="demo-card">
+      <img src="https://picsum.photos/seed/mak-flirt/200/250" alt="">
+      <div>
+        <div class="demo-card-name">Нежный флирт</div>
+        <div class="demo-card-desc">Розовые и белые альстромерии</div>
+      </div>
+      <div class="demo-card-price">2 800 ₽</div>
+    </div>
+
+    <button class="demo-open-btn"
+            data-checkout-name="Нежный флирт"
+            data-checkout-price="2800"
+            data-checkout-desc="Розовые и белые альстромерии в нежной упаковке"
+            data-checkout-img="https://picsum.photos/seed/mak-flirt/200/250">Оформить заказ →</button>
+  </section>
+</div>
+
+<!-- ================= ОКНО ОПЛАТЫ ================= -->
+<div class="checkout-overlay" id="checkoutOverlay">
+  <div class="checkout-modal" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
+
+    <div class="checkout-head">
+      <span class="checkout-eyebrow">Шаг 2 из 2</span>
+      <h2 id="checkoutTitle">Доставка и оплата</h2>
+      <button class="checkout-close" id="checkoutClose" aria-label="Закрыть">×</button>
+    </div>
+
+    <div class="checkout-body" id="checkoutBody">
+
+      <div class="checkout-summary-item">
+        <div class="checkout-thumb"><img id="checkoutSummaryImg" src="https://picsum.photos/seed/mak-flirt/200/250" alt=""></div>
+        <div>
+          <div class="checkout-summary-name" id="checkoutSummaryName">Нежный флирт</div>
+          <div class="checkout-summary-sub" id="checkoutSummaryDesc">Розовые и белые альстромерии в нежной упаковке</div>
+        </div>
+        <div class="checkout-summary-price" id="checkoutSummaryPrice">2 800 ₽</div>
+      </div>
+
+      <!-- способ получения -->
+      <div class="checkout-section">
+        <label class="checkout-label">Как получить букет</label>
+        <div class="checkout-segment" data-group="fulfillment">
+          <button type="button" class="checkout-segment-btn is-active" data-value="delivery">Доставка</button>
+          <button type="button" class="checkout-segment-btn" data-value="pickup">Самовывоз</button>
+        </div>
+      </div>
+
+      <!-- поля адреса: видны только для доставки -->
+      <div class="checkout-fields" id="deliveryFields">
+        <div class="checkout-field" id="cityField">
+          <label>Город</label>
+          <select id="citySelect" required>
+            <option value="" disabled selected>Выберите город</option>
+            <option value="riga">Рига</option>
+            <option value="moscow">Москва</option>
+            <option value="spb">Санкт-Петербург</option>
+            <option value="kazan">Казань</option>
+            <option value="jurmala">Юрмала</option>
+          </select>
+          <span class="checkout-error-msg">Выберите город доставки</span>
+        </div>
+        <div class="checkout-row-2">
+          <div class="checkout-field" id="streetField">
+            <label>Улица, дом</label>
+            <input type="text" id="streetInput" placeholder="ул. Бривибас, 24">
+            <span class="checkout-error-msg">Укажите улицу и дом</span>
+          </div>
+          <div class="checkout-field checkout-field--narrow">
+            <label>Кв. / офис</label>
+            <input type="text" placeholder="14">
+          </div>
+        </div>
+        <div class="checkout-field">
+          <label>Комментарий курьеру</label>
+          <input type="text" placeholder="Домофон, этаж, ориентир — необязательно">
+        </div>
+        <div class="checkout-section">
+          <label class="checkout-label">Когда привезти</label>
+          <div class="checkout-segment" data-group="time">
+            <button type="button" class="checkout-segment-btn is-active" data-value="asap">Как можно скорее</button>
+            <button type="button" class="checkout-segment-btn" data-value="scheduled">Ко времени</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- инфо для самовывоза: видно только при самовывозе -->
+      <div class="checkout-pickup-info" id="pickupInfo" hidden>
+        <div><b>ул. Бривибас, 12, Рига</b></div>
+        <div>Ежедневно с 8:00 до 22:00, без наценки</div>
+        <div>Букет будет ждать вас у стойки — назовите номер заказа</div>
+      </div>
+
+      <!-- контакты -->
+      <div class="checkout-section">
+        <label class="checkout-label">Контакты</label>
+        <div class="checkout-field">
+          <label>Телефон</label>
+          <input type="tel" id="phoneInput" placeholder="+371 20 000 000">
+        </div>
+      </div>
+
+      <!-- оплата -->
+      <div class="checkout-section">
+        <label class="checkout-label">Оплата</label>
+        <div class="checkout-segment" data-group="payment">
+          <button type="button" class="checkout-segment-btn is-active" data-value="card">Картой сейчас</button>
+          <button type="button" class="checkout-segment-btn" data-value="cash" id="cashSegmentBtn">Наличными курьеру</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- итог + CTA -->
+    <div class="checkout-foot" id="checkoutFoot">
+      <div class="checkout-totals">
+        <div class="checkout-totals-row"><span>Букет</span><span id="itemPriceValue">2 800 ₽</span></div>
+        <div class="checkout-totals-row" id="deliveryFeeRow"><span id="deliveryFeeLabel">Доставка</span><span id="deliveryFeeValue">300 ₽</span></div>
+        <div class="checkout-totals-row checkout-totals-total"><span>Итого</span><span id="totalValue">3 100 ₽</span></div>
+      </div>
+      <button class="checkout-cta" id="checkoutCta">Оплатить 3 100 ₽ →</button>
+      <p class="checkout-trust" id="checkoutTrust">Оплата картой защищена. Нажимая «Оплатить», вы соглашаетесь с условиями доставки.</p>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
