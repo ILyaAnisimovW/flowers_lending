@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bloomly — цветы громче слов</title><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Space+Grotesk:wght@300;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+</head>
+<body>
+
+<!-- ================= PRELOADER ================= -->
+<div class="preloader" id="preloader">
+  <div class="preloader-flash" id="preloaderFlash" aria-hidden="true"></div>
+  <div class="preloader-content">
+    <div class="preloader-logo-wrap">
+      <svg class="preloader-logo-ring" viewBox="0 0 104 104">
+        <circle class="preloader-logo-ring-bg" cx="52" cy="52" r="48"></circle>
+        <circle class="preloader-logo-ring-progress" id="preloaderRing" cx="52" cy="52" r="48"></circle>
+      </svg>
+      <img src="/images/logo.png" alt="Bloomly" class="preloader-logo-mark" id="preloaderLogo">
+    </div>
+    <div class="preloader-percent" id="preloaderPercent">0<span>%</span></div>
+    <div class="preloader-bar-track">
+      <div class="preloader-bar-fill" id="preloaderBarFill"></div>
+    </div>
+    <div class="preloader-label" id="preloaderLabel">Собираем цветы</div>
+  </div>
+</div>
+
+<div class="petal-cursor" id="cursor"></div>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a href="#" class="logo">
+  <img src="/images/logo.png" alt="Bloomly" class="logo-mark">
+  Bloomly
+</a>
+    <nav class="nav-links">
+  <a href="catalog.html">Каталог</a>
+  <a href="#how">Как заказать</a>
+  <a href="#pricing">Тарифы</a>
+  <a href="#" class="nav-contact-trigger" data-contact-trigger>Контакты</a>
+</nav>
+<a href="catalog.html" class="nav-cta">Собрать букет</a>
+  </div>
+</header>
+
+<!-- ============================================================
+     1. ПЕРВЫЙ ЭКРАН (обложка) — УТП, подзаголовок, визуал, CTA
+     ============================================================ -->
+<section class="showcase" id="showcase">
+  <div class="showcase-stripes" aria-hidden="true"></div>
+  <div class="showcase-inner">
+
+    <div class="showcase-content">
+      <span class="eyebrow showcase-eyebrow">Bloomly — цветочная мастерская</span>
+      <div class="showcase-tags">
+        <span class="tag-hot">🔥 Хит</span>
+        <span class="tag-cat" id="showcaseCat">ХИТ НЕДЕЛИ</span>
+      </div>
+      <h1 class="showcase-title" id="showcaseTitle">НЕЖНЫЙ ФЛИРТ</h1>
+      <p class="showcase-desc" id="showcaseDesc">Розовые и белые альстромерии в нежной упаковке</p>
+      <div class="showcase-meta">
+        <span class="showcase-price" id="showcasePrice">2 800 ₽</span>
+        <a href="#catalog" class="btn-primary">Смотреть каталог →</a>
+      </div>
+      <a href="#catalog" class="showcase-see-all">Все хиты сезона <span>→</span></a>
+    </div>
+    <div class="showcase-media">
+      <div class="showcase-glow" aria-hidden="true"></div>
+      <img class="showcase-img" id="showcaseImg" src="/images/bouquet-flirt.png" alt="">
+    </div>
+  </div>
+  <div class="showcase-dots" id="showcaseDots"></div>
+  <div class="showcase-nav">
+    <button class="showcase-arrow" id="showcasePrev" aria-label="Предыдущий">‹</button>
+    <button class="showcase-arrow" id="showcaseNext" aria-label="Следующий">›</button>
+  </div>
+</section>
+
+<!-- ============================================================
+     2. ГЕОГРАФИЯ ДОСТАВКИ (районы выезжают по одному, буквы -- из точек)
+     ============================================================ -->
+<section class="districts" id="districts">
+  <div class="districts-stage" id="districtsStage">
+
+    <div class="districts-row" style="--indent:2%" data-index="0">
+      <span class="districts-name">Создаём</span>
+    </div>
+    <div class="districts-row" style="--indent:24%" data-index="1">
+      <span class="districts-name">Букеты</span>
+    </div>
+    <div class="districts-row" style="--indent:7%" data-index="2">
+      <span class="districts-name">Сейчас в</span>
+    </div>
+
+    <div class="districts-row" style="--indent:32%" data-index="3">
+      <span class="districts-name">Рига</span>
+      <span class="districts-time">Бривибас,<br>Латвия</span>
+    </div>
+    <div class="districts-row" style="--indent:4%" data-index="4">
+      <span class="districts-name">Москва</span>
+      <span class="districts-time">Тверская,<br>Россия</span>
+    </div>
+    <div class="districts-row districts-row-photo" style="--indent:9%" data-index="5">
+      <span class="districts-name">Санкт</span>
+      <span class="districts-photo"><img src="images/city-spb.jpg" alt="Невский проспект, Санкт-Петербург" loading="lazy"></span>
+      <span class="districts-name">Петербург</span>
+      <span class="districts-time">Невский,<br>Россия</span>
+    </div>
+    <div class="districts-row" style="--indent:38%" data-index="6">
+      <span class="districts-name">Юрмала</span>
+      <span class="districts-time">Йомас,<br>Латвия</span>
+    </div>
+    <div class="districts-row" style="--indent:13%" data-index="7">
+      <span class="districts-name">Казань</span>
+      <span class="districts-time">Баумана,<br>Россия</span>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     3. ПРЕИМУЩЕСТВА -- pinned scrollytelling (см. main.js:
+     initAdvantagesPin). Пока скроллишь эту секцию на десктопе, скролл
+     страницы "залипает" на весь блок, а предыдущая секция (#districts)
+     плавно уменьшается. Внутри показывается один текстовый слайд
+     (номер + заголовок + описание), который переключается между 4
+     состояниями по прогрессу скролла -- ровно под 4 прежние карточки.
+     На мобильных pin отключается (initAdvantagesPin делает это через
+     gsap.matchMedia), вместо него показывается .advantages-grid-mobile.
+     ============================================================ -->
+<section class="advantages" id="advantages">
+
+  <div class="advantages-pin">
+
+    <!-- чисто декоративный слой: вращающееся пунктирное кольцо и пара
+         плюсиков по углам -- фон для сцены, никакого смысла в данных -->
+    <div class="advantages-decor" aria-hidden="true">
+      <span class="advantages-decor-ring"></span>
+      <span class="advantages-decor-plus advantages-decor-plus--tl">+</span>
+      <span class="advantages-decor-plus advantages-decor-plus--br">+</span>
+    </div>
+
+    <!-- огромная полупрозрачная цифра-призрак за текстом -- меняется
+         синхронно с advIndex в main.js, чисто для фактуры фона -->
+    <div class="advantages-ghost" id="advGhost" aria-hidden="true">01</div>
+
+    <div class="advantages-pin-inner">
+      <span class="eyebrow advantages-eyebrow">Почему Bloomly</span>
+      </span>
+
+      <div class="advantages-index-wrap">
+        <svg class="advantages-index-ring" viewBox="0 0 66 34" preserveAspectRatio="none" aria-hidden="true">
+          <rect class="advantages-index-ring-progress" id="advRingProgress" x="1" y="1" width="64" height="32" rx="8"></rect>
+        </svg>
+        <div class="advantages-index" id="advIndex">01</div>
+      </div>
+
+      <h2 class="advantages-heading" id="advHeading">Свежая срезка</h2>
+      <p class="advantages-desc" id="advDesc">Цветы приходят с фермы не позже чем за 48 часов до сборки — не залёживаются на складе.</p>
+      <div class="advantages-progress" id="advProgress">
+        <span class="advantages-dot active" data-index="0"></span>
+        <span class="advantages-dot" data-index="1"></span>
+        <span class="advantages-dot" data-index="2"></span>
+        <span class="advantages-dot" data-index="3"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- мобильный фолбэк -- обычная сетка карточек, без pin/scroll-jacking -->
+  <div class="advantages-grid-mobile">
+    <div class="advantage-card">
+      <div class="advantage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg></div>
+      <h3>Свежая срезка</h3>
+      <p>Цветы приходят с фермы не позже чем за 48 часов до сборки — не залёживаются на складе.</p>
+    </div>
+    <div class="advantage-card">
+      <div class="advantage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+      <h3>60 минут</h3>
+      <p>От заявки до звонка в дверь — курьер уже в пути, пока флорист довязывает бант.</p>
+    </div>
+    <div class="advantage-card">
+      <div class="advantage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div>
+      <h3>Честный состав</h3>
+      <p>У каждого букета — разбор по цветам и материалам. Видите, за что платите, до заказа.</p>
+    </div>
+    <div class="advantage-card">
+      <div class="advantage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21c4-8 12-8 16-16"/><path d="M14 3h4v4"/></svg></div>
+      <h3>Без слащавости</h3>
+      <p>Ни целлофана, ни рюшей — крафт-бумага, смелые сочетания и минимум декора.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     4. ОПИСАНИЕ ПРОДУКТА / КАТАЛОГ
+     ============================================================ -->
+<section class="collections" id="catalog">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <h2>Коллекция, которую собирают за одно утро</h2>
+      <p>Каждый букет — маленький скандал в хорошем смысле. Меняем состав ежедневно, в зависимости от того, что привезли с фермы.</p>
+    </div>
+    <div class="collections-wave" aria-hidden="true">
+      <svg viewBox="0 0 1440 100" preserveAspectRatio="none">
+        <path d="M0,55 C240,10 480,80 720,45 C960,10 1200,70 1440,35 L1440,100 L0,100 Z"></path>
+      </svg>
+    </div>
+    <div class="carousel3d-wrap reveal" id="carousel3dWrap">
+      <svg class="carousel3d-ribbons" id="carousel3dRibbons" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <path class="ribbon ribbon-1" d="M -100,190 C 150,90 380,300 650,210 S 1080,70 1300,190 L 1300,300 C 1020,150 800,390 560,310 S 130,160 -100,300 Z"/>
+        <path class="ribbon ribbon-2" d="M -100,400 C 220,510 460,290 740,410 S 1140,560 1300,430 L 1300,540 C 1000,650 780,380 540,470 S 120,630 -100,500 Z"/>
+        <path class="ribbon ribbon-3" d="M -100,560 C 280,660 500,470 800,560 S 1140,690 1300,580 L 1300,680 C 950,770 740,530 490,610 S 90,770 -100,650 Z"/>
+      </svg>
+      <div class="carousel3d" id="carousel3d"></div>
+      <div class="carousel3d-fade" aria-hidden="true"></div>
+      <div class="carousel3d-caption">
+        <span class="carousel3d-caption-tag"><span class="carousel3d-caption-fire">🔥</span>HOT</span>
+        <span class="carousel3d-caption-name" id="carouselCaptionName">НЕЖНЫЙ ФЛИРТ</span>
+        <span class="carousel3d-caption-price" id="carouselCaptionPrice">2 800 ₽</span>
+        <span class="carousel3d-caption-desc" id="carouselCaptionDesc">Розовые и белые альстромерии в нежной упаковке</span>
+      </div>
+      <div class="carousel3d-bottombar" id="carousel3dBottombar">
+        <a href="catalog.html" class="carousel3d-viewall">Все букеты <span>→</span></a>
+        <div class="carousel3d-select" id="carousel3dSelect"></div>
+        <div class="carousel3d-controls">
+          <button class="carousel3d-arrow" id="carouselPrev" aria-label="Предыдущий">‹</button>
+          <button class="carousel3d-arrow" id="carouselNext" aria-label="Следующий">›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="carousel3d-bg-extend" aria-hidden="true"></div>
+</section>
+
+
+<!-- откуда берём и какое качество — pinned scroll, карточки влетают
+     волной с разных сторон (см. main.js: initStoryCardsPin). Полностью
+     на scrub -- скроллишь вниз, карточки прилетают; скроллишь назад --
+     улетают обратно в том же порядке, без "одноразовых" reveal-триггеров.
+     storyFlash -- вспышка поппи-цвета в момент финального "взрыва"
+     карточек, элемент чисто декоративный (aria-hidden), заполняется
+     GSAP-таймлайном из initStoryCardsPin(). -->
+<section class="story" id="story">
+  <div class="story-pin" id="storyPin">
+
+    <div class="story-flash" id="storyFlash" aria-hidden="true"></div>
+
+    <div class="story-intro" id="storyIntro">
+      <span class="eyebrow">Прозрачность</span>
+      <h2>Не только красиво — ещё и честно</h2>
+      <p>Пока вы читаете это, где-то в Эквадоре режут розы для завтрашней доставки. Вот из чего на самом деле складывается букет.</p>
+    </div>
+
+    <div class="story-timeline" id="storyTimeline">
+      <div class="story-timeline-fill" id="storyTimelineFill"></div>
+    </div>
+
+    <div class="story-cards" id="storyCards">
+      <div class="story-card is-light" data-dir="left">
+        <img src="/images/logo.png" alt="Bloomly" class="story-card-logo">
+        <div class="story-card-inner"></div>
+  <span class="story-card-num">01</span>
+  <h3>Эквадор, 2800 м</h3>
+  <p>Фермы высоко в горах — розы растут медленнее, бутон получается плотнее и держится дольше.</p>
+</div>
+</div>
+<div class="story-card is-dark" data-dir="top">
+  <img src="/images/logo.png" alt="Bloomly" class="story-card-logo">
+  <div class="story-card-inner"></div>
+  <span class="story-card-num">02</span>
+  <h3>48 часов</h3>
+  <p>От срезки до сборки букета — никакого склада и никакой перележки в холодильнике.</p>
+</div>
+</div>
+<div class="story-card is-dark" data-dir="right">
+  <img src="/images/logo.png" alt="Bloomly" class="story-card-logo">
+  <div class="story-card-inner"></div>
+  <span class="story-card-num">03</span>
+  <h3>Ручная сборка</h3>
+  <p>Каждый стебель осматриваем и подрезаем под углом вручную — никакого конвейера.</p>
+</div>
+</div>
+<div class="story-card is-light" data-dir="bottom">
+  <img src="/images/logo.png" alt="Bloomly" class="story-card-logo">
+  <div class="story-card-inner"></div>
+  <span class="story-card-num">04</span>
+  <h3>Фейс-контроль</h3>
+  <p>Флорист лично проверяет каждый букет перед тем, как он поедет к вам.</p>
+</div>
+</div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- как заказать -->
+<section class="process" id="how">
+  <div class="wrap process-inner">
+    <div class="process-sticky reveal">
+      <span class="eyebrow">Как заказать</span>
+      <h2>От выбора до звонка в дверь — три шага</h2>
+      <p class="process-sticky-desc">Три простых шага — от выбора настроения до звонка в дверь. Листайте вниз, чтобы увидеть каждый из них.</p>
+    </div>
+
+    <div class="process-steps">
+      <div class="process-step reveal">
+        <div class="process-step-img">
+          <img src="https://picsum.photos/seed/mak-step1/900/700" alt="" loading="lazy">
+        </div>
+        <span class="process-num">01</span>
+        <h3>Выбери настроение</h3>
+        <p>Листай коллекции и лови вайб — от «дерзкого пиона» до «ночного карнавала».</p>
+      </div>
+      <div class="process-step reveal">
+        <div class="process-step-img">
+          <img src="https://picsum.photos/seed/mak-step2/900/700" alt="" loading="lazy">
+        </div>
+        <span class="process-num">02</span>
+        <h3>Добавь открытку</h3>
+        <p>Пара слов от руки — бесплатно к любому букету, доставим вместе с цветами.</p>
+      </div>
+      <div class="process-step reveal">
+        <div class="process-step-img">
+          <img src="https://picsum.photos/seed/mak-step3/900/700" alt="" loading="lazy">
+        </div>
+        <span class="process-num">03</span>
+        <h3>Жди 60 минут</h3>
+        <p>Курьер уже в пути. Пришлём фото букета перед вручением, если получатель не дома.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     5. СОЦИАЛЬНЫЕ ДОКАЗАТЕЛЬСТВА
+     ============================================================ -->
+<section class="reviews" id="reviews">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <h2>Нам верят не только флористы</h2>
+      <p>Больше тысячи букетов в месяц — вот что о них говорят.</p>
+    </div>
+
+    <div class="reviews-stats reveal">
+      <div class="reviews-stat"><b>4,9</b><span>Средний рейтинг</span></div>
+      <div class="reviews-stat"><b>1 200+</b><span>Букетов в месяц</span></div>
+      <div class="reviews-stat"><b>98%</b><span>Доставок в срок</span></div>
+      <div class="reviews-stat"><b>3 года</b><span>На рынке Риги</span></div>
+    </div>
+
+    <div class="reviews-grid reveal">
+      <a class="review-card" href="reviews.html">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-quote">Заказывала маме на день рождения — привезли ровно то, что было на фото, до последнего цветка. Больше никуда не пойду.</p>
+        <div class="review-person">
+          <div class="review-avatar">АК</div>
+          <div>
+            <div class="review-person-name">Анна К.</div>
+            <div class="review-person-meta">Заказ «Ромашковое облако»</div>
+          </div>
+        </div>
+      </a>
+      <a class="review-card" href="reviews.html">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-quote">Курьер написал за 15 минут, привёз раньше срока. Букет простоял почти две недели — для Риги в +28 это космос.</p>
+        <div class="review-person">
+          <div class="review-avatar">ДМ</div>
+          <div>
+            <div class="review-person-name">Дмитрий М.</div>
+            <div class="review-person-meta">Заказ «Полевой букет»</div>
+          </div>
+        </div>
+      </a>
+      <a class="review-card" href="reviews.html">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-quote">Разбор состава на сайте — гениальная штука, видно за что платишь. Взяла «Утренний персик» вслепую и не пожалела.</p>
+        <div class="review-person">
+          <div class="review-avatar">ЕС</div>
+          <div>
+            <div class="review-person-name">Елена С.</div>
+            <div class="review-person-meta">Заказ «Утренний персик»</div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="reviews-cta reveal">
+      <a href="reviews.html" class="btn-ghost">Смотреть все отзывы →</a>
+    </div>
+  </div>
+</section>
+
+<section class="about" id="about">
+  <div class="wrap about-inner">
+    <div class="about-visual reveal">
+      <svg viewBox="0 0 300 300" fill="none">
+        <circle cx="150" cy="150" r="26" fill="#E8412C"/>
+        <ellipse cx="150" cy="80" rx="30" ry="48" fill="#FAF9F5"/>
+        <ellipse cx="150" cy="220" rx="30" ry="48" fill="#FAF9F5"/>
+        <ellipse cx="80" cy="150" rx="48" ry="30" fill="#4A4A47"/>
+        <ellipse cx="220" cy="150" rx="48" ry="30" fill="#4A4A47"/>
+        <ellipse cx="100" cy="100" rx="28" ry="42" fill="#0D0D0D" transform="rotate(-45 100 100)"/>
+        <ellipse cx="200" cy="200" rx="28" ry="42" fill="#0D0D0D" transform="rotate(-45 200 200)"/>
+      </svg>
+    </div>
+    <div class="about-text reveal">
+      <p class="about-quote">«Мы верим, что цветы должны быть <span>громче будней</span>, а не просто украшать подоконник.»</p>
+      <p>Bloomly начался с одного рынка цветов на окраине и упрямого убеждения: букет — это не украшение, а высказывание. Мы не делаем сдержанную классику из трёх роз.</p>
+      <p>Каждое утро флористы отбирают самые дерзкие по цвету стебли и собирают букеты, которые видно с другого конца комнаты.</p>
+      <div class="about-sign">— команда Bloomly</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     5.5. КОМАНДА — три флориста, карточки "сдаются" одна за другой
+     на фоне видео со сборкой букетов. Продолжение "about": сначала
+     манифест команды, сразу за ним — конкретные лица.
+     ============================================================ -->
+<section class="florists" id="florists">
+
+  <div class="florists-video-layer" aria-hidden="true">
+    <video class="florists-video is-active" autoplay muted loop playsinline preload="metadata">
+      <source src="videos/florists-bg-1.mp4" type="video/mp4">
+    </video>
+    <video class="florists-video" autoplay muted loop playsinline preload="metadata">
+      <source src="videos/florists-bg-2.mp4" type="video/mp4">
+    </video>
+    <video class="florists-video" autoplay muted loop playsinline preload="metadata">
+      <source src="videos/florists-bg-3.mp4" type="video/mp4">
+    </video>
+    <div class="florists-scrim"></div>
+  </div>
+
+  <div class="florists-pin">
+    <div class="florists-head">
+      <span class="eyebrow">Кто внутри Bloomly</span>
+      <h2>Три пары рук, три взгляда на один букет</h2>
+      <p>Мы могли написать «наша дружная команда» — но это ничего не говорит. Вот три человека, которые каждое утро решают, что из этого поедет к вам.</p>
+    </div>
+
+    <div class="florists-stack" id="floristsStack">
+
+      <article class="florist-card" data-index="0">
+        <div class="florist-card-photo">
+          <img src="images/florist-marina.jpg" alt="Марина, флорист Bloomly" loading="lazy">
+        </div>
+        <div class="florist-card-body">
+          <span class="florist-card-num">01</span>
+          <h3>Марина</h3>
+          <span class="florist-card-role">Флорист · 4 года в Bloomly</span>
+          <p class="florist-card-quote">«Если букет не хочется потрогать — я его ещё не закончила.»</p>
+          <p class="florist-card-text">Начинает сборку с самого капризного цветка — пионовидной розы — и подгоняет под неё всё остальное, а не наоборот.</p>
+        </div>
+      </article>
+
+      <article class="florist-card" data-index="1">
+        <div class="florist-card-photo">
+          <img src="images/florist-irina.jpg" alt="Ирина, флорист-декоратор Bloomly" loading="lazy">
+        </div>
+        <div class="florist-card-body">
+          <span class="florist-card-num">02</span>
+          <h3>Ирина</h3>
+          <span class="florist-card-role">Флорист-декоратор · 6 лет в Bloomly</span>
+          <p class="florist-card-quote">«Весенние цветы прощают одну ошибку. Вторую — уже нет.»</p>
+          <p class="florist-card-text">Отвечает за сезонные и кашпо-композиции: тюльпаны и нарциссы в её руках не мнутся и не летят в мусор.</p>
+        </div>
+      </article>
+
+      <article class="florist-card" data-index="2">
+        <div class="florist-card-photo">
+          <img src="images/florist-artem.jpg" alt="Артём, старший флорист Bloomly" loading="lazy">
+        </div>
+        <div class="florist-card-body">
+          <span class="florist-card-num">03</span>
+          <h3>Артём</h3>
+          <span class="florist-card-role">Старший флорист · 5 лет в Bloomly</span>
+          <p class="florist-card-quote">«Разница между "нормально" и "дорого" — два сантиметра длины стебля.»</p>
+          <p class="florist-card-text">Выверяет пропорции до миллиметра и учит новых флористов прямо в мастерской на Бривибас.</p>
+        </div>
+      </article>
+
+    </div>
+
+    <div class="florists-progress" id="floristsProgress">
+      <span class="florists-progress-dot is-active" data-index="0"></span>
+      <span class="florists-progress-dot" data-index="1"></span>
+      <span class="florists-progress-dot" data-index="2"></span>
+    </div>
+    <span class="florists-hint">Скролльте — карточки сменяют друг друга</span>
+  </div>
+
+</section>
+
+<!-- ============================================================
+     6. ТАРИФЫ / ЦЕНЫ
+     ============================================================ -->
+<section class="pricing" id="pricing">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <h2>Разовый букет или на постоянной основе</h2>
+      <p>Три формата — под подарок раз в год или под привычку баловать себя каждую неделю.</p>
+    </div>
+
+    <div class="pricing-grid reveal">
+      <div class="pricing-card">
+        <div class="pricing-name">Разовый</div>
+        <p class="pricing-desc">Один букет здесь и сейчас, любой из каталога.</p>
+        <div class="pricing-price">от 2 200 ₽</div>
+        <ul class="pricing-features">
+          <li>Доставка за 60 минут</li>
+          <li>Открытка от руки — бесплатно</li>
+          <li>Фото у двери перед вручением</li>
+        </ul>
+        <a href="#catalog" class="btn-ghost-dark">Выбрать букет</a>
+      </div>
+
+      <div class="pricing-card is-popular">
+        <span class="pricing-badge">Популярный</span>
+        <div class="pricing-name">Абонемент на месяц</div>
+        <p class="pricing-desc">Свежий букет каждую неделю, состав каждый раз новый.</p>
+        <div class="pricing-price">8 900 ₽<span> / 4 букета</span></div>
+        <ul class="pricing-features">
+          <li>Экономия ~18% от разовых заказов</li>
+          <li>Приоритетная доставка в удобный день</li>
+          <li>Бесплатная замена, если что-то не понравилось</li>
+        </ul>
+        <a href="#contacts" class="btn-primary">Оформить абонемент</a>
+      </div>
+
+      <div class="pricing-card">
+        <div class="pricing-name">Абонемент на квартал</div>
+        <p class="pricing-desc">Для тех, кто дарит цветы не по поводу, а по привычке.</p>
+        <div class="pricing-price">24 900 ₽<span> / 12 букетов</span></div>
+        <ul class="pricing-features">
+          <li>Экономия ~24% от разовых заказов</li>
+          <li>Личный флорист ведёт все заказы</li>
+          <li>Гибкий перенос доставки без штрафов</li>
+        </ul>
+        <a href="#contacts" class="btn-ghost-dark">Оформить абонемент</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     7. FAQ
+     ============================================================ -->
+<section class="faq" id="faq">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <h2 class="faq-title">FAQ</h2>
+      <p>Наведи курсор на вопрос — он на месте превратится в ответ. Убери курсор — вернётся обратно.</p>
+    </div>
+
+    <div class="faq-list" id="faqList">
+
+      <button class="faq-strip" data-index="0" type="button">
+        <span class="faq-strip-num">01</span>
+        <span class="faq-strip-text"
+              data-question="Сколько живут цветы из Bloomly?"
+              data-answer="В среднем 7–10 дней — если менять воду каждые два дня и подрезать стебли под углом.">Сколько живут цветы из Bloomly?</span>
+        <span class="faq-strip-icon" aria-hidden="true">+</span>
+        <span class="faq-strip-sheen" aria-hidden="true"></span>
+      </button>
+
+      <button class="faq-strip" data-index="1" type="button">
+        <span class="faq-strip-num">02</span>
+        <span class="faq-strip-text"
+              data-question="Как быстро приедет курьер?"
+              data-answer="За 60 минут по Риге. Пришлём фото букета перед вручением, если получателя нет дома.">Как быстро приедет курьер?</span>
+        <span class="faq-strip-icon" aria-hidden="true">+</span>
+        <span class="faq-strip-sheen" aria-hidden="true"></span>
+      </button>
+
+      <button class="faq-strip" data-index="2" type="button">
+        <span class="faq-strip-num">03</span>
+        <span class="faq-strip-text"
+              data-question="Можно забрать букет самим?"
+              data-answer="Да — самовывоз с ул. Бривибас 12 ежедневно с 8:00 до 22:00, без наценки.">Можно забрать букет самим?</span>
+        <span class="faq-strip-icon" aria-hidden="true">+</span>
+        <span class="faq-strip-sheen" aria-hidden="true"></span>
+      </button>
+
+      <button class="faq-strip" data-index="3" type="button">
+        <span class="faq-strip-num">04</span>
+        <span class="faq-strip-text"
+              data-question="Открытка идёт бесплатно?"
+              data-answer="Да, пара слов от руки — бесплатно к любому букету, доставим вместе с цветами.">Открытка идёт бесплатно?</span>
+        <span class="faq-strip-icon" aria-hidden="true">+</span>
+        <span class="faq-strip-sheen" aria-hidden="true"></span>
+      </button>
+
+      <button class="faq-strip" data-index="4" type="button">
+        <span class="faq-strip-num">05</span>
+        <span class="faq-strip-text"
+              data-question="Как оплатить заказ?"
+              data-answer="Картой на сайте, Apple/Google Pay или наличными курьеру — выбираешь на последнем шаге.">Как оплатить заказ?</span>
+        <span class="faq-strip-icon" aria-hidden="true">+</span>
+        <span class="faq-strip-sheen" aria-hidden="true"></span>
+      </button>
+
+      <button class="faq-strip" data-index="5" type="button">
+        <span class="faq-strip-num">06</span>
+        <span class="faq-strip-text"
+              data-question="Что если состав букета изменится?"
+              data-answer="Мы предупредим и подберём равноценную замену того же настроения и цвета — никогда не в минус по стоимости.">Что если состав букета изменится?</span>
+        <span class="faq-strip-icon" aria-hidden="true">+</span>
+        <span class="faq-strip-sheen" aria-hidden="true"></span>
+      </button>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     8. ФИНАЛЬНЫЙ БЛОК
+     ============================================================ -->
+<section class="cta-banner reveal">
+  <h2>Готовы устроить <em>цветочный шум</em>?</h2>
+  <a href="#catalog" class="btn-primary">Собрать букет сейчас →</a>
+</section>
+
+<footer id="contacts">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#" class="logo">
+  <img src="/images/logo.png" alt="Bloomly" class="logo-mark">
+  Bloomly
+</a>
+        <p>Цветочная мастерская. Собираем и доставляем яркие букеты по Риге каждый день с 8:00 до 22:00.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Магазин</h4>
+        <a href="#catalog">Каталог</a>
+        <a href="#pricing">Тарифы</a>
+        <a href="#how">Доставка</a>
+        <a href="#about">О нас</a>
+      </div>
+      <div class="footer-col">
+        <h4>Контакты</h4>
+        <p>+371 20 000 000</p>
+        <p>hello@mak-flowers.lv</p>
+        <p>ул. Бривибас 12, Рига</p>
+      </div>
+      <div class="footer-col">
+        <h4>Соцсети</h4>
+        <a href="#">Instagram</a>
+        <a href="#">Telegram</a>
+        <a href="#">WhatsApp</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Bloomly. Все права защищены.</span>
+      <span>Ч/Б снаружи, ярко внутри</span>
+    </div>
+  </div>
+</footer>
+
+<section class="brand-banner" id="brandBanner">
+  <div class="brand-banner-inner" id="brandBannerInner">
+    <span class="brand-banner-layer brand-banner-layer--cyan" aria-hidden="true">BLOOMLY</span>
+    <span class="brand-banner-layer brand-banner-layer--red" aria-hidden="true">BLOOMLY</span>
+    <span class="brand-banner-layer brand-banner-layer--base">BLOOMLY</span>
+  </div>
+</section>
+
+<div class="contact-overlay" id="contactOverlay">
+  <div class="contact-modal" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
+    <div class="contact-head">
+      <span class="contact-eyebrow">Bloomly</span>
+      <h2 id="contactTitle">Как с нами связаться</h2>
+      <button class="contact-close" id="contactClose" aria-label="Закрыть">×</button>
+    </div>
+    <div class="contact-body">
+      <a href="tel:+37120000000" class="contact-row">
+        <span class="contact-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 2 6a2 2 0 0 1 2-2Z"/></svg></span>
+        <span class="contact-row-text">
+          <span class="contact-row-label">Телефон</span>
+          <span class="contact-row-value">+371 20 000 000</span>
+        </span>
+      </a>
+      <a href="mailto:hello@mak-flowers.lv" class="contact-row">
+        <span class="contact-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 5h18v14H3z"/><path d="m3 6 9 7 9-7"/></svg></span>
+        <span class="contact-row-text">
+          <span class="contact-row-label">Email</span>
+          <span class="contact-row-value">hello@mak-flowers.lv</span>
+        </span>
+      </a>
+      <a href="https://maps.google.com/?q=ул.+Бривибас+12,+Рига" target="_blank" rel="noopener" class="contact-row">
+        <span class="contact-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-6.6 7-12a7 7 0 0 0-14 0c0 5.4 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg></span>
+        <span class="contact-row-text">
+          <span class="contact-row-label">Мастерская</span>
+          <span class="contact-row-value">ул. Бривибас 12, Рига</span>
+        </span>
+      </a>
+      <div class="contact-row contact-row--static">
+        <span class="contact-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
+        <span class="contact-row-text">
+          <span class="contact-row-label">Часы работы</span>
+          <span class="contact-row-value">Ежедневно, 8:00–22:00</span>
+        </span>
+      </div>
+
+      <div class="contact-divider"></div>
+
+      <div class="contact-socials">
+        <a href="#" class="contact-social">Instagram</a>
+        <a href="#" class="contact-social">Telegram</a>
+        <a href="#" class="contact-social">WhatsApp</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

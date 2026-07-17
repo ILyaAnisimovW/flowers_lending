@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Отзывы — Bloomly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Space+Grotesk:wght@300;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</head>
+<body>
+
+<div class="petal-cursor" id="cursor"></div>
+
+<header class="nav nav--solid">
+  <div class="nav-inner">
+    <a href="index.html" class="logo">
+  <img src="/images/logo.png" alt="Bloomly" class="logo-mark">
+  Bloomly
+</a>
+    <nav class="nav-links">
+  <a href="catalog.html">Каталог</a>
+  <a href="index.html#how">Как заказать</a>
+  <a href="index.html#pricing">Тарифы</a>
+  <a href="#" class="nav-contact-trigger" data-contact-trigger>Контакты</a>
+</nav>
+<a href="catalog.html" class="nav-cta">Собрать букет</a>
+  </div>
+</header>
+
+<section class="reviews-wall" id="reviewsWall">
+  <div class="wrap reviews-wall-head">
+    <a href="index.html#reviews" class="reviews-wall-back">← На главную</a>
+    <span class="eyebrow">Голоса клиентов</span>
+    <h1>Всё, что о нас говорят</h1>
+    <p>Тяните лист в любую сторону — он бесконечный. Наведите на карточку — она приблизится и заговорит своими словами.</p>
+  </div>
+
+  <div class="wall-stage" id="wallStage">
+    <div class="wall-grid" id="wallGrid"></div>
+    <div class="review-detail-panel" id="reviewDetailPanel" aria-live="polite"></div>
+  </div>
+
+  <div class="reviews-wall-hint">Потяните, чтобы сдвинуть · наведите на карточку</div>
+</section>
+
+<footer id="contacts" class="footer-dark">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="logo">
+  <img src="/images/logo.png" alt="Bloomly" class="logo-mark">
+  Bloomly
+</a>
+        <p>Цветочная мастерская. Собираем и доставляем яркие букеты по Риге каждый день с 8:00 до 22:00.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Магазин</h4>
+        <a href="index.html#catalog">Каталог</a>
+        <a href="index.html#pricing">Тарифы</a>
+        <a href="index.html#how">Доставка</a>
+        <a href="index.html#about">О нас</a>
+      </div>
+      <div class="footer-col">
+        <h4>Контакты</h4>
+        <p>+371 20 000 000</p>
+        <p>hello@mak-flowers.lv</p>
+        <p>ул. Бривибас 12, Рига</p>
+      </div>
+      <div class="footer-col">
+        <h4>Соцсети</h4>
+        <a href="#">Instagram</a>
+        <a href="#">Telegram</a>
+        <a href="#">WhatsApp</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Bloomly. Все права защищены.</span>
+      <span>Ч/Б снаружи, ярко внутри</span>
+    </div>
+  </div>
+</footer>
+
+<section class="brand-banner" id="brandBanner">
+  <div class="brand-banner-inner" id="brandBannerInner">
+    <span class="brand-banner-layer brand-banner-layer--cyan" aria-hidden="true">BLOOMLY</span>
+    <span class="brand-banner-layer brand-banner-layer--red" aria-hidden="true">BLOOMLY</span>
+    <span class="brand-banner-layer brand-banner-layer--base">BLOOMLY</span>
+  </div>
+</section>
+
+<script type="module" src="src/reviews.js"></script>
+</body>
+</html>

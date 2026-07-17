@@ -1,0 +1,1562 @@
+@import './faq.css';
+@import './florists.css';
+@import './catalog.css';
+@import './brand-banner.css';
+@import './mouse-trail.css';
+@import './contact-panel.css';
+
+:root{
+  --poppy:#E8412C;
+  --poppy-dark:#C22F1F;
+  --ink:#0D0D0D;
+  --paper:#FAF9F5;
+  --gray-900:#171716;
+  --gray-700:#4A4A47;
+  --gray-500:#7A776E;
+  --gray-300:#C8C5BC;
+  --gray-200:#E6E3DB;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+html{
+  scroll-behavior: smooth;
+}
+
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  overflow-x:hidden;
+  cursor:default;
+}
+
+body.is-loading{overflow:hidden;height:100vh;}
+
+::selection{background:var(--poppy);color:var(--paper);}
+
+a{color:inherit;text-decoration:none;}
+
+img,svg{display:block;max-width:100%;}
+
+button{font-family:inherit;border:none;background:none;cursor:pointer;}
+
+:focus-visible{outline:3px solid var(--poppy);outline-offset:3px;}
+
+h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
+
+.eyebrow{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-size:.78rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+.wrap{max-width:1240px;margin:0 auto;padding:0 32px;}
+
+/* ================= PRELOADER ================= */
+.preloader{
+  position:fixed;inset:0;
+  z-index:10000;
+  background:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  clip-path:circle(150% at 50% 50%);
+  will-change:clip-path;
+}
+.preloader-content{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:26px;color:var(--paper);
+  position:relative;
+  z-index:2; /* выше .preloader-flash */
+}
+.preloader-logo-wrap{ position:relative; width:104px;height:104px; display:flex;align-items:center;justify-content:center; }
+.preloader-logo-ring{ position:absolute;inset:0; width:100%;height:100%; transform:rotate(-90deg); }
+.preloader-logo-ring-bg{ fill:none; stroke:rgba(250,249,245,.12); stroke-width:1.4; }
+.preloader-logo-ring-progress{ fill:none; stroke:var(--poppy); stroke-width:2.2; stroke-linecap:round; }
+.preloader-logo-mark{
+  position:relative;z-index:1;
+  width:58px;height:58px;object-fit:contain;
+  animation:preloader-breathe 2.4s ease-in-out infinite;
+}
+@keyframes preloader-breathe{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.06);} }
+.preloader-percent{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:clamp(3.2rem,9vw,5.4rem);
+  line-height:1;
+  letter-spacing:-.02em;
+  display:flex;align-items:flex-start;gap:3px;
+  font-variant-numeric:tabular-nums;
+}
+.preloader-percent span{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-size:.34em;
+  margin-top:.3em;
+  color:var(--poppy);
+}
+.preloader-flash{
+  position:absolute;
+  inset:0;
+  background:var(--poppy);
+  clip-path:circle(0% at 50% 50%);
+  z-index:1;
+  pointer-events:none;
+  will-change:clip-path, opacity;
+}
+.preloader-bar-track{
+  width:220px;height:2px;
+  border-radius:2px;
+  background:rgba(250,249,245,.14);
+  overflow:hidden;
+}
+.preloader-bar-fill{
+  width:0%;height:100%;
+  background:var(--poppy);
+  border-radius:2px;
+  will-change:width;
+}
+
+.preloader-label{
+  font-family:'Fraunces',serif;font-weight:600;font-style:italic;
+  font-size:.95rem;letter-spacing:.02em;color:rgba(250,249,245,.55);
+  min-width:200px; /* чтобы скрэмбл-текст не дёргал layout */
+  text-align:center;
+}
+/* ---------- custom cursor ---------- */
+.petal-cursor{
+  position:fixed;
+  width:34px;height:34px;
+  border-radius:50%;
+  border:2px solid var(--ink);
+  pointer-events:none;
+  z-index:9999;
+  mix-blend-mode:difference;
+  transform:translate(-50%,-50%);
+  transition:width .25s,height .25s,background .25s;
+}
+@media (pointer:coarse){ .petal-cursor{display:none;} }
+
+/* ---------- nav ---------- */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:150;
+  background:transparent;
+  border-bottom:2px solid transparent;
+  transition:transform .4s ease, background .35s ease, border-color .35s ease;
+}
+.nav-inner{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 32px;
+  max-width:1240px;margin:0 auto;
+}
+.logo{
+  display:flex;align-items:center;gap:10px;
+  font-family:'Fraunces',serif;
+  font-weight:900;
+  font-size:1.6rem;
+  color:var(--paper);
+}
+.logo{gap:12px;}
+.logo svg,
+.logo-mark{
+  width:46px;
+  height:46px;
+  object-fit:contain;
+}
+.nav-links{display:flex;gap:34px;align-items:center;}
+.nav-links a{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:.9rem;
+  font-weight:500;
+  position:relative;
+  padding-bottom:3px;
+  color:var(--paper);
+}
+.nav-links a::after{
+  content:'';position:absolute;left:0;bottom:0;
+  width:0;height:2px;background:var(--poppy);
+  transition:width .25s ease;
+}
+.nav-links a:hover::after{width:100%;}
+.nav-cta{
+  background:var(--poppy);color:var(--paper);
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;font-size:.85rem;
+  padding:12px 22px;border-radius:100px;
+  transition:background .2s ease;
+}
+.nav-cta:hover{background:var(--paper);color:var(--ink);}
+
+.nav-links a.is-current{ color: var(--poppy); }
+.nav-links a.is-current::after{ width:100%; }
+/* nav states, toggled from JS depending on scroll */
+.nav.nav--solid{
+  background:var(--ink);
+  border-bottom-color:rgba(250,249,245,.15);
+}
+.nav.nav--hidden{
+  transform:translateY(-100%);
+}
+
+/* ---------- buttons (used across sections) ---------- */
+.btn-primary{
+  background:var(--ink);color:var(--paper);
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.95rem;
+  padding:18px 30px;border-radius:100px;
+  display:inline-flex;align-items:center;gap:10px;
+}
+.btn-ghost{
+  border:2px solid var(--paper);color:var(--paper);
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.95rem;
+  padding:16px 28px;border-radius:100px;
+}
+.btn-ghost-dark{
+  border:2px solid var(--ink);color:var(--ink);
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.95rem;
+  padding:16px 28px;border-radius:100px;
+}
+
+/* ---------- showcase (rotating hits, replaces hero) ---------- */
+.showcase{
+  position:relative;
+  background:var(--ink);
+  color:var(--paper);
+  padding:226px 32px 150px;
+  overflow:hidden;
+  min-height:620px;
+  display:flex;align-items:center;
+}
+.showcase-stripes{
+  position:absolute;inset:0;
+  background-image:repeating-linear-gradient(-35deg, rgba(250,249,245,.05) 0 1px, transparent 1px 36px);
+  pointer-events:none;
+}
+.showcase-inner{
+  position:relative;z-index:2;
+  max-width:1240px;margin:0 auto;width:100%;
+  display:grid;
+  grid-template-columns:1.05fr .95fr;
+  gap:60px;align-items:center;
+}
+.showcase-tags{display:flex;gap:10px;margin-bottom:24px;}
+.tag-hot,.tag-cat{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:.7rem;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:7px 13px;border-radius:100px;
+  border:1px solid rgba(250,249,245,.28);
+}
+.tag-hot{background:var(--poppy);border-color:var(--poppy);}
+.tag-cat{opacity:.75;}
+.showcase-title{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(2.4rem,6vw,4.8rem);
+  font-weight:700;letter-spacing:-.01em;
+  text-transform:uppercase;
+  min-height:1.1em;
+  margin-bottom:20px;
+}
+.showcase-desc{
+  font-size:1.05rem;line-height:1.6;opacity:.7;
+  max-width:40ch;margin-bottom:32px;
+  min-height:2.6em;
+}
+.showcase-meta{display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-bottom:30px;}
+.showcase-price{
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.3rem;
+}
+.showcase-see-all{
+  font-family:'Space Grotesk',sans-serif;font-size:.85rem;font-weight:600;
+  display:inline-flex;align-items:center;gap:6px;opacity:.65;
+  border-bottom:1px solid rgba(250,249,245,.3);padding-bottom:3px;
+}
+.showcase-see-all span{transition:transform .2s ease;}
+.showcase-see-all:hover span{transform:translateX(4px);}
+.showcase-see-all:hover{opacity:1;}
+
+.showcase-media{
+  position:relative;
+  aspect-ratio:1/1;
+  display:flex;align-items:center;justify-content:center;
+}
+.showcase-glow{
+  position:absolute;
+  width:78%;height:78%;
+  background:radial-gradient(circle, rgba(232,65,44,.4), transparent 70%);
+  filter:blur(36px);
+  z-index:1;
+}
+.showcase-img{
+  position:relative;z-index:2;
+  width:86%;height:86%;
+  object-fit:cover;
+  border-radius:14px;
+  filter:grayscale(1) contrast(1.08);
+  box-shadow:0 30px 70px rgba(0,0,0,.55);
+  border:1px solid rgba(250,249,245,.1);
+}
+.showcase-dots{
+  position:absolute;left:32px;bottom:32px;z-index:3;
+  display:flex;gap:8px;
+}
+.showcase-dot{
+  width:22px;height:3px;background:rgba(250,249,245,.25);
+  transition:background .25s ease;cursor:pointer;
+}
+.showcase-dot.active{background:var(--poppy);}
+.showcase-nav{
+  position:absolute;right:32px;bottom:32px;z-index:3;
+  display:flex;gap:10px;
+}
+.showcase-arrow{
+  width:44px;height:44px;border-radius:50%;
+  border:1px solid rgba(250,249,245,.3);
+  color:var(--paper);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;line-height:1;
+  transition:border-color .2s ease, background .2s ease;
+}
+.showcase-arrow:hover{border-color:var(--poppy);background:rgba(232,65,44,.15);}
+
+/* ---------- districts (delivery zones, each row grows out of a single dot) ---------- */
+.districts{padding:150px 32px;background:var(--ink);color:var(--paper);position:relative;will-change:transform;}
+
+.districts-stage{
+  max-width:1080px;
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:0; /* было 44px -- строки должны идти впритык, как в референсе, line-height:1 сам даёт нужный интервал */
+}
+
+/* Каждая строка сдвинута на свой собственный отступ (--indent, задаётся
+   инлайн-стилем в HTML) -- отступы подобраны вразброс, а не строгим
+   чередованием лево/право, чтобы колонка читалась неровно, как в
+   референсе. Никаких разделительных линий между строками.
+   align-items:flex-end -- подпись улицы сидит по нижнему краю букв
+   (там, где кончается строка строчных без выносных элементов), а не
+   болтается по центру строки. */
+.districts-row{
+  position:relative;
+  display:flex;
+  align-items:flex-end;
+  gap:20px;
+  width:fit-content;
+  margin-left:var(--indent, 0%);
+}
+
+/* Название района/города собирается из отдельных БУКВ (см. main.js,
+   initDistrictsReveal). 1-2 буквы внутри слова помечаются "точкой-семенем"
+   (.seed-dot) -- сама точка сидит поверх этой буквы, в середине слова
+   (или в двух точках для длинных слов). Точки коротко появляются, затем
+   гаснут ровно в момент, когда буквы вокруг них начинают расти -- и
+   дальше "рябью" расходятся к краям слова. Каждая буква растёт не плавно,
+   а через ease:'steps(5)' в JS -- прыжками по 5 фиксированным размерам,
+   а не тином. Строка "Санкт [фото] Петербург" содержит ДВА .districts-name
+   -- каждый получает свои собственные точки-семена независимо.
+   Регистр — как в разметке (Рига, Москва, Санкт, Петербург), без
+   принудительного капса: капсом остаётся только мелкая подпись улицы. */
+.districts-name{
+  display:inline-block;
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-style:normal;
+  letter-spacing:-.02em;
+  line-height:1;
+  font-size:clamp(2.6rem,6.4vw,5.2rem);
+}
+.districts-name .letter{
+  position:relative;
+  display:inline-block;
+}
+.districts-name .letter-text{
+  display:inline-block;
+  transform-origin:50% 60%;
+  will-change:transform,opacity;
+}
+.districts-name .seed-dot{
+  position:absolute;
+  left:50%;top:38%;
+  transform:translate(-50%,-50%);
+  width:.24em;height:.24em;
+  min-width:15px;min-height:15px;
+  border-radius:3px;
+  background:var(--ink);
+  border:1.5px solid var(--paper);
+  pointer-events:none;
+  will-change:transform,opacity;
+}
+
+/* Фото-вставка (сейчас используется только в строке "Санкт [фото]
+   Петербург") -- сидит между двумя .districts-name как отдельное слово,
+   по высоте подстроена под кегль строки. Проявляется мягким плавным
+   тином (не "прыжками", в отличие от букв -- у фото рывками смотрелось
+   бы дёшево). */
+.districts-photo{
+  display:inline-flex;
+  flex:none;
+  will-change:transform,opacity;
+}
+.districts-photo img{
+  display:block;
+  height:clamp(48px,8.2vw,84px);
+  width:auto;
+  border-radius:12px;
+  object-fit:cover;
+  filter:grayscale(.15) contrast(1.05);
+  box-shadow:0 16px 38px rgba(0,0,0,.5);
+}
+
+/* Подпись под названием -- улица + страна, в две строки, узким тонким
+   капсом, как в референсе ("ONTARIO, CANADA"). Вес 300 -- реально
+   тонкая начертка Space Grotesk, а не подделанная браузером. Мельче,
+   чем у самого слова, и садится по нижнему краю строки за счёт
+   align-items:flex-end на .districts-row -- а не висит по центру. */
+.districts-time{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:.6rem;font-weight:300;
+  letter-spacing:.08em;text-transform:uppercase;
+  line-height:1.4;
+  color:rgba(250,249,245,.45);
+  white-space:nowrap;
+  will-change:transform,opacity;
+}
+
+@media (max-width:700px){
+  .districts{padding:110px 20px;}
+  .districts-row{
+    margin-left:0 !important;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .districts-name{font-size:clamp(2.3rem,10vw,3.2rem);}
+  .districts-photo img{height:clamp(34px,13vw,48px);}
+}
+
+
+/* ==========================================================
+   ADVANTAGES -- pinned scrollytelling
+   ==========================================================
+   Desktop (>880px): the section pins to the viewport (GSAP
+   ScrollTrigger, scroll is "locked" to this section for the
+   duration of the pin) and shows a single large text slide --
+   index badge + heading + description -- that swaps to the next
+   of 4 states as the person keeps scrolling. Just before the pin
+   engages, the section directly above (#districts) is scaled
+   down slightly, purely driven by scroll position, so it visibly
+   "shrinks back" to make room, instead of just being covered.
+
+   Mobile (<=880px): scroll-jacking / pinning is disabled outright
+   (bad on touch), and a plain stacked card grid is shown instead --
+   see .advantages-grid-mobile below and initAdvantagesPin() in
+   main.js, which only creates the pin/scrub via gsap.matchMedia
+   for the desktop breakpoint.
+   ========================================================== */
+.advantages{
+  position:relative;
+  background:var(--paper);
+  height:100vh;
+  overflow:hidden;
+}
+.advantages-pin{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:0 32px;
+}
+
+/* ---- purely decorative background layer: a slow-spinning dashed ring
+   plus two small "+" marks, echoing the little corner-mark/ring language
+   used elsewhere on the site so the pin doesn't read as a bare text
+   slide. Sits behind everything (z-index:1, .advantages-pin-inner is 2). ---- */
+.advantages-decor{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+}
+.advantages-decor-ring{
+  position:absolute;
+  top:14%;
+  left:calc(50% - 260px);
+  width:64px;height:64px;
+  border-radius:50%;
+  border:1.5px dashed var(--gray-300);
+  animation:advantages-ring-spin 22s linear infinite;
+}
+@keyframes advantages-ring-spin{ to{ transform:rotate(360deg); } }
+.advantages-decor-plus{
+  position:absolute;
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-size:1.3rem;
+  color:var(--gray-300);
+}
+.advantages-decor-plus--tl{ top:20%; right:14%; }
+.advantages-decor-plus--br{ bottom:16%; left:11%; }
+
+/* ---- giant faint ghost numeral sitting behind the heading -- swapped
+   in lockstep with advIndex by main.js, purely textural (very low
+   opacity, huge Fraunces weight) so the slide has depth instead of
+   floating in empty paper. ---- */
+.advantages-ghost{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-52%);
+  z-index:0;
+  font-family:'Fraunces',serif;
+  font-weight:900;
+  font-size:clamp(10rem,28vw,22rem);
+  line-height:1;
+  color:var(--ink);
+  opacity:.035;
+  white-space:nowrap;
+  user-select:none;
+  pointer-events:none;
+}
+
+.advantages-pin-inner{
+  position:relative;
+  z-index:2;
+  max-width:920px;
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.advantages-eyebrow{
+  color:var(--poppy);
+  margin-bottom:26px;
+}
+
+/* ---- index badge + its progress outline: a white stroke traces the
+   badge's own rectangular border, and -- unlike a single ring spanning
+   the whole pinned scroll -- it resets and redraws once per state, so
+   it repeats 4 times total (one full draw per "01..04" segment) rather
+   than accumulating across the whole section. Driven from main.js via
+   stroke-dashoffset on #advRingProgress, whose stroke-dasharray is set
+   at runtime from the rect's own getTotalLength() so it matches the
+   rounded corners exactly regardless of any sizing tweak here. ---- */
+.advantages-index-wrap{
+  position:relative;
+  width:66px;height:34px;
+  margin-bottom:40px;
+}
+.advantages-index-ring{
+  position:absolute;
+  inset:0;
+  width:100%;height:100%;
+  overflow:visible;
+}
+.advantages-index-ring-progress{
+  fill:none;
+  stroke:#fff;
+  stroke-width:1.6;
+  stroke-linecap:round;
+  filter:drop-shadow(0 0 1px rgba(13,13,13,.4));
+}
+.advantages-index{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--paper);
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;font-size:.78rem;
+  border:1px solid var(--gray-300);
+  border-radius:8px;
+  letter-spacing:.1em;
+  font-variant-numeric:tabular-nums;
+}
+.advantages-heading{
+  font-family:'Space Grotesk',sans-serif;
+  font-style:normal;
+  font-weight:600;
+  font-size:clamp(2.6rem,7.2vw,5.6rem);
+  line-height:1.03;
+  max-width:20ch;
+  margin-bottom:28px;
+}
+.advantages-desc{
+  font-size:1.05rem;line-height:1.65;
+  color:var(--gray-700);
+  max-width:52ch;
+}
+.advantages-progress{
+  display:flex;gap:10px;margin-top:52px;
+}
+.advantages-dot{
+  width:36px;height:3px;background:var(--gray-300);
+  border-radius:2px;
+  transition:background .3s ease;
+}
+.advantages-dot.active{background:var(--poppy);}
+
+/* mobile fallback grid -- hidden on desktop, see media query below */
+.advantages-grid-mobile{display:none;}
+.advantage-card{
+  background:var(--paper);
+  padding:40px 30px;
+  display:flex;flex-direction:column;gap:18px;
+  transition:background .25s ease;
+}
+.advantage-card:hover{background:var(--ink);color:var(--paper);}
+.advantage-card:hover .advantage-icon{background:var(--poppy);color:var(--paper);}
+.advantage-icon{
+  width:48px;height:48px;border-radius:50%;
+  background:var(--gray-200);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  transition:background .25s ease,color .25s ease;
+}
+.advantage-icon svg{width:22px;height:22px;}
+.advantage-card h3{
+  font-family:'Space Grotesk',sans-serif;font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:.01em;
+}
+.advantage-card p{font-size:.92rem;line-height:1.6;opacity:.75;}
+
+@media (max-width:880px){
+  .advantages{height:auto;overflow:visible;padding:100px 32px;}
+  .advantages-pin{display:none;}
+  .advantages-grid-mobile{
+    display:grid;grid-template-columns:1fr;gap:2px;
+    background:var(--gray-200);
+    border-radius:24px;overflow:hidden;
+  }
+}
+
+/* ---------- reviews (social proof) ---------- */
+.reviews{padding:130px 32px;background:var(--ink);color:var(--paper);}
+.reviews .section-head h2{color:var(--paper);}
+.reviews .section-head p{color:rgba(250,249,245,.68);}
+.reviews-stats{
+  display:flex;gap:48px;flex-wrap:wrap;
+  margin-bottom:64px;
+  padding-bottom:48px;
+  border-bottom:1px solid rgba(250,249,245,.15);
+}
+.reviews-stat b{
+  display:block;font-family:'Fraunces',serif;font-size:clamp(2rem,4vw,2.8rem);font-weight:600;color:var(--poppy);
+}
+.reviews-stat span{
+  font-family:'Space Grotesk',sans-serif;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;opacity:.65;
+}
+.reviews-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+}
+.review-card{
+  background:rgba(250,249,245,.05);
+  border:1px solid rgba(250,249,245,.12);
+  border-radius:20px;padding:32px;
+  display:flex;flex-direction:column;gap:18px;
+  cursor:pointer;
+  transform-style:preserve-3d;
+  will-change:transform;
+  transition:border-color .3s ease, box-shadow .3s ease;
+}
+.review-card:hover{
+  border-color:rgba(232,65,44,.45);
+  box-shadow:0 24px 60px rgba(0,0,0,.5);
+}
+.review-stars{color:var(--poppy);font-size:.9rem;letter-spacing:2px;}
+.review-quote{font-size:.98rem;line-height:1.6;color:rgba(250,249,245,.85);}
+.review-person{display:flex;align-items:center;gap:12px;margin-top:auto;}
+.review-avatar{
+  width:40px;height:40px;border-radius:50%;
+  background:var(--poppy);color:var(--paper);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.85rem;
+}
+.review-person-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.9rem;}
+.review-person-meta{font-size:.78rem;color:rgba(250,249,245,.5);}
+.reviews-cta{text-align:center;margin-top:56px;}
+
+/* ---------- pricing ---------- */
+.pricing{padding:130px 32px;background:var(--paper);}
+.pricing-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:stretch;
+}
+.pricing-card{
+  border:2px solid var(--gray-200);border-radius:24px;
+  padding:40px 32px;display:flex;flex-direction:column;gap:24px;
+  position:relative;
+}
+.pricing-card.is-popular{
+  border-color:var(--ink);background:var(--ink);color:var(--paper);
+}
+.pricing-badge{
+  position:absolute;top:-14px;right:32px;
+  background:var(--poppy);color:var(--paper);
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.7rem;
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:7px 14px;border-radius:100px;
+}
+.pricing-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.1rem;text-transform:uppercase;}
+.pricing-desc{font-size:.88rem;line-height:1.5;opacity:.65;max-width:26ch;}
+.pricing-price{font-family:'Fraunces',serif;font-size:clamp(1.9rem,3vw,2.4rem);font-weight:600;}
+.pricing-price span{font-family:'Inter',sans-serif;font-size:.85rem;font-weight:400;opacity:.6;}
+.pricing-features{display:flex;flex-direction:column;gap:12px;}
+.pricing-features li{
+  display:flex;gap:10px;align-items:flex-start;font-size:.9rem;line-height:1.5;
+}
+.pricing-features li::before{content:'✓';color:var(--poppy);font-weight:700;flex:none;}
+.pricing-card .btn-primary,.pricing-card .btn-ghost-dark{
+  margin-top:auto;justify-content:center;width:100%;
+}
+.pricing-card.is-popular .btn-primary{background:var(--poppy);}
+.pricing-card.is-popular .btn-ghost-dark{border-color:var(--paper);color:var(--paper);}
+
+/* ---------- collections ---------- */
+.collections{padding:130px 32px 0;overflow-x:hidden;position:relative;}
+.section-head{
+  display:flex;justify-content:space-between;align-items:flex-end;
+  gap:24px;flex-wrap:wrap;
+  margin-bottom:64px;
+}
+.section-head h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-style:normal;
+  font-size:clamp(2.1rem,4.4vw,3.4rem);
+  font-weight:600;
+  max-width:14ch;
+}
+.section-head p{
+  max-width:34ch;font-size:1rem;color:var(--gray-700);line-height:1.6;
+}
+
+/* ---- wave divider between the light .section-head and the dark
+   carousel below -- replaces the old hard white/black seam with an
+   organic curve in the same "ribbon" language already used inside the
+   carousel itself. The shape is solid ink from the curve down to its
+   own bottom edge, which sits flush against the carousel's top edge
+   (both var(--ink), margin-top:0 on .carousel3d-wrap below), so there's
+   no visible seam between the two -- the black area just appears to
+   rise unevenly out of the paper instead of being cut off in a straight
+   line. Full-bleed via the same 100vw/negative-margin trick used
+   elsewhere on this page. ---- */
+.collections-wave{
+  position:relative;
+  width:100vw;
+  left:50%;right:50%;
+  margin-left:-50vw;margin-right:-50vw;
+  height:clamp(46px,7vw,100px);
+  margin-top:24px;
+  pointer-events:none;
+}
+.collections-wave svg{
+  width:100%;height:100%;
+  display:block;
+  transform-origin:50% 100%;
+  will-change:transform;
+}
+.collections-wave path{
+  fill:var(--ink);
+  filter:drop-shadow(0 -10px 22px rgba(13,13,13,.16));
+}
+.carousel3d-wrap{
+  position:relative;
+  width:100vw;
+  left:50%;right:50%;
+  margin-left:-50vw;margin-right:-50vw;
+  height:clamp(460px,62vw,720px);
+  margin-top:0;
+  overflow:hidden;
+  background:var(--ink);
+  perspective:2400px;
+  perspective-origin:50% 38%;
+  cursor:grab;
+  touch-action:pan-y;
+  user-select:none;
+}
+.carousel3d-wrap:active{cursor:grabbing;}
+.carousel3d-ribbons{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  z-index:1;
+  pointer-events:none;
+  will-change:transform;
+}
+.carousel3d-ribbons path{
+  fill:var(--ribbon-color, #7A3B3B);
+  transition:fill 1.1s ease;
+}
+.carousel3d-ribbons .ribbon-1{opacity:.5;}
+.carousel3d-ribbons .ribbon-2{opacity:.32;}
+.carousel3d-ribbons .ribbon-3{opacity:.18;}
+.carousel3d{
+  position:absolute;
+  top:50%;left:50%;
+  width:0;height:0;
+  z-index:2;
+  transform-style:preserve-3d;
+  will-change:transform;
+}
+.carousel3d-fade{
+  position:absolute;inset:0;
+  z-index:3;
+  pointer-events:none;
+  background:
+    linear-gradient(to right,
+      var(--ink) 0%, rgba(13,13,13,0) 10%,
+      rgba(13,13,13,0) 90%, var(--ink) 100%),
+    linear-gradient(to bottom,
+      rgba(13,13,13,0) 0%, rgba(13,13,13,0) 72%, var(--ink) 100%);
+}
+
+.carousel3d-bottombar{
+  position:absolute;
+  right:28px;bottom:26px;
+  z-index:6;
+  display:flex;flex-direction:column;align-items:flex-end;
+  gap:14px;
+}
+.carousel3d-controls{
+  display:flex;justify-content:center;align-items:center;
+  gap:14px;
+}
+.carousel3d-controls .carousel3d-arrow{
+  border-color:rgba(250,249,245,.4);color:var(--paper);
+  width:40px;height:40px;font-size:1.1rem;
+}
+.carousel3d-controls .carousel3d-arrow:hover{border-color:var(--poppy);background:var(--poppy);color:var(--paper);}
+.carousel3d-arrow{
+  width:46px;height:46px;border-radius:50%;
+  border:2px solid var(--ink);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;line-height:1;
+  transition:border-color .2s ease, background .2s ease, color .2s ease;
+}
+.carousel3d-arrow:hover{border-color:var(--poppy);background:var(--poppy);color:var(--paper);}
+.carousel3d-item{
+  position:absolute;
+  top:50%;left:50%;
+  width:var(--card-w,600px);
+  height:var(--card-h,460px);
+  margin-left:calc(var(--card-w,600px) / -2);
+  margin-top:calc(var(--card-h,460px) / -2);
+  border-radius:14px;
+  overflow:hidden;
+  backface-visibility:hidden;
+  box-shadow:0 40px 90px rgba(0,0,0,.55);
+  cursor:pointer;
+  transition:box-shadow .25s ease;
+}
+.carousel3d-item:hover{
+  box-shadow:0 10px 40px rgba(232,65,44,.55), 0 40px 90px rgba(0,0,0,.55);
+}
+.carousel3d-item img{
+  width:100%;height:100%;object-fit:cover;
+  filter:grayscale(1) contrast(1.1) brightness(.92);
+  -webkit-user-drag:none;
+  user-select:none;
+  pointer-events:none;
+}
+.carousel3d-caption{
+  position:absolute;
+  left:28px;bottom:28px;z-index:5;
+  color:var(--paper);
+  display:flex;flex-direction:column;gap:6px;
+  pointer-events:none;
+  text-shadow:0 6px 24px rgba(0,0,0,.6), 0 1px 3px rgba(0,0,0,.5);
+}
+.carousel3d-caption-tag{
+  display:inline-flex;align-items:center;gap:5px;
+  width:fit-content;
+  background:var(--poppy);color:var(--paper);
+  font-family:'Space Grotesk',sans-serif;
+  font-size:.68rem;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:5px 11px;border-radius:100px;
+  text-shadow:none;
+}
+.carousel3d-caption-fire{font-size:.9em;line-height:1;}
+.carousel3d-caption-name{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;font-size:1.7rem;
+  text-transform:uppercase;letter-spacing:.01em;
+  min-height:1.3em;
+}
+.carousel3d-caption-price{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:600;font-size:1.3rem;
+  color:var(--poppy);
+  min-height:1.2em;
+}
+.carousel3d-caption-desc{
+  font-family:'Inter',sans-serif;
+  font-size:.9rem;line-height:1.4;
+  color:rgba(250,249,245,.75);
+  max-width:30ch;
+  min-height:2.4em;
+}
+
+.carousel3d-select{
+  display:flex;gap:10px;
+}
+.carousel3d-select button{
+  width:44px;height:44px;
+  border-radius:10px;
+  overflow:hidden;
+  border:2px solid transparent;
+  opacity:.5;
+  filter:grayscale(1);
+  transition:opacity .25s ease, border-color .25s ease, filter .25s ease, transform .25s ease;
+}
+.carousel3d-select button img{width:100%;height:100%;object-fit:cover;pointer-events:none;}
+.carousel3d-select button:hover{opacity:.85;transform:translateY(-2px);}
+.carousel3d-select button.active{
+  opacity:1;filter:grayscale(0);
+  border-color:var(--poppy);
+  transform:translateY(-2px);
+}
+
+.carousel3d-bg-extend{
+  width:100vw;
+  left:50%;right:50%;
+  margin-left:-50vw;margin-right:-50vw;
+  height:110px;
+  margin-top:-1px; /* eats the subpixel seam against the carousel above */
+  background:var(--ink);
+  position:relative;
+  overflow:hidden;
+}
+.carousel3d-bg-extend::before{
+  /* faint continuation of the ribbon color, bleeding down from the
+     carousel above and dissolving into the flat ink -- reads as the
+     ribbons trailing off instead of getting chopped by overflow:hidden */
+  content:'';
+  position:absolute;
+  top:-70px;left:0;right:0;
+  height:180px;
+  background:radial-gradient(ellipse 65% 100% at 50% 0%, var(--ribbon-color, #7A3B3B) 0%, transparent 72%);
+  opacity:.24;
+  filter:blur(30px);
+  pointer-events:none;
+  transition:background-color 1.1s ease;
+}
+
+/* ---- "Все букеты" -- маленькая кнопка над рядом миниатюр в
+   .carousel3d-bottombar (нижний правый угол карусели), ведёт на
+   отдельную страницу catalog.html со всеми букетами и фильтрами.
+   Оформлена как ghost-пилюля, на тон тише, чем .btn-ghost -- она
+   вспомогательная, не должна спорить с carousel3d-select под ней. ---- */
+.carousel3d-viewall{
+  position:relative;
+  z-index:2;
+  pointer-events:auto;
+  align-self:flex-end;
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:.72rem;font-weight:600;
+  letter-spacing:.03em;
+  color:rgba(250,249,245,.75);
+  border:1px solid rgba(250,249,245,.28);
+  border-radius:100px;
+  padding:8px 14px;
+  transition:border-color .2s ease, background .2s ease, color .2s ease;
+}
+
+.carousel3d-viewall span{transition:transform .2s ease;}
+.carousel3d-viewall:hover{
+  border-color:var(--poppy);
+  background:rgba(232,65,44,.15);
+  color:var(--paper);
+}
+.carousel3d-viewall:hover span{transform:translateX(3px);}
+
+@media (max-width:600px){
+  .carousel3d-viewall{font-size:.68rem;padding:7px 12px;}
+}
+
+#curtainBars{
+  position:fixed;
+  inset:0;
+  z-index:50;
+  display:none;
+  pointer-events:none;
+  overflow:hidden;
+}
+#curtainBars.is-active{ display:block; }   /* <-- этой строки не хватало */
+.curtain-bar{
+  position:absolute;
+  left:0;right:0;
+  background:var(--ink);
+  will-change:transform;
+}
+
+/* ==========================================================
+   STORY -- pinned scrollytelling, wave of cards flying in
+   ==========================================================
+   Same pin/scrub language as #advantages: the section locks to the
+   viewport while GSAP ScrollTrigger scrubs ONE timeline tied directly
+   to scroll position. Every card's fly-in is a tween on that timeline,
+   each starting a little later than the previous one (a "wave"), so
+   scrolling down cascades them in from four different edges and
+   scrolling back up cascades them back out in reverse -- nothing here
+   is a one-shot reveal, the whole thing is scroll-position-driven and
+   fully reversible by construction (scrub, not a `once` trigger).
+
+   Layout: cards land in a 2x2 grid around the centered intro text/
+   timeline instead of stacking on top of each other -- top-left,
+   top-right, bottom-left, bottom-right. Colors alternate light/dark
+   (checkerboard) so the set reads with contrast against the section's
+   pure-black background, instead of everything blending into one
+   muddy brown mass.
+
+   Mobile disables the pin (gsap.matchMedia, see main.js) and the cards
+   fall back to a plain stacked reveal grid instead.
+   ========================================================== */
+.story{
+  position:relative;
+  background:var(--ink);
+  color:var(--paper);
+  height:100vh;
+  overflow:hidden;
+}
+.story-pin{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:0 32px;
+}
+
+.story-intro{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  z-index:1;
+  max-width:560px;
+  text-align:center;
+  will-change:opacity;
+}
+.story-intro .eyebrow{color:var(--poppy);display:block;margin-bottom:18px;}
+.story-intro h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-style:normal;
+  font-size:clamp(2rem,4.4vw,3.2rem);
+  font-weight:600;
+  margin-bottom:16px;
+}
+.story-intro p{
+  font-size:1rem;line-height:1.6;
+  color:rgba(250,249,245,.68);
+}
+
+/* center scrubber line -- a thin progress rail sitting mid-screen,
+   filled/moved from main.js in lockstep with the pin's scroll
+   progress, so it visually reads as "how far into the effect we are".
+   Смещена ниже центра .story-intro (было top:50%, совпадало с центром
+   интро-блока и физически резало текст заголовка/буквы "ё" по средней
+   линии) -- теперь сидит под текстом, а не поверх него. */
+.story-timeline{
+  position:absolute;
+  top:calc(50% + 108px);
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:min(640px, 82vw);
+  height:1px;
+  background:rgba(250,249,245,.14);
+  z-index:3;
+  pointer-events:none;
+}
+.story-timeline-fill{
+  position:absolute;
+  left:0;top:0;
+  height:100%;width:0%;
+  background:var(--poppy);
+}
+
+.story-cards{
+  position:absolute;
+  inset:0;
+  z-index:4;
+  pointer-events:none;
+}
+.story-card{
+  position:absolute;
+  top:50%;left:50%;
+  width:min(380px, 78vw);
+  border-radius:22px;
+  padding:36px;
+  box-shadow:0 30px 70px rgba(0,0,0,.55);
+  pointer-events:auto;
+  will-change:transform,opacity;
+}
+.story-card-logo{
+  position:absolute;
+  top:20px;
+  right:20px;
+  width:34px;
+  height:34px;
+  object-fit:contain;
+  opacity:.9;
+  pointer-events:none;
+  z-index:2;
+}
+.story-card-num{
+  display:inline-block;
+  font-family:'Fraunces',serif;font-style:italic;font-weight:400;
+  font-size:2.6rem;
+  margin-bottom:12px;
+}
+.story-card h3{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:1.2rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.01em;
+  margin-bottom:12px;
+}
+.story-card p{
+  font-size:.94rem;line-height:1.6;
+}
+
+/* light card -- paper/ink, matches the rest of the site's light sections */
+.story-card.is-light{
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+}
+.story-card.is-light .story-card-num{ color:var(--poppy); }
+.story-card.is-light h3{ color:var(--ink); }
+.story-card.is-light p{ color:var(--gray-700); }
+
+/* dark card -- a deep wine-brown that's visibly distinct from the
+   section's pure-black background (was the same near-black before,
+   which is why everything read as one flat blob), edged in poppy */
+.story-card.is-dark{
+  background:#2B1310;
+  border:1.5px solid var(--poppy);
+}
+.story-card.is-dark .story-card-num{ color:var(--paper); }
+.story-card.is-dark h3{ color:var(--paper); }
+.story-card.is-dark p{ color:rgba(250,249,245,.72); }
+
+/* resting positions: a clean 2x2 arrangement around the centered intro
+   text -- 01 top-left, 02 top-right, 03 bottom-left, 04 bottom-right --
+   instead of everything converging on the same center point. */
+.story-card[data-dir="left"]{   margin-top:-260px; margin-left:-430px; z-index:1; }
+.story-card[data-dir="top"]{    margin-top:-260px; margin-left:50px;   z-index:2; }
+.story-card[data-dir="right"]{  margin-top:70px;   margin-left:-430px; z-index:3; }
+.story-card[data-dir="bottom"]{ margin-top:70px;   margin-left:50px;   z-index:4; }
+
+@media (max-width:1180px){
+  .story-card{width:min(320px, 62vw);}
+  .story-card[data-dir="left"]{  margin-top:-230px; margin-left:-360px; }
+  .story-card[data-dir="top"]{   margin-top:-230px; margin-left:40px; }
+  .story-card[data-dir="right"]{ margin-top:60px;   margin-left:-360px; }
+  .story-card[data-dir="bottom"]{margin-top:60px;   margin-left:40px; }
+}
+
+@media (max-width:880px){
+  .story{height:auto;overflow:visible;padding:100px 0;}
+  .story-pin{position:relative;inset:auto;display:block;padding:0 32px;}
+  .story-intro{position:relative;top:auto;left:auto;transform:none;margin:0 auto 40px;opacity:1 !important;}
+  .story-timeline{display:none;}
+  .story-cards{
+    position:relative;inset:auto;
+    display:flex;flex-direction:column;gap:16px;
+    max-width:480px;margin:0 auto;
+  }
+  .story-card{
+    position:relative;top:auto;left:auto;inset:auto !important;
+    margin:0 !important;
+    width:100%;
+    opacity:1;transform:none !important;
+  }
+}
+
+/* ---------- process (sticky title, scrolling steps) ---------- */
+.process{
+  background:var(--ink);color:var(--paper);
+  padding:130px 32px;
+}
+.process-inner{
+  display:grid;
+  grid-template-columns:minmax(260px,380px) 1fr;
+  gap:80px;
+  align-items:start;
+}
+.process-sticky{
+  position:sticky;
+  top:120px;
+  align-self:start;
+}
+.process-sticky .eyebrow{color:var(--poppy);}
+.process-sticky h2{
+  font-family:'Space Grotesk',sans-serif;
+  font-style:normal;
+  font-size:clamp(2rem,4vw,3rem);font-weight:600;
+  margin:18px 0 20px;max-width:14ch;
+}
+.process-sticky-desc{
+  font-size:.98rem;line-height:1.6;
+  color:rgba(250,249,245,.68);
+  max-width:30ch;
+}
+
+.process-steps{
+  display:flex;
+  flex-direction:column;
+  gap:110px;
+}
+.process-step{border-top:2px solid rgba(250,249,245,.25);padding-top:30px;}
+.process-step-img{
+  width:100%;
+  aspect-ratio:16/11;
+  border-radius:18px;
+  overflow:hidden;
+  margin-bottom:28px;
+  background:var(--gray-700);
+}
+.process-step-img img{
+  width:100%;height:100%;object-fit:cover;
+  filter:grayscale(1) contrast(1.08) brightness(.82);
+  transition:filter .4s ease, transform .5s ease;
+}
+.process-step:hover .process-step-img img{
+  filter:grayscale(0) contrast(1.05) brightness(1);
+  transform:scale(1.03);
+}
+.process-num{
+  font-family:'Fraunces',serif;font-style:italic;font-weight:400;
+  font-size:3rem;color:var(--poppy);display:block;margin-bottom:14px;
+}
+.process-step h3{font-family:'Space Grotesk',sans-serif;font-size:1.15rem;font-weight:700;margin-bottom:10px;}
+.process-step p{font-size:.95rem;line-height:1.6;opacity:.85;max-width:34ch;}
+
+/* ---------- about ---------- */
+.about{padding:130px 32px;}
+.about-inner{
+  display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center;
+}
+.about-visual{
+  background:var(--gray-200);
+  border-radius:24px;
+  aspect-ratio:1/1;
+  display:flex;align-items:center;justify-content:center;
+  padding:40px;
+  position:relative;
+}
+.about-visual svg{width:70%;}
+.about-quote{
+  font-family:'Fraunces',serif;font-style:italic;font-weight:500;
+  font-size:clamp(1.6rem,3vw,2.3rem);
+  line-height:1.35;
+  margin-bottom:26px;
+}
+.about-quote span{color:var(--poppy);}
+.about-text p{font-size:1rem;line-height:1.7;color:var(--gray-700);margin-bottom:18px;max-width:42ch;}
+.about-sign{
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.9rem;
+  margin-top:26px;
+}
+
+/* ---------- cta banner ---------- */
+.cta-banner{
+  margin:0 32px 32px;
+  background:var(--ink);color:var(--paper);
+  border-radius:28px;
+  padding:100px 40px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.cta-banner h2{
+  font-size:clamp(2.2rem,6vw,4.6rem);
+  font-weight:900;
+  max-width:16ch;margin:0 auto 34px;
+}
+.cta-banner h2 em{font-style:italic;font-weight:400;color:var(--poppy);}
+.cta-banner .btn-primary{background:var(--poppy);}
+
+/* ---------- footer ---------- */
+footer{
+  padding:70px 32px 40px;
+}
+.footer-grid{
+  display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:40px;
+  padding-bottom:60px;border-bottom:2px solid var(--ink);
+}
+.footer-brand .logo{margin-bottom:16px;color:var(--ink);}
+.footer-brand p{font-size:.92rem;color:var(--gray-700);max-width:30ch;line-height:1.6;}
+.footer-col h4{
+  font-family:'Space Grotesk',sans-serif;font-size:.82rem;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:16px;color:var(--gray-500);
+}
+.footer-col a,.footer-col p{
+  display:block;font-size:.92rem;margin-bottom:10px;color:var(--ink);
+}
+.footer-col a:hover{color:var(--poppy);}
+.footer-bottom{
+  display:flex;justify-content:space-between;align-items:center;
+  padding-top:26px;flex-wrap:wrap;gap:12px;
+  font-size:.82rem;color:var(--gray-500);
+}
+
+/* ---- dark footer variant, used only on reviews.html so the page
+   stays one continuous dark surface instead of ending in the site's
+   default light footer, which reads as a jarring white block after
+   an all-black page ---- */
+footer.footer-dark{
+  background:var(--ink);
+  color:var(--paper);
+}
+footer.footer-dark .logo{ color:var(--paper); }
+footer.footer-dark .footer-brand p{ color:rgba(250,249,245,.65); }
+footer.footer-dark .footer-col h4{ color:rgba(250,249,245,.45); }
+footer.footer-dark .footer-col a,
+footer.footer-dark .footer-col p{ color:rgba(250,249,245,.82); }
+footer.footer-dark .footer-col a:hover{ color:var(--poppy); }
+footer.footer-dark .footer-grid{ border-bottom-color:rgba(250,249,245,.15); }
+footer.footer-dark .footer-bottom{ color:rgba(250,249,245,.4); }
+
+/* ---------- reveal ---------- */
+.reveal{opacity:0;transform:translateY(36px) rotate(var(--r,0deg));}
+#story .reveal{transform:translateY(90px);}
+
+/* ---------- responsive ---------- */
+@media (max-width:920px){
+  .nav-links{display:none;}
+  .about-inner{grid-template-columns:1fr;}
+  .process-inner{grid-template-columns:1fr;gap:40px;}
+  .process-sticky{position:static;}
+  .process-steps{gap:60px;}
+  .footer-grid{grid-template-columns:1fr 1fr;}
+  .showcase-inner{grid-template-columns:1fr;text-align:left;}
+  .showcase-media{order:-1;max-width:320px;margin:0 auto 36px;}
+
+  .reviews-grid{grid-template-columns:1fr;}
+  .reviews-stats{gap:32px;}
+  .pricing-grid{grid-template-columns:1fr;}
+}
+@media (max-width:600px){
+  .footer-grid{grid-template-columns:1fr;}
+  .showcase{padding:180px 20px 130px;}
+  .wrap,.nav-inner{padding:0 20px;}
+  .carousel3d-caption-desc{max-width:22ch;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important;}
+  .reveal{opacity:1;transform:none;}
+  #curtainBars{display:none;}
+  .advantages{height:auto;overflow:visible;}
+  .advantages-pin{position:relative;display:flex;}
+}
+/* ============================================================
+   REVIEWS WALL (reviews.html) -- a flat, draggable sheet of
+   testimonial cards. The only "3D" is a cursor-follow lens: cards
+   near it scale up, push radially outward and tilt slightly, like a
+   convex lens laid on top of paper. Everything outside the lens sits
+   dim and desaturated -- literally this site's "Ч/Б снаружи, ярко
+   внутри" line, turned into an interaction.
+   ============================================================ */
+.reviews-wall{
+  background:var(--ink);color:var(--paper);
+  padding:180px 32px 0;
+  min-height:100vh;
+  display:flex;flex-direction:column;
+}
+.reviews-wall-head{
+  text-align:center;
+  max-width:640px;margin:0 auto 20px;
+}
+.reviews-wall-head .eyebrow{color:var(--poppy);}
+.reviews-wall-head h1{
+  font-family:'Space Grotesk',sans-serif;
+  font-style:normal;
+  font-size:clamp(2.4rem,5.2vw,4rem);
+  font-weight:600;
+  margin:16px 0 14px;
+}
+.reviews-wall-head p{
+  font-size:1rem;line-height:1.6;
+  color:rgba(250,249,245,.62);
+}
+.reviews-wall-back{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'Space Grotesk',sans-serif;font-size:.85rem;font-weight:600;
+  color:rgba(250,249,245,.6);
+  margin-bottom:34px;
+}
+.reviews-wall-back:hover{color:var(--paper);}
+
+.wall-stage{
+  position:relative;
+  flex:1;
+  min-height:560px;
+  overflow:hidden;
+  perspective:1000px;
+  cursor:grab;
+  touch-action:pan-y;
+  user-select:none;
+}
+.wall-stage:active{cursor:grabbing;}
+.wall-stage::after{
+  /* soft vignette so the tiled edges fade into the ink background
+     instead of ending in a hard visible rectangle */
+  content:'';
+  position:absolute;inset:0;
+  pointer-events:none;
+  background:radial-gradient(ellipse at center, transparent 45%, var(--ink) 92%);
+  z-index:5;
+}
+.wall-grid{
+  position:absolute;
+  top:0;left:0;
+  transform-style:preserve-3d;
+  will-change:transform;
+}
+.wall-card{
+  position:absolute;
+  background:rgba(250,249,245,.06);
+  border:1px solid rgba(250,249,245,.14);
+  border-radius:14px;
+  padding:14px;
+  display:flex;flex-direction:column;gap:6px;
+  cursor:pointer;
+  transition:border-color .3s ease, background .3s ease;
+  will-change:transform,filter;
+}
+.wall-card.is-active{
+  border-color:rgba(232,65,44,.6);
+  background:rgba(250,249,245,.1);
+}
+.wall-card-stars{color:var(--poppy);font-size:.64rem;letter-spacing:1px;}
+.wall-card-quote{
+  font-size:.68rem;line-height:1.38;
+  color:rgba(250,249,245,.88);
+  flex:1;
+  overflow:hidden;
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  -webkit-box-orient:vertical;
+}
+.wall-card-person{display:flex;align-items:center;gap:7px;margin-top:auto;}
+.wall-card-avatar{
+  width:22px;height:22px;border-radius:50%;flex:none;
+  background:var(--poppy);color:var(--paper);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.56rem;
+}
+.wall-card-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.66rem;}
+.wall-card-order{font-size:.58rem;color:rgba(250,249,245,.48);}
+
+/* ---- detail panel, pinned to the left, filled on card hover/tap ---- */
+.review-detail-panel{
+  position:absolute;
+  left:28px;top:50%;
+  transform:translateY(-50%) translateX(-16px);
+  width:min(360px, 84vw);
+  z-index:20;
+  background:var(--ink);
+  border:1px solid rgba(250,249,245,.16);
+  border-radius:18px;
+  padding:26px 26px 24px;
+  opacity:0;
+  pointer-events:none;
+  box-shadow:0 30px 70px rgba(0,0,0,.55);
+  transition:opacity .3s ease, transform .3s ease;
+}
+.review-detail-panel.is-visible{
+  opacity:1;
+  transform:translateY(-50%) translateX(0);
+}
+.review-detail-stars{color:var(--poppy);font-size:1rem;letter-spacing:2px;margin-bottom:14px;}
+.review-detail-quote{
+  font-family:'Fraunces',serif;font-style:italic;
+  font-size:1.15rem;line-height:1.5;
+  color:var(--paper);
+  margin-bottom:22px;
+}
+.review-detail-person{display:flex;align-items:center;gap:12px;}
+.review-detail-avatar{
+  width:44px;height:44px;border-radius:50%;flex:none;
+  background:var(--poppy);color:var(--paper);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.95rem;
+}
+.review-detail-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;color:var(--paper);}
+.review-detail-order{font-size:.82rem;color:rgba(250,249,245,.55);}
+
+.reviews-wall-hint{
+  text-align:center;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;
+  color:rgba(250,249,245,.35);
+  padding:26px 0 60px;
+}
+
+@media (max-width:700px){
+  .reviews-wall{padding:140px 20px 0;}
+  .wall-stage{min-height:440px;}
+  .review-detail-panel{
+    left:50%;top:auto;bottom:20px;
+    transform:translate(-50%, 12px);
+    width:min(320px, 90vw);
+    padding:20px 20px 18px;
+  }
+  .review-detail-panel.is-visible{ transform:translate(-50%, 0); }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .wall-card{transition:none;}
+}
+.story.is-curtain-preview,
+#catalog.is-curtain-preview{
+  position:fixed;
+  inset:0;
+  z-index:40; /* ниже #curtainBars (z-index:50) */
+  width:100%;
+  height:100vh;
+  overflow:hidden;
+}
+.curtain-bar{
+  will-change:transform;
+}
+.story-flash{
+  position:absolute;inset:0;
+  z-index:6;
+  pointer-events:none;
+  background:radial-gradient(circle at 50% 50%, var(--poppy), transparent 70%);
+  mix-blend-mode:screen;
+  opacity:0;
+}
+.story-card{
+  transform-style:preserve-3d;
+  backface-visibility:hidden;
+  will-change:transform, opacity, filter;
+}
+.story-card{
+  cursor:pointer;
+}
+.story-card-inner{
+  transform-style:preserve-3d;
+  will-change:transform;
+}
+.showcase-brand-note{
+  font-family:'Inter', sans-serif;
+  font-size:.8rem;
+  font-weight:500;
+  color:rgba(250,249,245,.5);
+  margin-left:4px;
+}
+
+@media (max-width:880px){
+  .showcase-service-tag{
+    position:static;
+    display:block;
+    max-width:none;
+    margin:0 0 20px;
+    font-size:1rem;
+  }
+}
+.showcase-eyebrow{
+  display:block;
+  margin-bottom:16px;
+}

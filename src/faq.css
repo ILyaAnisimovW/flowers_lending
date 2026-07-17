@@ -1,0 +1,153 @@
+/* =========================================================
+   FAQ — glassy black strips on paper background.
+   Import this file from style.css:  @import './faq.css';
+   or from main.js:                  import './faq.css';
+   ========================================================= */
+
+.faq{
+  padding:130px 32px;
+  background:var(--paper);
+  color:var(--ink);
+}
+.faq .section-head p{color:var(--gray-700);}
+.faq-accent{color:var(--poppy);}
+
+.faq-list{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+/* ---- the strip itself ---- */
+.faq-strip{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:24px;
+  width:100%;
+  padding:26px 40px;
+  border-radius:14px;
+  background:var(--ink);
+  color:var(--paper);
+  text-align:left;
+  overflow:hidden;
+  cursor:pointer;
+  isolation:isolate; /* keeps the sheen/edges from bleeding onto siblings via blend modes */
+  transition:box-shadow .3s ease;
+  /* starting state for the scroll-in animation -- JS drives x/opacity via GSAP,
+     this is just the safe fallback if JS fails to load */
+  opacity:0;
+}
+
+/* glass edges: two soft light rims on left/right, like light catching the
+   edge of a pane of glass sitting on the black bar */
+.faq-strip::before,
+.faq-strip::after{
+  content:'';
+  position:absolute;
+  top:0;bottom:0;
+  width:64px;
+  pointer-events:none;
+  z-index:1;
+  opacity:.55;
+  transition:opacity .35s ease;
+}
+.faq-strip::before{
+  left:0;
+  background:linear-gradient(90deg, rgba(250,249,245,.5), rgba(250,249,245,0) 90%);
+}
+.faq-strip::after{
+  right:0;
+  background:linear-gradient(270deg, rgba(250,249,245,.5), rgba(250,249,245,0) 90%);
+}
+.faq-strip:hover::before,
+.faq-strip:hover::after,
+.faq-strip:focus-visible::before,
+.faq-strip:focus-visible::after{opacity:1;}
+
+/* diagonal sheen that sweeps across on hover -- the "стеклянный" глинт */
+.faq-strip-sheen{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  background:linear-gradient(115deg,
+    transparent 30%,
+    rgba(250,249,245,.16) 45%,
+    rgba(250,249,245,.28) 50%,
+    rgba(250,249,245,.16) 55%,
+    transparent 70%);
+  transform:translateX(-130%);
+}
+.faq-strip:hover .faq-strip-sheen,
+.faq-strip:focus-visible .faq-strip-sheen{
+  transform:translateX(130%);
+  transition:transform .9s cubic-bezier(.2,.7,.2,1);
+}
+.faq-strip-sheen{transition:transform 0s;} /* snap back instantly on mouseleave, ready for the next sweep */
+
+/* ---- content ---- */
+.faq-strip-num{
+  position:relative;z-index:2;
+  flex:none;
+  font-family:'Fraunces',serif;
+  font-style:italic;font-weight:400;
+  font-size:1.1rem;
+  color:var(--poppy);
+  min-width:28px;
+  transition:color .3s ease;
+}
+.faq-strip-text{
+  position:relative;z-index:2;
+  flex:1;
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-size:clamp(1.05rem,2vw,1.35rem);
+  letter-spacing:-.01em;
+  white-space:normal;
+}
+.faq-strip-text.is-glitching{
+  color:var(--poppy);
+  text-shadow:1px 0 0 rgba(63,216,232,.6), -1px 0 0 rgba(232,65,44,.6);
+}
+.faq-strip-icon{
+  position:relative;z-index:2;
+  flex:none;
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;font-size:1.4rem;
+  color:var(--paper);
+  transition:transform .35s ease, color .3s ease;
+}
+
+/* open (hover/focus) state */
+.faq-strip.is-open{box-shadow:0 18px 44px rgba(232,65,44,.18);}
+.faq-strip.is-open .faq-strip-num{color:var(--paper);}
+.faq-strip.is-open .faq-strip-icon{transform:rotate(45deg);color:var(--poppy);}
+
+@media (max-width:640px){
+  .faq{padding:90px 20px;}
+  .faq-strip{padding:20px 22px;gap:16px;}
+  .faq-strip-icon{font-size:1.2rem;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .faq-strip{opacity:1 !important;transform:none !important;}
+  .faq-strip-sheen{display:none;}
+}
+
+.faq-title{
+  display:block;
+  font-family:'Space Grotesk', sans-serif;
+  font-weight:700;
+  font-size:clamp(7rem, 16vw, 15rem);
+  line-height:.82;
+  letter-spacing:-.03em;
+  color:var(--poppy);
+  margin:0 0 32px;
+}
+
+@media (max-width:640px){
+  .faq-title{
+    font-size:clamp(4.5rem, 24vw, 7rem);
+  }
+}

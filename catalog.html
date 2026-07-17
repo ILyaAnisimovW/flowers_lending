@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Все букеты — Bloomly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Space+Grotesk:wght@300;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<link rel="stylesheet" href="src/style.css">
+<!-- окно оплаты подключается отдельным файлом, чтобы не трогать
+     общий style.css/import-chain -->
+<link rel="stylesheet" href="src/checkout.css">
+<!-- лепестки, летящие за курсором -->
+<link rel="stylesheet" href="src/mouse-trail.css">
+</head>
+<body class="catalog-page">
+
+<div class="petal-cursor" id="cursor"></div>
+
+<header class="nav nav--solid">
+  <div class="nav-inner">
+    <a href="index.html" class="logo">
+  <img src="/images/logo.png" alt="Bloomly" class="logo-mark">
+  Bloomly
+</a>
+    <nav class="nav-links">
+  <a href="catalog.html" class="is-current">Каталог</a>
+  <a href="index.html#how">Как заказать</a>
+  <a href="index.html#pricing">Тарифы</a>
+  <a href="#" class="nav-contact-trigger" data-contact-trigger>Контакты</a>
+</nav>
+<a href="#" class="nav-cta" data-contact-trigger>Собрать букет</a>
+  </div>
+</header>
+
+<section class="catalog-head">
+  <a href="index.html" class="catalog-back">
+    <span class="catalog-back-arrow">←</span> На главную
+  </a>
+</section>
+
+<section class="catalog-shell wrap">
+
+  <aside class="catalog-sidebar">
+    <div class="catalog-search">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6.5" stroke="currentColor" stroke-width="1.6"/><path d="M14 14L18 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <input type="text" id="catalogSearch" placeholder="Найти букет...">
+    </div>
+
+    <nav class="catalog-category-list" id="catalogCategoryList" aria-label="Категория">
+      <button class="catalog-category-item is-active" data-category="all" type="button">
+        <span>Все</span><span class="catalog-category-count" id="count-all">0</span>
+      </button>
+      <button class="catalog-category-item" data-category="Хит недели" type="button">
+        <span>Хит недели</span><span class="catalog-category-count" id="count-hit">0</span>
+      </button>
+      <button class="catalog-category-item" data-category="Бестселлер" type="button">
+        <span>Бестселлер</span><span class="catalog-category-count" id="count-best">0</span>
+      </button>
+      <button class="catalog-category-item" data-category="Новинка" type="button">
+        <span>Новинка</span><span class="catalog-category-count" id="count-new">0</span>
+      </button>
+      <button class="catalog-category-item" data-category="Премиум" type="button">
+        <span>Премиум</span><span class="catalog-category-count" id="count-premium">0</span>
+      </button>
+      <button class="catalog-category-item" data-category="Топ подарок" type="button">
+        <span>Топ подарок</span><span class="catalog-category-count" id="count-gift">0</span>
+      </button>
+      <button class="catalog-category-item" data-category="Монобукет" type="button">
+        <span>Монобукет</span><span class="catalog-category-count" id="count-mono">0</span>
+      </button>
+    </nav>
+
+    <div class="catalog-sort-block">
+      <label class="catalog-sort-label" for="catalogSort">Сортировка</label>
+      <select id="catalogSort">
+        <option value="popular">Популярные</option>
+        <option value="new">Сначала новинки</option>
+        <option value="name-asc">По алфавиту (А-Я)</option>
+      </select>
+    </div>
+  </aside>
+
+  <div class="catalog-main">
+    <div class="catalog-count" id="catalogCount">Показано 0 из 0 букетов</div>
+    <div class="catalog-grid" id="catalogGrid"></div>
+    <div class="catalog-empty" id="catalogEmpty" hidden>
+      <p>По этим фильтрам ничего не нашлось.</p>
+      <button class="catalog-reset-btn" id="catalogResetBtn" type="button">Сбросить фильтры</button>
+    </div>
+  </div>
+
+</section>
+
+<section class="cta-banner">
+  <h2>Не нашли <em>свой букет</em>?</h2>
+  <a href="index.html#contacts" class="btn-primary">Соберём индивидуально →</a>
+</section>
+
+<footer id="contacts">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="logo">
+  <img src="/images/logo.png" alt="Bloomly" class="logo-mark">
+  Bloomly
+</a>
+        <p>Цветочная мастерская. Собираем и доставляем яркие букеты по Риге каждый день с 8:00 до 22:00.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Магазин</h4>
+        <a href="index.html#catalog">Каталог</a>
+        <a href="index.html#pricing">Тарифы</a>
+        <a href="index.html#how">Доставка</a>
+        <a href="index.html#about">О нас</a>
+      </div>
+      <div class="footer-col">
+        <h4>Контакты</h4>
+        <p>+371 20 000 000</p>
+        <p>hello@mak-flowers.lv</p>
+        <p>ул. Бривибас 12, Рига</p>
+      </div>
+      <div class="footer-col">
+        <h4>Соцсети</h4>
+        <a href="#">Instagram</a>
+        <a href="#">Telegram</a>
+        <a href="#">WhatsApp</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Bloomly. Все права защищены.</span>
+      <span>Ч/Б снаружи, ярко внутри</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ================= ОКНО ОПЛАТЫ =================
+     Открывается по клику на любую кнопку "Заказать" в сетке каталога
+     (см. data-checkout-* атрибуты, которые catalog.js навешивает на
+     каждую карточку) -- обработчик клика живёт в src/checkout.js. -->
+<div class="checkout-overlay" id="checkoutOverlay">
+  <div class="checkout-modal" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
+
+    <div class="checkout-head">
+      <span class="checkout-eyebrow">Шаг 2 из 2</span>
+      <h2 id="checkoutTitle">Доставка и оплата</h2>
+      <button class="checkout-close" id="checkoutClose" aria-label="Закрыть">×</button>
+    </div>
+
+    <div class="checkout-body" id="checkoutBody">
+
+      <div class="checkout-summary-item">
+        <div class="checkout-thumb"><img id="checkoutSummaryImg" src="" alt=""></div>
+        <div>
+          <div class="checkout-summary-name" id="checkoutSummaryName">Букет</div>
+          <div class="checkout-summary-sub" id="checkoutSummaryDesc">1 шт.</div>
+        </div>
+        <div class="checkout-summary-price" id="checkoutSummaryPrice">0 ₽</div>
+      </div>
+
+      <div class="checkout-section">
+        <label class="checkout-label">Как получить букет</label>
+        <div class="checkout-segment" data-group="fulfillment">
+          <button type="button" class="checkout-segment-btn is-active" data-value="delivery">Доставка</button>
+          <button type="button" class="checkout-segment-btn" data-value="pickup">Самовывоз</button>
+        </div>
+      </div>
+
+      <div class="checkout-fields" id="deliveryFields">
+        <div class="checkout-field" id="cityField">
+          <label>Город</label>
+          <select id="citySelect" required>
+            <option value="" disabled selected>Выберите город</option>
+            <option value="riga">Рига</option>
+            <option value="moscow">Москва</option>
+            <option value="spb">Санкт-Петербург</option>
+            <option value="kazan">Казань</option>
+            <option value="jurmala">Юрмала</option>
+          </select>
+          <span class="checkout-error-msg">Выберите город доставки</span>
+        </div>
+        <div class="checkout-row-2">
+          <div class="checkout-field" id="streetField">
+            <label>Улица, дом</label>
+            <input type="text" id="streetInput" placeholder="ул. Бривибас, 24">
+            <span class="checkout-error-msg">Укажите улицу и дом</span>
+          </div>
+          <div class="checkout-field checkout-field--narrow">
+            <label>Кв. / офис</label>
+            <input type="text" placeholder="14">
+          </div>
+        </div>
+        <div class="checkout-field">
+          <label>Комментарий курьеру</label>
+          <input type="text" placeholder="Домофон, этаж, ориентир — необязательно">
+        </div>
+        <div class="checkout-section">
+          <label class="checkout-label">Когда привезти</label>
+          <div class="checkout-segment" data-group="time">
+            <button type="button" class="checkout-segment-btn is-active" data-value="asap">Как можно скорее</button>
+            <button type="button" class="checkout-segment-btn" data-value="scheduled">Ко времени</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="checkout-pickup-info" id="pickupInfo" hidden>
+        <div><b>ул. Бривибас, 12, Рига</b></div>
+        <div>Ежедневно с 8:00 до 22:00, без наценки</div>
+        <div>Букет будет ждать вас у стойки — назовите номер заказа</div>
+      </div>
+
+      <div class="checkout-section">
+        <label class="checkout-label">Контакты</label>
+        <div class="checkout-field">
+          <label>Телефон</label>
+          <input type="tel" id="phoneInput" placeholder="+371 20 000 000">
+        </div>
+      </div>
+
+      <div class="checkout-section">
+        <label class="checkout-label">Оплата</label>
+        <div class="checkout-segment" data-group="payment">
+          <button type="button" class="checkout-segment-btn is-active" data-value="card">Картой сейчас</button>
+          <button type="button" class="checkout-segment-btn" data-value="cash" id="cashSegmentBtn">Наличными курьеру</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="checkout-foot" id="checkoutFoot">
+      <div class="checkout-totals">
+        <div class="checkout-totals-row"><span>Букет</span><span id="itemPriceValue">0 ₽</span></div>
+        <div class="checkout-totals-row" id="deliveryFeeRow"><span id="deliveryFeeLabel">Доставка</span><span id="deliveryFeeValue">300 ₽</span></div>
+        <div class="checkout-totals-row checkout-totals-total"><span>Итого</span><span id="totalValue">0 ₽</span></div>
+      </div>
+      <button class="checkout-cta" id="checkoutCta">Оплатить →</button>
+      <p class="checkout-trust" id="checkoutTrust">Оплата картой защищена. Нажимая «Оплатить», вы соглашаетесь с условиями доставки.</p>
+    </div>
+
+  </div>
+</div>
+
+<script type="module" src="src/catalog.js"></script>
+<script type="module" src="src/checkout.js"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+.brand-banner{
+  position:relative;
+  background:var(--paper);   /* свой фикс. фон -- не зависит от темы страницы,
+                                 поэтому одинаково видно и на светлом index,
+                                 и на тёмном catalog/reviews */
+  overflow:hidden;
+  padding:44px 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:default;
+}
+
+.brand-banner-inner{
+  position:relative;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.brand-banner-layer{
+  position:relative;
+  display:block;
+  width:100%;
+  text-align:center;
+  font-family:'Space Grotesk', sans-serif;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:-.01em;
+  line-height:1;
+  white-space:nowrap;
+  user-select:none;
+  pointer-events:none;
+  font-size:22vw;
+}
+
+.brand-banner-layer--red,
+.brand-banner-layer--cyan{
+  position:absolute;
+  left:0;
+  top:0;
+}
+
+.brand-banner-layer--base{
+  color:var(--ink);   /* чёрный текст -- всегда контрастен на светлом фоне блока */
+  z-index:3;
+}
+
+.brand-banner-layer--red{
+  color:#FF2E3D;
+  z-index:2;
+  mix-blend-mode:multiply;
+  will-change:transform;
+}
+
+.brand-banner-layer--cyan{
+  color:#2EE6FF;
+  z-index:1;
+  mix-blend-mode:multiply;
+  will-change:transform;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .brand-banner-layer--red,
+  .brand-banner-layer--cyan{ transform:none !important; }
+}
