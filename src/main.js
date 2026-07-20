@@ -82,14 +82,12 @@ __pageReady.then(() => {
 /* ================= РЕАЛЬНАЯ синхронизация ScrollTrigger с late-loading
    контентом (видео флористов, lazy-картинки, pin-spacer'ы) —
    то, что было только в комментарии выше, но не было написано. */
-let __stRefreshPending = false;
+let __stRefreshTimer = null;
 function requestSTRefresh(){
-  if (__stRefreshPending) return;
-  __stRefreshPending = true;
-  requestAnimationFrame(() => {
-    __stRefreshPending = false;
+  clearTimeout(__stRefreshTimer);
+  __stRefreshTimer = setTimeout(() => {
     ScrollTrigger.refresh();
-  });
+  }, 150);
 }
 
 // ловит ЛЮБОЕ изменение реальной высоты body: догрузку видео,
@@ -112,60 +110,50 @@ document.body.classList.add('is-loading');
 
 /* ================= PRELOADER ================= */
 const preloader = document.getElementById('preloader');
-const preloaderLogo = document.getElementById('preloaderLogo');
-const preloaderRing = document.getElementById('preloaderRing');
-const preloaderRingSvg = document.querySelector('.preloader-logo-ring');
-const preloaderPercent = document.getElementById('preloaderPercent');
-const preloaderLabel = document.getElementById('preloaderLabel');
-const preloaderBarFill = document.getElementById('preloaderBarFill');
-const preloaderBarTrack = document.querySelector('.preloader-bar-track');
-const preloaderFlash = document.getElementById('preloaderFlash');
+const preloaderTopRight = document.getElementById('preloaderTopRight');
+const preloaderCountDigits = document.getElementById('preloaderCountDigits');
+const preloaderWordmark = document.getElementById('preloaderWordmark');
+const preloaderWordmarkLetters = preloaderWordmark
+  ? preloaderWordmark.querySelectorAll('.pw-letter')
+  : [];
 
 document.body.classList.add('is-loading');
 
-const ringLength = preloaderRing.getTotalLength();
-preloaderRing.style.strokeDasharray = ringLength;
-preloaderRing.style.strokeDashoffset = ringLength;
-
-// фразы, которыми лейбл скрэмблится по мере прогресса —
-// scrambleText объявлена ниже по файлу через function-декларацию,
-// поэтому она захостится и доступна уже здесь
-const LOADING_PHRASES = [
-  'Собираем цветы',
-  'Подрезаем стебли',
-  'Заворачиваем в крафт',
-  'Почти готово',
-];
-let __lastPhraseIndex = -1;
-
 const progressObj = { val: 0 };
 let displayedPercent = 0;
-function setProgress(fraction){
+function renderProgress(){
+  const v = Math.round(progressObj.val);
+  if (v !== displayedPercent){
+    displayedPercent = v;
+    preloaderCountDigits.textContent = String(v).padStart(3, '0'); // 0 -> "000", 7 -> "007"
+    gsap.fromTo(preloaderCountDigits,
+      { y: -4, opacity: .5 },
+      { y: 0, opacity: 1, duration: .18, ease: 'power2.out' }
+    );
+  }
+}
+function setProgress(fraction, duration = .45){
   gsap.to(progressObj, {
     val: Math.min(fraction, 1) * 100,
-    duration: .45, ease: 'power2.out',
-    onUpdate: () => {
-      const v = Math.round(progressObj.val);
-      if (v !== displayedPercent){
-        displayedPercent = v;
-        preloaderPercent.firstChild.textContent = v;
-      }
-      preloaderRing.style.strokeDashoffset = ringLength * (1 - progressObj.val / 100);
-      if (preloaderBarFill) preloaderBarFill.style.width = progressObj.val + '%';
-
-      const phraseIndex = Math.min(
-        LOADING_PHRASES.length - 1,
-        Math.floor((progressObj.val / 100) * LOADING_PHRASES.length)
-      );
-      if (phraseIndex !== __lastPhraseIndex){
-        __lastPhraseIndex = phraseIndex;
-        scrambleText(preloaderLabel, LOADING_PHRASES[phraseIndex]);
-      }
-    }
+    duration, ease: 'power2.out',
+    onUpdate: renderProgress,
   });
 }
 
-// реальные критичные ассеты, без которых первый экран не имеет смысла показывать
+/* прелоадер обязан быть виден минимум MIN_PRELOADER_MS, даже если все
+   критичные ассеты закешированы -- см. предыдущий комментарий выше по
+   логике: часовой таймлайн сам ведёт счётчик до 92% за это время,
+   реальная загрузка лишь добивает остаток */
+const MIN_PRELOADER_MS = 1600;
+const preloaderStart = performance.now();
+
+const clockTween = gsap.to(progressObj, {
+  val: 92,
+  duration: MIN_PRELOADER_MS / 1000,
+  ease: 'power1.out',
+  onUpdate: renderProgress,
+});
+
 const criticalImages = [
   BASE + 'images/logo.png',
   BASE + 'images/bouquet-flirt.png',
@@ -174,14 +162,10 @@ const criticalImages = [
   BASE + 'images/bouquet-cloud.png',
   BASE + 'images/bouquet-whisper.png',
 ];
-const totalTasks = criticalImages.length + 1; // +1 за шрифты
-let doneCount = 0;
-function taskDone(){ doneCount++; setProgress(doneCount / totalTasks); }
-
-const fontsPromise = (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(taskDone);
+const fontsPromise = (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve());
 const imagePromises = criticalImages.map(src => new Promise(resolve => {
   const img = new Image();
-  img.onload = img.onerror = () => { taskDone(); resolve(); };
+  img.onload = img.onerror = resolve;
   img.src = src;
 }));
 
@@ -189,11 +173,23 @@ let __assetsLoaded = false;
 let __pageReadyDone = false;
 Promise.all([fontsPromise, ...imagePromises]).then(() => { __assetsLoaded = true; maybeRunIntro(); });
 __pageReady.then(() => { __pageReadyDone = true; ScrollTrigger.refresh(); maybeRunIntro(); });
-function maybeRunIntro(){ if (__assetsLoaded && __pageReadyDone) runIntro(); }
+
+function maybeRunIntro(){
+  if (!(__assetsLoaded && __pageReadyDone)) return;
+  const elapsed = performance.now() - preloaderStart;
+  const remaining = MIN_PRELOADER_MS - elapsed;
+
+  const finish = () => {
+    clockTween.kill();
+    setProgress(1, .3);
+    gsap.delayedCall(.35, runIntro);
+  };
+
+  if (remaining > 0) setTimeout(finish, remaining);
+  else finish();
+}
 
 function runIntro(){
-  preloaderLogo.style.animation = 'none'; // снимаем CSS keyframes перед тем как их место займёт GSAP
-
   const tl = gsap.timeline({
     onComplete: () => {
       preloader.remove();
@@ -202,30 +198,22 @@ function runIntro(){
     }
   });
 
-  // 1. UI-обвес (кольцо/процент/бар/лейбл) быстро гаснет и уезжает вверх
-  tl.to([preloaderRingSvg, preloaderPercent, preloaderBarTrack, preloaderLabel], {
-      opacity: 0, y: -10, duration: .22, ease: 'power2.in', stagger: .03
-    })
-    // 2. логотип делает акцентирующий "удар" перед стартом перехода
-    .to(preloaderLogo, { scale: 1.3, duration: .16, ease: 'power2.out' }, '-=.05')
-    // 3. poppy-вспышка раскрывается из центра — на долю секунды экран
-    //    целиком заливает акцентный цвет бренда
-    .to(preloaderFlash, { clipPath: 'circle(140% at 50% 50%)', duration: .55, ease: 'power4.inOut' }, '-=.02')
-    // 4. чёрный слой прелоадера схлопывается ровно в момент, когда
-    //    вспышка уже раскрылась — получается "flash cut", а не дыра в черноте
-    .to(preloader, { clipPath: 'circle(0% at 50% 50%)', duration: .85, ease: 'power4.inOut' }, '-=.3')
-    .to(preloaderLogo, { scale: 22, opacity: 0, duration: .85, ease: 'power3.in' }, '<')
-    // 5. вспышка сама уходит чуть позже, вымывая под собой hero
-    .to(preloaderFlash, { opacity: 0, duration: .4, ease: 'power2.in' }, '-=.35')
+  // 1. счётчик в углу гаснет -- дальше он больше не нужен
+  tl.to(preloaderTopRight, { opacity: 0, y: -8, duration: .22, ease: 'power2.in' })
+    // 2. буквы BLOOMLY выпрыгивают по одной, с пружиной
+    .fromTo(preloaderWordmarkLetters,
+      { y: '70%', opacity: 0 },
+      { y: '0%', opacity: 1, duration: .6, ease: 'back.out(1.7)', stagger: .045 },
+      '-=.05'
+    )
+    // 3. короткая пауза -- буквы "постояли" на экране
+    .to({}, { duration: .35 })
+    // 4. весь прелоадер целиком уезжает вверх, унося с собой ворд-марк
+    .to(preloader, { yPercent: -100, duration: .9, ease: 'power4.inOut' }, '+=.05')
     .add(playHero, '-=.55');
 }
-
 function playHero(){
-  gsap.from('.showcase-tags, .showcase-title, .showcase-desc, .showcase-meta, .showcase-see-all', {
-    opacity: 0, y: 26, duration: .8, stagger: .08, ease: 'power3.out'
-  });
-  gsap.from('.showcase-media', { opacity: 0, scale: .92, duration: 1, ease: 'power2.out', delay: .08 });
-  gsap.delayedCall(1.1, startShowcase);
+  startShowcase();
 }
 
 const showcaseItems = [
@@ -707,6 +695,8 @@ function initDistrictsReveal(){
 }
 initDistrictsReveal();
 
+
+
 /* ================= ADVANTAGES -- pinned scrollytelling ================= */
 function initAdvantagesPin(){
   const section = document.getElementById('advantages');
@@ -800,139 +790,117 @@ function initAdvantagesPin(){
   });
 }
 initAdvantagesPin();
-
-/* ================= STORY -- pinned card-dealing sequence + взрыв =================
-   Тот же безопасный паттерн, что и в advantages/florists: end как
-   функция + invalidateOnRefresh + anticipatePin -- чтобы не вернуть
-   баг с телепортацией скролла (см. комментарий про Lenis-синк выше).
-
-   Порядок фаз внутри пина:
-   1. intro (заголовок/текст) полностью гаснет, пока карточки летят
-      к своим местам в сетке 2x2.
-   2. Карточки долетают, собираются, задерживаются на месте (hold).
-   3. "Взрыв": карточки резко разлетаются ДАЛЬШЕ своих исходных
-      офсетов (в ту же сторону, откуда прилетели), с утроенным
-      вращением и затуханием, синхронно со вспышкой storyFlash. */
-function initStoryCardsPin(){
+function initStoryPanels(){
   const section = document.getElementById('story');
-  const intro   = document.getElementById('storyIntro');
-  const fill    = document.getElementById('storyTimelineFill');
-  const flash   = document.getElementById('storyFlash');
-  const cards   = [...document.querySelectorAll('.story-card')];
-  if (!section || !cards.length) return;
+  if (!section) return;
 
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const logo = document.getElementById('storyLogo');
+  const wordWrapEl = section.querySelector('.story-word-wrap');
+  const wordEl = document.getElementById('storyWord');
+  const subEl  = document.getElementById('storySub');
+  const dots   = section.querySelectorAll('.story-progress-dot');
+  if (!wordWrapEl || !wordEl || !subEl) return;
 
-  // откуда карточка "прилетает", по data-dir
-  const OFFSET = {
-    left:   { x: -760, y: 0    },
-    top:    { x: 0,    y: -560 },
-    right:  { x: 760,  y: 0    },
-    bottom: { x: 0,    y: 560  },
-  };
-  const ROTATE = { left: -10, top: 6, right: 10, bottom: -6 };
+  const items = [
+    { word:'Прозрачность',    sub:'Пока вы читаете это, где-то в Эквадоре режут розы для завтрашней доставки.' },
+    { word:'Эквадор, 2800 м', sub:'Фермы высоко в горах — розы растут медленнее, бутон получается плотнее и держится дольше.' },
+    { word:'48 часов',        sub:'От срезки до сборки букета — никакого склада и никакой перележки в холодильнике.' },
+    { word:'Ручная сборка',   sub:'Каждый стебель осматриваем и подрезаем под углом вручную — никакого конвейера.' },
+    { word:'Фейс-контроль',   sub:'Флорист лично проверяет каждый букет перед тем, как он поедет к вам.' },
+  ];
+  const segments   = items.length;
+  const transitions = segments - 1;      // сколько флипов нужно, чтобы показать все тексты (4)
+  const dwellAfterLast = 0.5;            // короткая пауза-"отдых" после последнего флипа, в высотах экрана
+  const totalScrollUnits = transitions + dwellAfterLast;
+
+  let current = -1;
+
+  function render(i, immediate = false){
+    if (i === current) return;
+    current = i;
+    const item = items[i];
+    const isDark = i % 2 === 0;
+    const sideRight = isDark;
+
+    section.classList.toggle('is-dark', isDark);
+    section.classList.toggle('is-light', !isDark);
+    wordWrapEl.classList.toggle('story-side-right', sideRight);
+    wordWrapEl.classList.toggle('story-side-left', !sideRight);
+
+    const enterX = sideRight ? 64 : -64;
+
+    if (immediate){
+      wordEl.textContent = item.word;
+      subEl.textContent = item.sub;
+      gsap.set(wordWrapEl, { x:0, opacity:1, scale:1 });
+    } else {
+      gsap.timeline()
+        .to(wordWrapEl, { opacity:0, x: sideRight ? -18 : 18, scale:.94, duration:.22, ease:'power2.in' })
+        .call(() => {
+          wordEl.textContent = item.word;
+          subEl.textContent = item.sub;
+        })
+        .fromTo(wordWrapEl,
+          { opacity:0, x:enterX, scale:.94 },
+          { opacity:1, x:0, scale:1, duration:.5, ease:'back.out(1.6)' }
+        );
+    }
+
+    dots.forEach((d, idx) => d.classList.toggle('active', idx === i));
+  }
+
+  /* ---- вращение лого от прогресса скролла.
+     phase идёт 0..totalScrollUnits. Каждое ЦЕЛОЕ значение фазы
+     (0,1,2,3,4) -- это момент, когда rotateY кратен 180°, то есть
+     лого развёрнуто плашмя к зрителю -- именно тогда меняем текст
+     (Math.floor(phase) даёт индекс сегмента ровно с этой границы).
+     После последнего перехода (phase >= transitions) вращение
+     ЗАМОРАЖИВАЕТСЯ -- остаток скролла (dwellAfterLast) просто держит
+     лого неподвижным лицом к зрителю, без лишнего докручивания. ---- */
+  function updateLogoRotation(rawPhase){
+    if (!logo) return;
+    const rotationPhase = Math.min(rawPhase, transitions);
+    logo.style.transform = `rotateY(${rotationPhase * 180}deg)`;
+  }
+
+  function segmentIndexFromPhase(rawPhase){
+    return Math.min(segments - 1, Math.floor(rawPhase));
+  }
+
+  render(0, true);
+  updateLogoRotation(0);
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    return;
+  }
 
   const mm = gsap.matchMedia();
 
   mm.add('(min-width: 881px)', () => {
-    // перспектива нужна родителю, иначе translateZ ("разлёт назад")
-    // у карточек будет просто невидим -- preserve-3d на самих карточках
-    // без perspective на контейнере ничего не даёт
-    const storyPin = section.querySelector('.story-pin') || section;
-    gsap.set(storyPin, { perspective: 1400 });
-    gsap.set(cards, { transformPerspective: 900, transformOrigin: '50% 50%' });
-
-    // для каждой карточки заранее считаем случайные "хаотичные" параметры
-    // взрыва -- один раз при инициализации, чтобы при скролле туда-обратно
-    // разлёт был одинаковым, а не рандомился на каждый кадр
-    const explodeParams = cards.map(card => {
-      const off = OFFSET[card.dataset.dir] || { x: 0, y: 0 };
-      return {
-        x: off.x * (1.5 + Math.random() * .5),
-        y: off.y * (1.5 + Math.random() * .5) + gsap.utils.random(-140, 140),
-        z: gsap.utils.random(-900, -500), // "назад" -- вглубь экрана
-        rotationX: gsap.utils.random(-260, 260),
-        rotationY: gsap.utils.random(-260, 260),
-        rotationZ: (ROTATE[card.dataset.dir] || 0) * gsap.utils.random(2.5, 4) * (Math.random() < .5 ? -1 : 1),
-      };
+    const pinTrigger = ScrollTrigger.create({
+      trigger: section,
+      start: 'top top',
+      end: () => '+=' + (window.innerHeight * totalScrollUnits),
+      pin: true,
+      scrub: true,
+      anticipatePin: 1,
+      invalidateOnRefresh: true,
+      onUpdate: self => {
+        const phase = self.progress * totalScrollUnits;
+        updateLogoRotation(phase);
+        render(segmentIndexFromPhase(phase));
+      },
+      onRefresh: self => {
+        const phase = self.progress * totalScrollUnits;
+        updateLogoRotation(phase);
+        render(segmentIndexFromPhase(phase), true);
+      },
     });
 
-    cards.forEach(card => {
-      const off = OFFSET[card.dataset.dir] || { x: 0, y: 0 };
-      gsap.set(card, {
-        x: off.x, y: off.y, z: 0,
-        rotate: ROTATE[card.dataset.dir] || 0,
-        rotationX: 0, rotationY: 0,
-        opacity: 0,
-        scale: .82,
-      });
-    });
-    gsap.set(fill, { width: '0%' });
-    gsap.set(flash, { opacity: 0 });
-    gsap.set(intro, { opacity: 1, y: 0 });
-
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: section,
-        start: 'top top',
-        end: () => '+=' + (window.innerHeight * 2.8), // чуть длиннее -- на фазу взрыва нужна своя дистанция
-        pin: true,
-        scrub: .6,
-        anticipatePin: 1,
-        invalidateOnRefresh: true, // <-- та же фиксация, что спасла advantages/florists от телепорта
-      }
-    });
-
-    // интро полностью гаснет (а не просто тускнеет), пока карточки летят
-    tl.to(intro, { opacity: 0, y: -20, duration: .5, ease: 'power2.in' }, .05);
-
-    // карточки собираются в сетку 2x2
-    cards.forEach((card, i) => {
-      tl.to(card, {
-        x: 0, y: 0, z: 0, rotate: 0, rotationX: 0, rotationY: 0,
-        opacity: 1, scale: 1,
-        duration: 1, ease: 'power3.out',
-      }, .15 + i * .18);
-    });
-
-    tl.to(fill, { width: '55%', duration: cards.length * .18 + .3, ease: 'none' }, .1);
-
-    // пауза, чтобы собранное состояние успело "прочитаться" перед взрывом
-    const holdStart = .15 + (cards.length - 1) * .18 + 1 + .2;
-
-    // ВЗРЫВ: карточки разлетаются в стороны И вглубь экрана (z), с
-    // хаотичным кувырканием по всем трём осям -- вспышка синхронно
-    // с началом разлёта
-    tl.to(flash, { opacity: .6, duration: .12, ease: 'power2.out' }, holdStart)
-      .to(cards, {
-        x: (i) => explodeParams[i].x,
-        y: (i) => explodeParams[i].y,
-        z: (i) => explodeParams[i].z,
-        rotationX: (i) => explodeParams[i].rotationX,
-        rotationY: (i) => explodeParams[i].rotationY,
-        rotate: (i) => explodeParams[i].rotationZ,
-        scale: .55,
-        opacity: 0,
-        duration: 1.1,
-        ease: 'power2.in',
-        stagger: .04,
-      }, holdStart)
-      .to(flash, { opacity: 0, duration: .5, ease: 'power2.in' }, holdStart + .3)
-      .to(fill, { width: '100%', duration: 1.1, ease: 'power2.in' }, holdStart);
-
-    return () => {
-      tl.scrollTrigger && tl.scrollTrigger.kill();
-      tl.kill();
-      gsap.set(storyPin, { clearProps: 'perspective' });
-    };
+    return () => { pinTrigger.kill(); };
   });
-
-  // мобилка: там уже CSS форсит фолбэк (статичный стек, opacity:1,
-  // transform:none) через (max-width:880px) в style.css — JS-пин
-  // там не нужен, ровно как в advantages/florists.
 }
-initStoryCardsPin();
-
+initStoryPanels();
 /* ================= FAQ (glass strips, scramble + scroll-invert) ================= */
 initFAQ();
 

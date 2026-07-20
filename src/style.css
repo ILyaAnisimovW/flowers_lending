@@ -21,13 +21,13 @@
 
 html{
   scroll-behavior: smooth;
+  overflow-x:clip; 
 }
 
 body{
   background:var(--paper);
   color:var(--ink);
   font-family:'Inter',sans-serif;
-  overflow-x:hidden;
   cursor:default;
 }
 
@@ -60,69 +60,54 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
   position:fixed;inset:0;
   z-index:10000;
   background:var(--ink);
-  display:flex;align-items:center;justify-content:center;
-  clip-path:circle(150% at 50% 50%);
-  will-change:clip-path;
-}
-.preloader-content{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:26px;color:var(--paper);
-  position:relative;
-  z-index:2; /* выше .preloader-flash */
-}
-.preloader-logo-wrap{ position:relative; width:104px;height:104px; display:flex;align-items:center;justify-content:center; }
-.preloader-logo-ring{ position:absolute;inset:0; width:100%;height:100%; transform:rotate(-90deg); }
-.preloader-logo-ring-bg{ fill:none; stroke:rgba(250,249,245,.12); stroke-width:1.4; }
-.preloader-logo-ring-progress{ fill:none; stroke:var(--poppy); stroke-width:2.2; stroke-linecap:round; }
-.preloader-logo-mark{
-  position:relative;z-index:1;
-  width:58px;height:58px;object-fit:contain;
-  animation:preloader-breathe 2.4s ease-in-out infinite;
-}
-@keyframes preloader-breathe{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.06);} }
-.preloader-percent{
-  font-family:'Fraunces',serif;
-  font-weight:600;
-  font-size:clamp(3.2rem,9vw,5.4rem);
-  line-height:1;
-  letter-spacing:-.02em;
-  display:flex;align-items:flex-start;gap:3px;
-  font-variant-numeric:tabular-nums;
-}
-.preloader-percent span{
-  font-family:'Space Grotesk',sans-serif;
-  font-weight:700;
-  font-size:.34em;
-  margin-top:.3em;
-  color:var(--poppy);
-}
-.preloader-flash{
-  position:absolute;
-  inset:0;
-  background:var(--poppy);
-  clip-path:circle(0% at 50% 50%);
-  z-index:1;
-  pointer-events:none;
-  will-change:clip-path, opacity;
-}
-.preloader-bar-track{
-  width:220px;height:2px;
-  border-radius:2px;
-  background:rgba(250,249,245,.14);
   overflow:hidden;
-}
-.preloader-bar-fill{
-  width:0%;height:100%;
-  background:var(--poppy);
-  border-radius:2px;
-  will-change:width;
+  will-change:transform;
 }
 
-.preloader-label{
-  font-family:'Fraunces',serif;font-weight:600;font-style:italic;
-  font-size:.95rem;letter-spacing:.02em;color:rgba(250,249,245,.55);
-  min-width:200px; /* чтобы скрэмбл-текст не дёргал layout */
-  text-align:center;
+/* минималистичный счётчик -- просто число, без бара и подписи */
+.preloader-topright{
+  position:absolute;
+  top:36px;right:40px;
+  z-index:3;
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:600;
+  font-size:.95rem;
+  color:rgba(250,249,245,.6);
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.02em;
+}
+.preloader-count-percent{
+  opacity:.5;
+  margin-left:2px;
+  font-size:.85em;
+}
+
+/* огромный ворд-марк по центру -- главный акцент экрана вместо
+   счётчика. Буквы -- отдельные span'ы, изначально спрятаны (opacity:0,
+   сдвинуты вниз), main.js раскрывает их пружинистым stagger'ом */
+.preloader-wordmark{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  z-index:2;
+  display:flex;
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-size:clamp(3rem, 11vw, 9rem);
+  letter-spacing:-.02em;
+  color:var(--paper);
+  line-height:1;
+  pointer-events:none;
+}
+.preloader-wordmark .pw-letter{
+  display:inline-block;
+  opacity:0;
+  transform:translateY(70%);
+  will-change:transform,opacity;
+}
+
+@media (max-width:600px){
+  .preloader-topright{ top:22px; right:22px; font-size:.82rem; }
 }
 /* ---------- custom cursor ---------- */
 .petal-cursor{
@@ -987,28 +972,8 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
   background:var(--ink);
   will-change:transform;
 }
-
 /* ==========================================================
-   STORY -- pinned scrollytelling, wave of cards flying in
-   ==========================================================
-   Same pin/scrub language as #advantages: the section locks to the
-   viewport while GSAP ScrollTrigger scrubs ONE timeline tied directly
-   to scroll position. Every card's fly-in is a tween on that timeline,
-   each starting a little later than the previous one (a "wave"), so
-   scrolling down cascades them in from four different edges and
-   scrolling back up cascades them back out in reverse -- nothing here
-   is a one-shot reveal, the whole thing is scroll-position-driven and
-   fully reversible by construction (scrub, not a `once` trigger).
-
-   Layout: cards land in a 2x2 grid around the centered intro text/
-   timeline instead of stacking on top of each other -- top-left,
-   top-right, bottom-left, bottom-right. Colors alternate light/dark
-   (checkerboard) so the set reads with contrast against the section's
-   pure-black background, instead of everything blending into one
-   muddy brown mass.
-
-   Mobile disables the pin (gsap.matchMedia, see main.js) and the cards
-   fall back to a plain stacked reveal grid instead.
+   STORY -- pinned panel reveal, editorial-style typography
    ========================================================== */
 .story{
   position:relative;
@@ -1021,153 +986,120 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
   position:absolute;
   inset:0;
   display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.story-ghost{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-52%);
+  z-index:0;
+  font-family:'Fraunces',serif;
+  font-weight:900;
+  font-size:clamp(10rem,30vw,24rem);
+  line-height:1;
+  color:var(--paper);
+  opacity:.035;
+  white-space:nowrap;
+  user-select:none;
+  pointer-events:none;
+}
+
+.story-panels{
+  position:relative;
+  z-index:1;
+  width:100%;
+  height:100%;
+}
+
+.story-panel{
+  position:absolute;
+  inset:0;
+  display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
+  text-align:center;
   padding:0 32px;
 }
 
-.story-intro{
-  position:absolute;
-  top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  z-index:1;
-  max-width:560px;
-  text-align:center;
-  will-change:opacity;
-}
-.story-intro .eyebrow{color:var(--poppy);display:block;margin-bottom:18px;}
-.story-intro h2{
-  font-family:'Space Grotesk',sans-serif;
-  font-style:normal;
-  font-size:clamp(2rem,4.4vw,3.2rem);
-  font-weight:600;
-  margin-bottom:16px;
-}
-.story-intro p{
-  font-size:1rem;line-height:1.6;
-  color:rgba(250,249,245,.68);
-}
-
-/* center scrubber line -- a thin progress rail sitting mid-screen,
-   filled/moved from main.js in lockstep with the pin's scroll
-   progress, so it visually reads as "how far into the effect we are".
-   Смещена ниже центра .story-intro (было top:50%, совпадало с центром
-   интро-блока и физически резало текст заголовка/буквы "ё" по средней
-   линии) -- теперь сидит под текстом, а не поверх него. */
-.story-timeline{
-  position:absolute;
-  top:calc(50% + 108px);
-  left:50%;
-  transform:translate(-50%,-50%);
-  width:min(640px, 82vw);
-  height:1px;
-  background:rgba(250,249,245,.14);
-  z-index:3;
-  pointer-events:none;
-}
-.story-timeline-fill{
-  position:absolute;
-  left:0;top:0;
-  height:100%;width:0%;
-  background:var(--poppy);
-}
-
-.story-cards{
-  position:absolute;
-  inset:0;
-  z-index:4;
-  pointer-events:none;
-}
-.story-card{
-  position:absolute;
-  top:50%;left:50%;
-  width:min(380px, 78vw);
-  border-radius:22px;
-  padding:36px;
-  box-shadow:0 30px 70px rgba(0,0,0,.55);
-  pointer-events:auto;
+.story-panel-inner{
+  max-width:640px;
   will-change:transform,opacity;
 }
-.story-card-logo{
-  position:absolute;
-  top:20px;
-  right:20px;
-  width:34px;
-  height:34px;
-  object-fit:contain;
-  opacity:.9;
-  pointer-events:none;
-  z-index:2;
-}
-.story-card-num{
-  display:inline-block;
-  font-family:'Fraunces',serif;font-style:italic;font-weight:400;
-  font-size:2.6rem;
-  margin-bottom:12px;
-}
-.story-card h3{
+
+.story-eyebrow{color:var(--poppy);display:block;margin-bottom:22px;}
+.story-panel-title{
   font-family:'Space Grotesk',sans-serif;
-  font-size:1.2rem;font-weight:700;
-  text-transform:uppercase;letter-spacing:.01em;
-  margin-bottom:12px;
+  font-weight:600;
+  font-size:clamp(2rem,4.6vw,3.4rem);
+  line-height:1.08;
+  margin-bottom:20px;
 }
-.story-card p{
-  font-size:.94rem;line-height:1.6;
+.story-panel-lead{
+  font-size:1.05rem;line-height:1.65;
+  color:rgba(250,249,245,.68);
+  max-width:52ch;margin:0 auto;
 }
 
-/* light card -- paper/ink, matches the rest of the site's light sections */
-.story-card.is-light{
-  background:var(--paper);
-  border:1.5px solid var(--ink);
+.story-panel[data-align="right"] .story-panel-inner{ text-align:left; margin-left:8%; }
+.story-panel[data-align="left"]  .story-panel-inner{ text-align:right; margin-right:8%; }
+
+.story-panel-num{
+  display:inline-block;
+  font-family:'Fraunces',serif;font-style:italic;font-weight:500;
+  font-size:clamp(3rem,6vw,4.6rem);
+  color:var(--poppy);
+  margin-bottom:14px;
+  line-height:1;
 }
-.story-card.is-light .story-card-num{ color:var(--poppy); }
-.story-card.is-light h3{ color:var(--ink); }
-.story-card.is-light p{ color:var(--gray-700); }
-
-/* dark card -- a deep wine-brown that's visibly distinct from the
-   section's pure-black background (was the same near-black before,
-   which is why everything read as one flat blob), edged in poppy */
-.story-card.is-dark{
-  background:#2B1310;
-  border:1.5px solid var(--poppy);
+.story-panel-heading{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:-.01em;
+  font-size:clamp(2rem,5vw,3.6rem);
+  line-height:1.05;
+  margin-bottom:22px;
 }
-.story-card.is-dark .story-card-num{ color:var(--paper); }
-.story-card.is-dark h3{ color:var(--paper); }
-.story-card.is-dark p{ color:rgba(250,249,245,.72); }
+.story-panel-text{
+  font-size:1.02rem;line-height:1.65;
+  color:rgba(250,249,245,.7);
+  max-width:38ch;
+}
+.story-panel[data-align="right"] .story-panel-text{margin-left:0;margin-right:auto;}
+.story-panel[data-align="left"]  .story-panel-text{margin-left:auto;margin-right:0;}
 
-/* resting positions: a clean 2x2 arrangement around the centered intro
-   text -- 01 top-left, 02 top-right, 03 bottom-left, 04 bottom-right --
-   instead of everything converging on the same center point. */
-.story-card[data-dir="left"]{   margin-top:-260px; margin-left:-430px; z-index:1; }
-.story-card[data-dir="top"]{    margin-top:-260px; margin-left:50px;   z-index:2; }
-.story-card[data-dir="right"]{  margin-top:70px;   margin-left:-430px; z-index:3; }
-.story-card[data-dir="bottom"]{ margin-top:70px;   margin-left:50px;   z-index:4; }
-
-@media (max-width:1180px){
-  .story-card{width:min(320px, 62vw);}
-  .story-card[data-dir="left"]{  margin-top:-230px; margin-left:-360px; }
-  .story-card[data-dir="top"]{   margin-top:-230px; margin-left:40px; }
-  .story-card[data-dir="right"]{ margin-top:60px;   margin-left:-360px; }
-  .story-card[data-dir="bottom"]{margin-top:60px;   margin-left:40px; }
+.story-progress{
+  position:absolute;
+  bottom:44px;left:50%;
+  transform:translateX(-50%);
+  display:flex;gap:10px;
+  z-index:3;
 }
 
 @media (max-width:880px){
   .story{height:auto;overflow:visible;padding:100px 0;}
-  .story-pin{position:relative;inset:auto;display:block;padding:0 32px;}
-  .story-intro{position:relative;top:auto;left:auto;transform:none;margin:0 auto 40px;opacity:1 !important;}
-  .story-timeline{display:none;}
-  .story-cards{
+  .story-pin{position:relative;inset:auto;display:block;}
+  .story-ghost{display:none;}
+  .story-panels{
+    position:relative;
+    display:flex;flex-direction:column;gap:70px;
+    padding:0 24px;
+  }
+  .story-panel{
     position:relative;inset:auto;
-    display:flex;flex-direction:column;gap:16px;
-    max-width:480px;margin:0 auto;
+    opacity:1 !important;transform:none !important;
+    padding:0;
   }
-  .story-card{
-    position:relative;top:auto;left:auto;inset:auto !important;
-    margin:0 !important;
-    width:100%;
-    opacity:1;transform:none !important;
-  }
+  .story-panel-inner{margin:0 auto !important;text-align:center !important;}
+  .story-panel-text{margin:0 auto !important;}
+  .story-progress{display:none;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .story-panel{opacity:1 !important;transform:none !important;}
 }
 
 /* ---------- process (sticky title, scrolling steps) ---------- */
@@ -1230,31 +1162,6 @@ h1,h2,h3{font-family:'Fraunces',serif;line-height:1;}
 .process-step p{font-size:.95rem;line-height:1.6;opacity:.85;max-width:34ch;}
 
 /* ---------- about ---------- */
-.about{padding:130px 32px;}
-.about-inner{
-  display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center;
-}
-.about-visual{
-  background:var(--gray-200);
-  border-radius:24px;
-  aspect-ratio:1/1;
-  display:flex;align-items:center;justify-content:center;
-  padding:40px;
-  position:relative;
-}
-.about-visual svg{width:70%;}
-.about-quote{
-  font-family:'Fraunces',serif;font-style:italic;font-weight:500;
-  font-size:clamp(1.6rem,3vw,2.3rem);
-  line-height:1.35;
-  margin-bottom:26px;
-}
-.about-quote span{color:var(--poppy);}
-.about-text p{font-size:1rem;line-height:1.7;color:var(--gray-700);margin-bottom:18px;max-width:42ch;}
-.about-sign{
-  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.9rem;
-  margin-top:26px;
-}
 
 /* ---------- cta banner ---------- */
 .cta-banner{
@@ -1519,26 +1426,6 @@ footer.footer-dark .footer-bottom{ color:rgba(250,249,245,.4); }
 .curtain-bar{
   will-change:transform;
 }
-.story-flash{
-  position:absolute;inset:0;
-  z-index:6;
-  pointer-events:none;
-  background:radial-gradient(circle at 50% 50%, var(--poppy), transparent 70%);
-  mix-blend-mode:screen;
-  opacity:0;
-}
-.story-card{
-  transform-style:preserve-3d;
-  backface-visibility:hidden;
-  will-change:transform, opacity, filter;
-}
-.story-card{
-  cursor:pointer;
-}
-.story-card-inner{
-  transform-style:preserve-3d;
-  will-change:transform;
-}
 .showcase-brand-note{
   font-family:'Inter', sans-serif;
   font-size:.8rem;
@@ -1559,4 +1446,164 @@ footer.footer-dark .footer-bottom{ color:rgba(250,249,245,.4); }
 .showcase-eyebrow{
   display:block;
   margin-bottom:16px;
+}
+.story{
+  transition: background-color .6s ease;
+  background:var(--ink);
+  overflow:hidden;
+}
+.story.is-dark{ background:var(--ink); }
+.story.is-light{ background:var(--paper); }
+
+.story-pin{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 32px;
+}
+
+/* мягкое свечение позади лого -- белое на чёрном, чёрное на белом */
+.story-logo-glow{
+  position:absolute;
+  top:50%;left:50%;
+  width:6px;height:6px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  box-shadow:0 0 170px 90px rgba(250,249,245,.28);
+  opacity:.5;
+  z-index:0;
+  pointer-events:none;
+  transition:box-shadow .6s ease, opacity .6s ease;
+}
+.story.is-light .story-logo-glow{
+  box-shadow:0 0 170px 90px rgba(13,13,13,.16);
+  opacity:.4;
+}
+
+/* лого закреплено ровно по центру и никогда не двигается --
+   вся динамика в тексте, который выезжает то справа, то слева */
+.story-logo-stage{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  z-index:2;
+  width:132px;height:132px;
+  perspective:900px;
+}
+.story-logo-3d{
+  width:100%;height:100%;
+  object-fit:contain;
+  transform-style:preserve-3d;
+  /* вращение больше не авто-плеер -- угол выставляется из JS
+     напрямую (rotateY), синхронно со скроллом пина */
+  filter:brightness(0) invert(1) drop-shadow(0 0 28px rgba(250,249,245,.85));
+  transition:filter .6s ease;
+  will-change:transform;
+}
+.story.is-light .story-logo-3d{
+  /* белый на чёрном -> чёрный на белом, тот же принцип: только
+     чёрный/белый, никакого исходного цвета лого */
+  filter:brightness(0) drop-shadow(0 0 24px rgba(13,13,13,.55));
+}
+@keyframes story-logo-spin{
+  0%{  transform:rotateY(0deg)   rotateX(0deg);}
+  50%{ transform:rotateY(180deg) rotateX(6deg);}
+  100%{transform:rotateY(360deg) rotateX(0deg);}
+}
+
+/* текст выезжает то по правую, то по левую руку от лого --
+   справа читается "от" лого, слева зеркально прижат к нему */
+.story-word-wrap{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:1;
+  width:min(46%, 460px);
+  will-change:transform,opacity;
+}
+.story-word-wrap.story-side-right{
+  left:54%;
+  text-align:left;
+}
+.story-word-wrap.story-side-left{
+  right:54%;
+  text-align:right;
+}
+.story-word{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:-.01em;
+  font-size:clamp(2rem,4.6vw,3.6rem);
+  line-height:1.05;
+  margin-bottom:18px;
+  color:var(--paper);
+  transition:color .6s ease;
+}
+.story.is-light .story-word{ color:var(--ink); }
+.story-sub{
+  font-size:.98rem;line-height:1.6;
+  color:rgba(250,249,245,.68);
+  transition:color .6s ease;
+}
+.story.is-light .story-sub{ color:rgba(13,13,13,.62); }
+
+@media (max-width:1100px){
+  .story-word-wrap{ width:min(56%, 400px); }
+  .story-word-wrap.story-side-right{ left:52%; }
+  .story-word-wrap.story-side-left{ right:52%; }
+}
+
+.story-progress{
+  position:absolute;
+  bottom:44px;left:50%;
+  transform:translateX(-50%);
+  display:flex;gap:10px;
+  z-index:3;
+}
+.story-progress-dot{
+  width:26px;height:3px;
+  background:rgba(250,249,245,.2);
+  border-radius:2px;
+  transition:background .3s ease,width .3s ease;
+}
+.story-progress-dot.active{background:var(--paper);width:40px;}
+.story.is-light .story-progress-dot{background:rgba(13,13,13,.15);}
+.story.is-light .story-progress-dot.active{background:var(--ink);}
+
+/* мобильный фолбэк -- обычный статичный список, без пина/вращения */
+.story-mobile-list{display:none;}
+.story-mobile-item{
+  padding:56px 24px;
+  border-bottom:1px solid rgba(250,249,245,.12);
+}
+.story-mobile-item:last-child{border-bottom:none;}
+.story-mobile-logo{
+  width:64px;height:64px;object-fit:contain;
+  margin:0 auto 20px;
+  animation:story-logo-spin 10s linear infinite;
+}
+.story-mobile-word{
+  display:block;
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;text-transform:uppercase;
+  font-size:1.5rem;color:var(--poppy);
+  margin-bottom:12px;
+}
+.story-mobile-item p{
+  font-size:.95rem;line-height:1.6;
+  color:rgba(250,249,245,.68);
+  max-width:44ch;margin:0 auto;
+}
+
+@media (max-width:880px){
+  .story{height:auto;overflow:visible;padding:60px 0;}
+  .story-pin{display:none;}
+  .story-mobile-list{display:block;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .story-logo-3d,.story-mobile-logo{animation:none;}
 }
