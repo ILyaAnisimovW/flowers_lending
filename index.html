@@ -9,33 +9,23 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
-  <script type="module" crossorigin src="/flowers_lending/assets/main-4PcWBWZY.js"></script>
+  <script type="module" crossorigin src="/flowers_lending/assets/main-z119kyh6.js"></script>
   <link rel="modulepreload" crossorigin href="/flowers_lending/assets/modulepreload-polyfill-Dezn_h7o.js">
-  <link rel="modulepreload" crossorigin href="/flowers_lending/assets/contact-panel-DFV3IbEY.js">
+  <link rel="modulepreload" crossorigin href="/flowers_lending/assets/contact-panel-Bx6Xx1r5.js">
   <link rel="modulepreload" crossorigin href="/flowers_lending/assets/mouse-trail-Z4_7ZIZA.js">
-  <link rel="stylesheet" crossorigin href="/flowers_lending/assets/contact-panel-DBh1a6nn.css">
+  <link rel="stylesheet" crossorigin href="/flowers_lending/assets/contact-panel-C6DMhG2w.css">
 </head>
 <body>
 
 <!-- ================= PRELOADER ================= -->
 <div class="preloader" id="preloader">
-  <div class="preloader-flash" id="preloaderFlash" aria-hidden="true"></div>
-  <div class="preloader-content">
-    <div class="preloader-logo-wrap">
-      <svg class="preloader-logo-ring" viewBox="0 0 104 104">
-        <circle class="preloader-logo-ring-bg" cx="52" cy="52" r="48"></circle>
-        <circle class="preloader-logo-ring-progress" id="preloaderRing" cx="52" cy="52" r="48"></circle>
-      </svg>
-      <img src="/flowers_lending/images/logo.png" alt="Bloomly" class="preloader-logo-mark" id="preloaderLogo">
-    </div>
-    <div class="preloader-percent" id="preloaderPercent">0<span>%</span></div>
-    <div class="preloader-bar-track">
-      <div class="preloader-bar-fill" id="preloaderBarFill"></div>
-    </div>
-    <div class="preloader-label" id="preloaderLabel">Собираем цветы</div>
+  <div class="preloader-topright" id="preloaderTopRight">
+  <span id="preloaderCountDigits">000</span><span class="preloader-count-percent">%</span>
+</div>
+  <div class="preloader-wordmark" id="preloaderWordmark" aria-hidden="true">
+    <span class="pw-letter">B</span><span class="pw-letter">L</span><span class="pw-letter">O</span><span class="pw-letter">O</span><span class="pw-letter">M</span><span class="pw-letter">L</span><span class="pw-letter">Y</span>
   </div>
 </div>
-
 <div class="petal-cursor" id="cursor"></div>
 
 <header class="nav">
@@ -44,10 +34,11 @@
   <img src="/flowers_lending/images/logo.png" alt="Bloomly" class="logo-mark">
   Bloomly
 </a>
-    <nav class="nav-links">
+<nav class="nav-links">
   <a href="catalog.html">Каталог</a>
   <a href="#how">Как заказать</a>
   <a href="#pricing">Тарифы</a>
+  <a href="reviews.html">Отзывы</a>
   <a href="#" class="nav-contact-trigger" data-contact-trigger>Контакты</a>
 </nav>
 <a href="catalog.html" class="nav-cta">Собрать букет</a>
@@ -244,66 +235,56 @@
 </section>
 
 
-<!-- откуда берём и какое качество — pinned scroll, карточки влетают
-     волной с разных сторон (см. main.js: initStoryCardsPin). Полностью
-     на scrub -- скроллишь вниз, карточки прилетают; скроллишь назад --
-     улетают обратно в том же порядке, без "одноразовых" reveal-триггеров.
-     storyFlash -- вспышка поппи-цвета в момент финального "взрыва"
-     карточек, элемент чисто декоративный (aria-hidden), заполняется
-     GSAP-таймлайном из initStoryCardsPin(). -->
 <section class="story" id="story">
   <div class="story-pin" id="storyPin">
 
-    <div class="story-flash" id="storyFlash" aria-hidden="true"></div>
+    <div class="story-logo-glow" id="storyLogoGlow" aria-hidden="true"></div>
 
-    <div class="story-intro" id="storyIntro">
-      <span class="eyebrow">Прозрачность</span>
-      <h2>Не только красиво — ещё и честно</h2>
-      <p>Пока вы читаете это, где-то в Эквадоре режут розы для завтрашней доставки. Вот из чего на самом деле складывается букет.</p>
+    <div class="story-logo-stage">
+      <img src="images/logo.png" alt="" class="story-logo-3d" id="storyLogo">
     </div>
 
-    <div class="story-timeline" id="storyTimeline">
-      <div class="story-timeline-fill" id="storyTimelineFill"></div>
+    <div class="story-word-wrap">
+      <h2 class="story-word" id="storyWord">Прозрачность</h2>
+      <p class="story-sub" id="storySub">Пока вы читаете это, где-то в Эквадоре режут розы для завтрашней доставки.</p>
     </div>
 
-    <div class="story-cards" id="storyCards">
-      <div class="story-card is-light" data-dir="left">
-        <img src="/flowers_lending/images/logo.png" alt="Bloomly" class="story-card-logo">
-        <div class="story-card-inner"></div>
-  <span class="story-card-num">01</span>
-  <h3>Эквадор, 2800 м</h3>
-  <p>Фермы высоко в горах — розы растут медленнее, бутон получается плотнее и держится дольше.</p>
-</div>
-</div>
-<div class="story-card is-dark" data-dir="top">
-  <img src="/flowers_lending/images/logo.png" alt="Bloomly" class="story-card-logo">
-  <div class="story-card-inner"></div>
-  <span class="story-card-num">02</span>
-  <h3>48 часов</h3>
-  <p>От срезки до сборки букета — никакого склада и никакой перележки в холодильнике.</p>
-</div>
-</div>
-<div class="story-card is-dark" data-dir="right">
-  <img src="/flowers_lending/images/logo.png" alt="Bloomly" class="story-card-logo">
-  <div class="story-card-inner"></div>
-  <span class="story-card-num">03</span>
-  <h3>Ручная сборка</h3>
-  <p>Каждый стебель осматриваем и подрезаем под углом вручную — никакого конвейера.</p>
-</div>
-</div>
-<div class="story-card is-light" data-dir="bottom">
-  <img src="/flowers_lending/images/logo.png" alt="Bloomly" class="story-card-logo">
-  <div class="story-card-inner"></div>
-  <span class="story-card-num">04</span>
-  <h3>Фейс-контроль</h3>
-  <p>Флорист лично проверяет каждый букет перед тем, как он поедет к вам.</p>
-</div>
-</div>
+    <div class="story-progress" id="storyProgress">
+      <span class="story-progress-dot active" data-index="0"></span>
+      <span class="story-progress-dot" data-index="1"></span>
+      <span class="story-progress-dot" data-index="2"></span>
+      <span class="story-progress-dot" data-index="3"></span>
+      <span class="story-progress-dot" data-index="4"></span>
     </div>
+  </div>
 
+  <!-- мобильный фолбэк: пин и вращение отключены (initStoryPanels
+       ниже включает их только через gsap.matchMedia на >880px),
+       просто статичный список -->
+  <div class="story-mobile-list" id="storyMobileList">
+    <div class="story-mobile-item">
+      <img src="images/logo.png" alt="" class="story-mobile-logo">
+      <span class="story-mobile-word">Прозрачность</span>
+      <p>Пока вы читаете это, где-то в Эквадоре режут розы для завтрашней доставки.</p>
+    </div>
+    <div class="story-mobile-item">
+      <span class="story-mobile-word">Эквадор, 2800 м</span>
+      <p>Фермы высоко в горах — розы растут медленнее, бутон получается плотнее и держится дольше.</p>
+    </div>
+    <div class="story-mobile-item">
+      <span class="story-mobile-word">48 часов</span>
+      <p>От срезки до сборки букета — никакого склада и никакой перележки в холодильнике.</p>
+    </div>
+    <div class="story-mobile-item">
+      <span class="story-mobile-word">Ручная сборка</span>
+      <p>Каждый стебель осматриваем и подрезаем под углом вручную — никакого конвейера.</p>
+    </div>
+    <div class="story-mobile-item">
+      <span class="story-mobile-word">Фейс-контроль</span>
+      <p>Флорист лично проверяет каждый букет перед тем, как он поедет к вам.</p>
+    </div>
   </div>
 </section>
-
 
 <!-- как заказать -->
 <section class="process" id="how">
@@ -398,28 +379,6 @@
 
     <div class="reviews-cta reveal">
       <a href="reviews.html" class="btn-ghost">Смотреть все отзывы →</a>
-    </div>
-  </div>
-</section>
-
-<section class="about" id="about">
-  <div class="wrap about-inner">
-    <div class="about-visual reveal">
-      <svg viewBox="0 0 300 300" fill="none">
-        <circle cx="150" cy="150" r="26" fill="#E8412C"/>
-        <ellipse cx="150" cy="80" rx="30" ry="48" fill="#FAF9F5"/>
-        <ellipse cx="150" cy="220" rx="30" ry="48" fill="#FAF9F5"/>
-        <ellipse cx="80" cy="150" rx="48" ry="30" fill="#4A4A47"/>
-        <ellipse cx="220" cy="150" rx="48" ry="30" fill="#4A4A47"/>
-        <ellipse cx="100" cy="100" rx="28" ry="42" fill="#0D0D0D" transform="rotate(-45 100 100)"/>
-        <ellipse cx="200" cy="200" rx="28" ry="42" fill="#0D0D0D" transform="rotate(-45 200 200)"/>
-      </svg>
-    </div>
-    <div class="about-text reveal">
-      <p class="about-quote">«Мы верим, что цветы должны быть <span>громче будней</span>, а не просто украшать подоконник.»</p>
-      <p>Bloomly начался с одного рынка цветов на окраине и упрямого убеждения: букет — это не украшение, а высказывание. Мы не делаем сдержанную классику из трёх роз.</p>
-      <p>Каждое утро флористы отбирают самые дерзкие по цвету стебли и собирают букеты, которые видно с другого конца комнаты.</p>
-      <div class="about-sign">— команда Bloomly</div>
     </div>
   </div>
 </section>
