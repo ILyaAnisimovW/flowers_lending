@@ -11,12 +11,12 @@
 <!-- окно оплаты подключается отдельным файлом, чтобы не трогать
      общий style.css/import-chain -->
 <!-- лепестки, летящие за курсором -->
-  <script type="module" crossorigin src="/flowers_lending/assets/catalog-9SGb3cDG.js"></script>
+  <script type="module" crossorigin src="/flowers_lending/assets/catalog-CgI7Xrgw.js"></script>
   <link rel="modulepreload" crossorigin href="/flowers_lending/assets/modulepreload-polyfill-Dezn_h7o.js">
-  <link rel="modulepreload" crossorigin href="/flowers_lending/assets/contact-panel-Bx6Xx1r5.js">
+  <link rel="modulepreload" crossorigin href="/flowers_lending/assets/nav-mobile-inwaBkMU.js">
   <link rel="modulepreload" crossorigin href="/flowers_lending/assets/mouse-trail-Z4_7ZIZA.js">
   <link rel="modulepreload" crossorigin href="/flowers_lending/assets/checkout-BU-0x6VP.js">
-  <link rel="stylesheet" crossorigin href="/flowers_lending/assets/contact-panel-C6DMhG2w.css">
+  <link rel="stylesheet" crossorigin href="/flowers_lending/assets/nav-mobile-Cpe-Ujoq.css">
   <link rel="stylesheet" crossorigin href="/flowers_lending/assets/checkout-DIV6APG1.css">
   <link rel="stylesheet" crossorigin href="/flowers_lending/assets/catalog-B6WRODb2.css">
 </head>
@@ -38,8 +38,23 @@
   <a href="#" class="nav-contact-trigger" data-contact-trigger>Контакты</a>
 </nav>
 <a href="#" class="nav-cta" data-contact-trigger>Собрать букет</a>
+
+    <button class="nav-burger" id="navBurger" aria-label="Меню" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </header>
+
+<div class="nav-mobile-menu" id="navMobileMenu">
+  <nav class="nav-mobile-links">
+    <a href="catalog.html">Каталог</a>
+    <a href="index.html#how">Как заказать</a>
+    <a href="index.html#pricing">Тарифы</a>
+    <a href="reviews.html" class="is-active">Отзывы</a>
+    <a href="#" data-contact-trigger>Контакты</a>
+  </nav>
+  <a href="#" class="btn-primary nav-mobile-cta" data-contact-trigger>Собрать букет →</a>
+</div>
 
 <section class="catalog-head">
   <a href="index.html" class="catalog-back">

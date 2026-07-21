@@ -14,11 +14,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
-  <script type="module" crossorigin src="/flowers_lending/assets/main-z119kyh6.js"></script>
+  <script type="module" crossorigin src="/flowers_lending/assets/main-l2n_5emd.js"></script>
   <link rel="modulepreload" crossorigin href="/flowers_lending/assets/modulepreload-polyfill-Dezn_h7o.js">
-  <link rel="modulepreload" crossorigin href="/flowers_lending/assets/contact-panel-Bx6Xx1r5.js">
+  <link rel="modulepreload" crossorigin href="/flowers_lending/assets/nav-mobile-inwaBkMU.js">
   <link rel="modulepreload" crossorigin href="/flowers_lending/assets/mouse-trail-Z4_7ZIZA.js">
-  <link rel="stylesheet" crossorigin href="/flowers_lending/assets/contact-panel-C6DMhG2w.css">
+  <link rel="stylesheet" crossorigin href="/flowers_lending/assets/nav-mobile-Cpe-Ujoq.css">
 </head>
 <body>
 
@@ -47,8 +47,23 @@
   <a href="#" class="nav-contact-trigger" data-contact-trigger>Контакты</a>
 </nav>
 <a href="catalog.html" class="nav-cta">Собрать букет</a>
+
+    <button class="nav-burger" id="navBurger" aria-label="Меню" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </header>
+
+<div class="nav-mobile-menu" id="navMobileMenu">
+  <nav class="nav-mobile-links">
+    <a href="catalog.html">Каталог</a>
+    <a href="#how">Как заказать</a>
+    <a href="#pricing">Тарифы</a>
+    <a href="reviews.html">Отзывы</a>
+    <a href="#" data-contact-trigger>Контакты</a>
+  </nav>
+  <a href="catalog.html" class="btn-primary nav-mobile-cta">Собрать букет →</a>
+</div>
 
 <!-- ============================================================
      1. ПЕРВЫЙ ЭКРАН (обложка) — УТП, подзаголовок, визуал, CTA
