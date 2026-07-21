@@ -4,6 +4,7 @@ import { initFlorists } from './florists.js';
 import { initBrandBanner } from './brand-banner.js';
 import { initMouseTrail } from './mouse-trail.js';
 import { initContactPanel } from './contact-panel.js';
+import { initMobileNav } from './nav-mobile.js';
 const BASE = import.meta.env.BASE_URL; // '/flowers_lending/' на проде, '/' в dev
 
 gsap.registerPlugin(ScrollTrigger);
@@ -415,6 +416,11 @@ function initCarousel3D(items){
   let ribbonX = 0, ribbonTargetX = 0;
   let ribbonY = 0, ribbonTargetY = 0;
 
+  let rafId = null;
+  let carouselVisible = false;
+  function startTick(){ if (!rafId) rafId = requestAnimationFrame(tick); }
+  function stopTick(){ if (rafId) cancelAnimationFrame(rafId); rafId = null; }
+
   let frontIndex = -1;
   function updateCaption(i){
     const item = items[((i % n) + n) % n];
@@ -489,9 +495,17 @@ function initCarousel3D(items){
       updateCaption(rounded);
     }
 
-    requestAnimationFrame(tick);
+    if (carouselVisible) rafId = requestAnimationFrame(tick);
+    else rafId = null;
   }
-  requestAnimationFrame(tick);
+
+  new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      carouselVisible = entry.isIntersecting;
+      if (carouselVisible) startTick();
+    });
+  }, { rootMargin: '200px 0px' }).observe(wrap);
+
   updateCaption(0);
 
   function step(dir){
@@ -907,6 +921,36 @@ initFAQ();
 /* ================= FLORISTS (pinned card-dealing sequence + video crossfade) ================= */
 initFlorists();
 
+/* ---- три видео секции florists все стартуют с autoplay при загрузке
+   и продолжают декодироваться фоном, даже если видно только .is-active
+   -- это лишняя постоянная нагрузка, которая как раз и складывается с
+   пином/скрабом этой секции в лаг. Секция вне вьюпорта -- пауза всем;
+   в кадре -- играет только текущий активный ролик, остальные на паузе. ---- */
+(function initFloristsVideoPerf(){
+  const section = document.getElementById('florists');
+  if (!section) return;
+  const videos = section.querySelectorAll('.florists-video');
+  if (!videos.length) return;
+
+  function syncPlayback(sectionInView){
+    videos.forEach(v => {
+      if (sectionInView && v.classList.contains('is-active')) v.play().catch(()=>{});
+      else v.pause();
+    });
+  }
+
+  new IntersectionObserver((entries) => {
+    entries.forEach(entry => syncPlayback(entry.isIntersecting));
+  }, { threshold: .05 }).observe(section);
+
+  // florists.js переключает .is-active при кроссфейде -- ловим смену
+  // класса и держим играющим только новый активный ролик
+  const classObserver = new MutationObserver(() => {
+    syncPlayback(section.getBoundingClientRect().top < window.innerHeight && section.getBoundingClientRect().bottom > 0);
+  });
+  videos.forEach(v => classObserver.observe(v, { attributes:true, attributeFilter:['class'] }));
+})();
+
 /* ================= REVIEW CARDS: MAGNETIC 3D TILT ================= */
 document.querySelectorAll('.review-card').forEach(card => {
   card.addEventListener('mousemove', e => {
@@ -955,3 +999,4 @@ window.addEventListener('scroll', () => {
 initBrandBanner();
 initMouseTrail();
 initContactPanel();
+initMobileNav();
