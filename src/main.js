@@ -1,113 +1,228 @@
 import './style.css';
+import { initFAQ } from './faq.js';
+import { initFlorists } from './florists.js';
+import { initBrandBanner } from './brand-banner.js';
+import { initMouseTrail } from './mouse-trail.js';
+import { initContactPanel } from './contact-panel.js';
+import { initMobileNav } from './nav-mobile.js';
+const BASE = import.meta.env.BASE_URL; // '/flowers_lending/' на проде, '/' в dev
 
 gsap.registerPlugin(ScrollTrigger);
+ScrollTrigger.config({
+  ignoreMobileResize: true, // игнорит "resize" от появления/скрытия адресбара на мобильных
+  autoRefreshEvents: 'DOMContentLoaded,load', // убрали 'resize' и 'visibilitychange' из дефолтного списка
+});
 
-/* Layout keeps shifting after this script first runs -- late-loading web
-   fonts change text metrics (hence section heights), and the preloader's
-   own removal flips body from a locked/hidden-overflow state back to
-   normal, both of which move where every section actually starts/ends on
-   the page. Any ScrollTrigger created before those settle is working off
-   stale coordinates -- which is exactly what causes a scroll-linked
-   effect to "sometimes" not fire: the trigger's start/end no longer
-   matches where the element really is by the time the person scrolls
-   there. Forcing a refresh once things stabilize keeps every trigger
-   accurate. */
-window.addEventListener('load', () => ScrollTrigger.refresh());
-if (document.fonts && document.fonts.ready){
-  document.fonts.ready.then(() => ScrollTrigger.refresh());
+/* ================= LENIS SMOOTH SCROLL =================
+   Обёрнуто в try/catch: если CDN с Lenis не отдался (сеть, блокировщик,
+   упавший хостинг), сайт не должен вставать колом на прелоадере -- вместо
+   плавного скролла используется нативный window.scrollTo, а весь
+   остальной код (прелоадер, анимации, переход-жалюзи) работает как ни
+   в чём не бывало. */
+window.__lenis = {
+  scrollTo(target, opts = {}) {
+    const y = typeof target === 'number'
+      ? target
+      : (target?.getBoundingClientRect?.().top ?? 0) + window.scrollY;
+    window.scrollTo({ top: y, behavior: opts.immediate ? 'auto' : 'smooth' });
+  },
+};
+ // доступен из initCurtainTransition и, при желании, снаружи
+
+/* ================= LENIS <-> SCROLLTRIGGER SYNC =================
+   Причина "телепортов" при скролле: Lenis при инициализации считает
+   свой внутренний `limit` (высота документа минус высота вьюпорта) и
+   дальше клэмпит/лерпит скролл относительно этого числа. Но реальная
+   высота документа продолжает меняться уже ПОСЛЕ первого рендера --
+   догружаются видео (.florists-video), lazy-картинки (districts,
+   florist-card-photo, process-step-img с внешнего picsum.photos), а
+   также сами GSAP-пины (#advantages, #story, #florists) добавляют
+   pin-spacer'ы, которые дополнительно увеличивают scrollHeight.
+
+   ScrollTrigger.refresh() эти изменения учитывает (пересчитывает
+   триггеры), а вот Lenis -- нет, если явно не вызвать lenis.resize().
+   В момент, когда реальная высота документа расходится с тем, что
+   Lenis посчитал при старте, скролл колесом мыши упирается в старый
+   `limit` и резко "перескакивает" -- это и есть баг с телепортами.
+
+   Фикс: 1) любой ScrollTrigger.refresh() досчитывает lenis.resize();
+         2) ResizeObserver на <body> ловит любое изменение реальной
+            высоты документа (видео/картинки/пин-спейсеры) и сам
+            вызывает ScrollTrigger.refresh() (а тот, по цепочке из
+            пункта 1, дёрнет lenis.resize());
+         3) на всякий случай -- отдельные слушатели на загрузку видео
+            и lazy-картинок, чтобы не полагаться только на резайз-обсёрвер. */
+
+
+/* якорные ссылки (нав, кнопки "Смотреть каталог" и т.п.) теперь плавно
+   скроллит Lenis -- раньше это делал html{scroll-behavior:smooth}, но
+   его убрали из CSS, т.к. он конфликтовал с Lenis и давал тормоза */
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('a[href^="#"]');
+  if (!link) return;
+  const id = link.getAttribute('href');
+  if (!id || id === '#') return;
+  const target = document.querySelector(id);
+  if (!target) return;
+  e.preventDefault();
+  window.__lenis.scrollTo(target);
+});
+
+const __pageReady = Promise.all([
+  document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve(),
+  document.readyState === 'complete'
+    ? Promise.resolve()
+    : new Promise(res => window.addEventListener('load', res, { once: true })),
+]);
+
+__pageReady.then(() => {
+  // единственный "официальный" refresh за всю жизнь страницы после старта
+  ScrollTrigger.refresh();
+});
+
+/* ================= РЕАЛЬНАЯ синхронизация ScrollTrigger с late-loading
+   контентом (видео флористов, lazy-картинки, pin-spacer'ы) —
+   то, что было только в комментарии выше, но не было написано. */
+let __stRefreshTimer = null;
+function requestSTRefresh(){
+  clearTimeout(__stRefreshTimer);
+  __stRefreshTimer = setTimeout(() => {
+    ScrollTrigger.refresh();
+  }, 150);
 }
+
+// ловит ЛЮБОЕ изменение реальной высоты body: догрузку видео,
+// картинок, появление/исчезание pin-spacer'ов
+new ResizeObserver(requestSTRefresh).observe(document.body);
+
+// на всякий случай отдельно — видео и lazy-картинки часто
+// резолвятся не через resize body синхронно, а с задержкой кадра
+document.querySelectorAll('video').forEach(v => {
+  if (v.readyState >= 1) return; // metadata уже есть
+  v.addEventListener('loadedmetadata', requestSTRefresh, { once: true });
+});
+
+document.querySelectorAll('img[loading="lazy"]').forEach(img => {
+  if (img.complete) return;
+  img.addEventListener('load', requestSTRefresh, { once: true });
+});
 
 document.body.classList.add('is-loading');
 
 /* ================= PRELOADER ================= */
-const counterNum = document.getElementById('counterNum');
-const counterBar = document.getElementById('counterBar');
 const preloader = document.getElementById('preloader');
-const preloaderStack = document.getElementById('preloaderStack');
+const preloaderTopRight = document.getElementById('preloaderTopRight');
+const preloaderCountDigits = document.getElementById('preloaderCountDigits');
+const preloaderWordmark = document.getElementById('preloaderWordmark');
+const preloaderWordmarkLetters = preloaderWordmark
+  ? preloaderWordmark.querySelectorAll('.pw-letter')
+  : [];
 
-/* build a small overlapping stack of bouquet cards, fanned with slight rotation */
-const stackImages = [
-  '/images/bouquet-flirt.png',
-  '/images/bouquet-field.png',
-  '/images/bouquet-peach.png',
-  '/images/bouquet-cloud.png',
-  '/images/bouquet-whisper.png',
+document.body.classList.add('is-loading');
+
+const progressObj = { val: 0 };
+let displayedPercent = 0;
+function renderProgress(){
+  const v = Math.round(progressObj.val);
+  if (v !== displayedPercent){
+    displayedPercent = v;
+    preloaderCountDigits.textContent = String(v).padStart(3, '0'); // 0 -> "000", 7 -> "007"
+    gsap.fromTo(preloaderCountDigits,
+      { y: -4, opacity: .5 },
+      { y: 0, opacity: 1, duration: .18, ease: 'power2.out' }
+    );
+  }
+}
+function setProgress(fraction, duration = .45){
+  gsap.to(progressObj, {
+    val: Math.min(fraction, 1) * 100,
+    duration, ease: 'power2.out',
+    onUpdate: renderProgress,
+  });
+}
+
+/* прелоадер обязан быть виден минимум MIN_PRELOADER_MS, даже если все
+   критичные ассеты закешированы -- см. предыдущий комментарий выше по
+   логике: часовой таймлайн сам ведёт счётчик до 92% за это время,
+   реальная загрузка лишь добивает остаток */
+const MIN_PRELOADER_MS = 1600;
+const preloaderStart = performance.now();
+
+const clockTween = gsap.to(progressObj, {
+  val: 92,
+  duration: MIN_PRELOADER_MS / 1000,
+  ease: 'power1.out',
+  onUpdate: renderProgress,
+});
+
+const criticalImages = [
+  BASE + 'images/logo.png',
+  BASE + 'images/bouquet-flirt.png',
+  BASE + 'images/bouquet-field.png',
+  BASE + 'images/bouquet-peach.png',
+  BASE + 'images/bouquet-cloud.png',
+  BASE + 'images/bouquet-whisper.png',
 ];
-const stackRot   = [-11, 7, -5, 12, -3];
-const stackShift = [[-7,-5], [6,-3], [-4,6], [8,3], [-2,-8]];
+const fontsPromise = (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve());
+const imagePromises = criticalImages.map(src => new Promise(resolve => {
+  const img = new Image();
+  img.onload = img.onerror = resolve;
+  img.src = src;
+}));
 
-stackImages.forEach(src => {
-  const card = document.createElement('div');
-  card.className = 'preloader-card';
-  card.innerHTML = `<img src="${src}" alt="">`;
-  preloaderStack.appendChild(card);
-});
+let __assetsLoaded = false;
+let __pageReadyDone = false;
+Promise.all([fontsPromise, ...imagePromises]).then(() => { __assetsLoaded = true; maybeRunIntro(); });
+__pageReady.then(() => { __pageReadyDone = true; ScrollTrigger.refresh(); maybeRunIntro(); });
 
-const cards = preloaderStack.querySelectorAll('.preloader-card');
+function maybeRunIntro(){
+  if (!(__assetsLoaded && __pageReadyDone)) return;
+  const elapsed = performance.now() - preloaderStart;
+  const remaining = MIN_PRELOADER_MS - elapsed;
 
-gsap.set(cards, { opacity: 0, scale: .3, y: 26, rotate: 0 });
-gsap.to(cards, {
-  opacity: 1,
-  scale: 1,
-  y: (i) => stackShift[i][1],
-  x: (i) => stackShift[i][0],
-  rotate: (i) => stackRot[i],
-  duration: .5,
-  stagger: .07,
-  ease: 'back.out(2.2)',
-  delay: .05
-});
+  const finish = () => {
+    clockTween.kill();
+    setProgress(1, .3);
+    gsap.delayedCall(.35, runIntro);
+  };
 
-const counterObj = { val: 0 };
-gsap.to(counterObj, {
-  val: 100,
-  duration: 1.35,
-  delay: .15,
-  ease: 'power1.inOut',
-  onUpdate: () => {
-    const v = Math.round(counterObj.val);
-    counterNum.textContent = v;
-    counterBar.style.width = v + '%';
-  },
-  onComplete: runIntro
-});
+  if (remaining > 0) setTimeout(finish, remaining);
+  else finish();
+}
 
 function runIntro(){
   const tl = gsap.timeline({
     onComplete: () => {
       preloader.remove();
       document.body.classList.remove('is-loading');
-      ScrollTrigger.refresh(); // body just went from overflow:hidden/locked back to normal -- section positions may have shifted
+      ScrollTrigger.refresh();
     }
   });
 
-  tl.to(cards, {
-      opacity: 0, scale: .35, y: '-=18',
-      duration: .3, stagger: .025, ease: 'power3.in'
-    })
-    .to('.preloader-meta, .preloader-bar, .preloader-label', {
-      opacity: 0, y: -6, duration: .25, ease: 'power2.in'
-    }, '<')
-    .to('.preloader', { opacity: 0, duration: .3, ease: 'power2.out' }, '-=.12')
-    .add(playHero, '-=.2');
+  // 1. счётчик в углу гаснет -- дальше он больше не нужен
+  tl.to(preloaderTopRight, { opacity: 0, y: -8, duration: .22, ease: 'power2.in' })
+    // 2. буквы BLOOMLY выпрыгивают по одной, с пружиной
+    .fromTo(preloaderWordmarkLetters,
+      { y: '70%', opacity: 0 },
+      { y: '0%', opacity: 1, duration: .6, ease: 'back.out(1.7)', stagger: .045 },
+      '-=.05'
+    )
+    // 3. короткая пауза -- буквы "постояли" на экране
+    .to({}, { duration: .35 })
+    // 4. весь прелоадер целиком уезжает вверх, унося с собой ворд-марк
+    .to(preloader, { yPercent: -100, duration: .9, ease: 'power4.inOut' }, '+=.05')
+    .add(playHero, '-=.55');
 }
-
-/* ================= SHOWCASE ENTRANCE (fires after preloader) ================= */
 function playHero(){
-  gsap.from('.showcase-tags, .showcase-title, .showcase-desc, .showcase-meta, .showcase-see-all', {
-    opacity: 0, y: 26, duration: .8, stagger: .08, ease: 'power3.out', delay: .1
-  });
-  gsap.from('.showcase-media', { opacity: 0, scale: .92, duration: 1, ease: 'power2.out', delay: .18 });
-  gsap.delayedCall(1.1, startShowcase);
+  startShowcase();
 }
 
-/* ================= SHOWCASE (rotating hits, apechain-style glitch swap) ================= */
 const showcaseItems = [
-  { name:'Нежный флирт',      desc:'Розовые и белые альстромерии в нежной упаковке',       price:'2 800 ₽', img:'/images/bouquet-flirt.png',    cat:'Хит недели'  },
-  { name:'Полевой букет',     desc:'Ромашки, зелень и полевые травы',                       price:'2 400 ₽', img:'/images/bouquet-field.png',    cat:'Бестселлер'  },
-  { name:'Утренний персик',   desc:'Пионовидные розы, ромашки и гвоздика',                  price:'3 100 ₽', img:'/images/bouquet-peach.png',    cat:'Новинка'     },
-  { name:'Ромашковое облако', desc:'Огромная шапка хризантем с гипсофилой',                 price:'4 500 ₽', img:'/images/bouquet-cloud.png',    cat:'Премиум'     },
-  { name:'Тихий шёпот',       desc:'Эустома, гвоздика и пастельные тона',                   price:'2 200 ₽', img:'/images/bouquet-whisper.png',  cat:'Топ подарок' },
+  { name:'Нежный флирт',      desc:'Розовые и белые альстромерии в нежной упаковке',       price:'2 800 ₽', img:BASE + 'images/bouquet-flirt.png',    cat:'Хит недели'  },
+  { name:'Полевой букет',     desc:'Ромашки, зелень и полевые травы',                       price:'2 400 ₽', img:BASE + 'images/bouquet-field.png',    cat:'Бестселлер'  },
+  { name:'Утренний персик',   desc:'Пионовидные розы, ромашки и гвоздика',                  price:'3 100 ₽', img:BASE + 'images/bouquet-peach.png',    cat:'Новинка'     },
+  { name:'Ромашковое облако', desc:'Огромная шапка хризантем с гипсофилой',                 price:'4 500 ₽', img:BASE + 'images/bouquet-cloud.png',    cat:'Премиум'     },
+  { name:'Тихий шёпот',       desc:'Эустома, гвоздика и пастельные тона',                   price:'2 200 ₽', img:BASE + 'images/bouquet-whisper.png',  cat:'Топ подарок' },
 ];
 
 const showcaseTitle   = document.getElementById('showcaseTitle');
@@ -198,24 +313,30 @@ showcaseNext.addEventListener('click', () => goToShowcase(showcaseIndex + 1));
 showcaseSection.addEventListener('mouseenter', () => clearInterval(showcaseTimer));
 showcaseSection.addEventListener('mouseleave', resetShowcaseTimer);
 
-/* ================= BOUQUET DATA (real photos) ================= */
 const bouquets = [
-  { name:'Нежный флирт',      desc:'Розовые и белые альстромерии в нежной упаковке', price:'2 800 ₽', img:'/images/bouquet-flirt.png',   accent:'#D9748F' },
-  { name:'Полевой букет',     desc:'Ромашки, зелень и полевые травы',                price:'2 400 ₽', img:'/images/bouquet-field.png',   accent:'#7DAE5C' },
-  { name:'Утренний персик',   desc:'Пионовидные розы, ромашки и гвоздика',           price:'3 100 ₽', img:'/images/bouquet-peach.png',   accent:'#E39A5D' },
-  { name:'Ромашковое облако', desc:'Огромная шапка хризантем с гипсофилой',          price:'4 500 ₽', img:'/images/bouquet-cloud.png',   accent:'#E8A9C4' },
-  { name:'Тихий шёпот',       desc:'Эустома, гвоздика и пастельные тона',            price:'2 200 ₽', img:'/images/bouquet-whisper.png', accent:'#D98CA3' },
+  { name:'Нежный флирт',      desc:'Розовые и белые альстромерии в нежной упаковке', price:'2 800 ₽', img:BASE + 'images/bouquet-flirt.png',   accent:'#D9748F' },
+  { name:'Полевой букет',     desc:'Ромашки, зелень и полевые травы',                price:'2 400 ₽', img:BASE + 'images/bouquet-field.png',   accent:'#7DAE5C' },
+  { name:'Утренний персик',   desc:'Пионовидные розы, ромашки и гвоздика',           price:'3 100 ₽', img:BASE + 'images/bouquet-peach.png',   accent:'#E39A5D' },
+  { name:'Ромашковое облако', desc:'Огромная шапка хризантем с гипсофилой',          price:'4 500 ₽', img:BASE + 'images/bouquet-cloud.png',   accent:'#E8A9C4' },
+  { name:'Тихий шёпот',       desc:'Эустома, гвоздика и пастельные тона',            price:'2 200 ₽', img:BASE + 'images/bouquet-whisper.png', accent:'#D98CA3' },
 ];
 
 initCarousel3D(bouquets);
 
-/* ---- Coverflow: cards sit side by side, offset from the centered one by
-   translateX + rotateY + a push back on Z. This is what apechain-style
-   showcases actually are -- flat tilted panels receding to each side, not
-   a full 360 ring. A ring only shows neighbours if the radius is huge
-   relative to card size; with 5 items that either hides them behind the
-   front card or shrinks everything. Coverflow shows exactly as many
-   neighbours as you want, at a size you control directly. ---- */
+/* "Все букеты" сидит внутри .carousel3d-wrap, который слушает
+   pointerdown/mousemove на себе (bubbling phase) для drag/tilt
+   взаимодействий. Проверка e.target.closest() внутри того обработчика
+   уже должна пропускать ссылки и кнопки, но остановка propagation прямо
+   здесь, до того как событие дойдёт до wrap, надёжнее -- обработчики
+   wrap вообще не срабатывают для этого элемента. */
+(function protectViewAllButton(){
+  const viewAllBtn = document.querySelector('.carousel3d-viewall');
+  if (!viewAllBtn) return;
+  ['pointerdown', 'mousedown', 'touchstart', 'click'].forEach(evt => {
+    viewAllBtn.addEventListener(evt, e => e.stopPropagation());
+  });
+})();
+
 function initCarousel3D(items){
   const wrap    = document.getElementById('carousel3dWrap');
   const ring    = document.getElementById('carousel3d');
@@ -232,9 +353,9 @@ function initCarousel3D(items){
   const cardW  = Math.round(narrow ? window.innerWidth * .58 : Math.min(520, window.innerWidth * .28));
   const cardH  = Math.round(wrapH * .74);
 
-  const SPACING = Math.round(cardW * (narrow ? .5 : .6)); // px shift per step -- controls how much of a neighbour peeks out
-  const TILT    = 34;   // deg rotateY per step away from center
-  const DEPTH   = 110;  // px pushed back (negative Z) per step away from center
+  const SPACING = Math.round(cardW * (narrow ? .5 : .6));
+  const TILT    = 34;
+  const DEPTH   = 110;
 
   wrap.style.perspective = '1700px';
   ring.style.setProperty('--card-w', cardW + 'px');
@@ -243,7 +364,7 @@ function initCarousel3D(items){
   const cardEls = [];
   let hoveredIndex = -1;
   let dragMoved = false;
-  const hoverLocal = { x: 0, y: 0 }; // cursor position within the hovered card, -0.5..0.5
+  const hoverLocal = { x: 0, y: 0 };
 
   items.forEach((b, i) => {
     const card = document.createElement('div');
@@ -262,8 +383,6 @@ function initCarousel3D(items){
       hoverLocal.x = (e.clientX - r.left) / r.width - .5;
       hoverLocal.y = (e.clientY - r.top) / r.height - .5;
     });
-    // click any card (front or side) to bring it to center -- ignored if
-    // the click was actually the tail end of a drag
     card.addEventListener('click', () => {
       if (dragMoved) return;
       goTo(i);
@@ -286,7 +405,7 @@ function initCarousel3D(items){
     wrap._resumeTimer = setTimeout(() => { paused = false; scheduleAutoAdvance(); }, 2200);
   }
 
-  let position = 0;         // continuous "current index" (float, eased)
+  let position = 0;
   let targetPosition = 0;
   let dragBasePosition = 0;
   let paused = false;
@@ -294,8 +413,13 @@ function initCarousel3D(items){
   let dragStartX = 0;
   let t = 0;
 
-  let ribbonX = 0, ribbonTargetX = 0;   // background ribbons drift slightly with the cursor
+  let ribbonX = 0, ribbonTargetX = 0;
   let ribbonY = 0, ribbonTargetY = 0;
+
+  let rafId = null;
+  let carouselVisible = false;
+  function startTick(){ if (!rafId) rafId = requestAnimationFrame(tick); }
+  function stopTick(){ if (rafId) cancelAnimationFrame(rafId); rafId = null; }
 
   let frontIndex = -1;
   function updateCaption(i){
@@ -304,12 +428,17 @@ function initCarousel3D(items){
     scrambleText(capPrice, item.price);
     scrambleText(capDesc, item.desc);
 
-    ribbons.style.setProperty('--ribbon-color', item.accent);
+    // Пишем переменную на :root, а не на сам SVG-узел ribbons -- так
+    // её подхватывает и .carousel3d-ribbons path (fill), и мягкое
+    // цветовое "послесвечение" под каруселью (.carousel3d-bg-extend::before,
+    // см. style.css) -- оба должны переливаться в один и тот же акцент
+    // синхронно, а bg-extend лежит вне .collections как соседняя секция,
+    // так что запись на сам ribbons-узел до него бы не докаскадилась.
+    document.documentElement.style.setProperty('--ribbon-color', item.accent);
 
     selectBtns.forEach((b, idx) => b.classList.toggle('active', idx === i));
   }
 
-  // shortest signed distance from `position` to index i, wrapped around n
   function wrappedOffset(i){
     let off = i - position;
     while (off > half)  off -= n;
@@ -336,16 +465,12 @@ function initCarousel3D(items){
       let rotX = 0;
       let scale = Math.max(1 - abs * .16, .5);
       let opacity = Math.max(1 - abs * .38, 0);
-      // the closer a card sits to dead center, the more colour it keeps --
-      // fully colour at abs=0, fully grayscale by the time it's a step away
       let grayscale = Math.min(abs / .85, 1);
       let brightness = Math.max(1 - abs * .3, .55);
 
       if (index === hoveredIndex){
-        // hovered card: full colour, a touch bigger, nudged toward the
-        // cursor position within it (a light magnetic/parallax tilt)
         scale += .1;
-        x += hoverLocal.x * 26 + 10;   // +10 = the small constant rightward nudge on hover
+        x += hoverLocal.x * 26 + 10;
         const yShift = hoverLocal.y * 16;
         rotY += hoverLocal.x * 12;
         rotX = hoverLocal.y * -10;
@@ -370,17 +495,23 @@ function initCarousel3D(items){
       updateCaption(rounded);
     }
 
-    requestAnimationFrame(tick);
+    if (carouselVisible) rafId = requestAnimationFrame(tick);
+    else rafId = null;
   }
-  requestAnimationFrame(tick);
+
+  new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      carouselVisible = entry.isIntersecting;
+      if (carouselVisible) startTick();
+    });
+  }, { rootMargin: '200px 0px' }).observe(wrap);
+
   updateCaption(0);
 
   function step(dir){
     targetPosition += dir;
   }
 
-  /* auto-advance: waits 7s, then steps one card, then waits again --
-     any interaction resets the clock */
   function scheduleAutoAdvance(){
     clearTimeout(wrap._autoTimer);
     wrap._autoTimer = setTimeout(() => {
@@ -405,11 +536,13 @@ function initCarousel3D(items){
     ribbonTargetY = ((e.clientY - r.top) / r.height - .5) * 26;
   });
 
-  // Ignore drags that start on the arrow buttons -- setPointerCapture below
-  // would otherwise swallow their click event entirely.
   wrap.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('button')) return;
-    e.preventDefault(); // stops the browser's own "drag this image" / text-selection gesture
+    // button = select thumbnails / prev-next arrows; a = "Все букеты" link
+    // и любой другой anchor внутри carousel wrap -- ни один из них
+    // не должен начинать drag, иначе его click никогда не сработает
+    // из-за preventDefault() ниже.
+    if (e.target.closest('button, a')) return;
+    e.preventDefault();
     dragging = true;
     dragMoved = false;
     dragStartX = e.clientX;
@@ -444,7 +577,6 @@ function initCarousel3D(items){
   document.getElementById('carouselNext').addEventListener('click', () => clickStep(1));
 }
 
-/* ================= CUSTOM CURSOR ================= */
 const cursor = document.getElementById('cursor');
 if (matchMedia('(pointer:fine)').matches) {
   window.addEventListener('mousemove', e => {
@@ -460,22 +592,14 @@ if (matchMedia('(pointer:fine)').matches) {
   cursor.style.display = 'none';
 }
 
-/* ================= SCROLL REVEALS ================= */
 document.querySelectorAll('.reveal').forEach(el => {
-  if (el.closest('#story')) return; // story gets its own faster fly-in below
+  if (el.closest('#story')) return;
   gsap.to(el, {
     opacity: 1, y: 0, duration: .9, ease: 'power3.out',
     scrollTrigger: { trigger: el, start: 'top 85%' }
   });
 });
 
-/* Story content flies in via its own independent scroll trigger. Since
-   the curtain jumps the scroll position straight to #story's top while
-   the tiles are fully covering the screen, this trigger fires right as
-   the tiles start opening -- so the content is already rising into
-   place by the time the mosaic reveals it. Shorter duration, steeper
-   ease, bigger starting offset than the rest of the page's reveals, so
-   it reads as "flying up" into frame rather than gently fading in. */
 document.querySelectorAll('#story .reveal').forEach((el, i) => {
   gsap.to(el, {
     opacity: 1, y: 0, duration: .45, ease: 'power4.out', delay: i * .05,
@@ -483,8 +607,7 @@ document.querySelectorAll('#story .reveal').forEach((el, i) => {
   });
 });
 
-/* ================= MAGNETIC BUTTONS ================= */
-document.querySelectorAll('.btn-primary, .btn-ghost, .nav-cta').forEach(btn => {
+document.querySelectorAll('.btn-primary, .btn-ghost, .btn-ghost-dark, .nav-cta').forEach(btn => {
   btn.addEventListener('mousemove', e => {
     const r = btn.getBoundingClientRect();
     const x = e.clientX - r.left - r.width / 2;
@@ -496,418 +619,367 @@ document.querySelectorAll('.btn-primary, .btn-ghost, .nav-cta').forEach(btn => {
   });
 });
 
-/* ================= STORY HOTSPOTS (bouquet breakdown) ================= */
+function initDistrictsReveal(){
+  const rows = document.querySelectorAll('.districts-row');
+  if (!rows.length || !window.gsap) return;
 
-/* Clip a segment (x1,y1)-(x2,y2) against an axis-aligned rectangle and
-   return the point where it enters the rectangle (closest to point 1).
-   Uses the Liang-Barsky algorithm. Returns null if the segment never
-   touches the rectangle. All coordinates are in the same space (here:
-   viewport px). */
-function intersectSegmentWithRect(x1, y1, x2, y2, rx1, ry1, rx2, ry2){
-  const dx = x2 - x1, dy = y2 - y1;
-  let tMin = 0, tMax = 1;
-  const p = [-dx, dx, -dy, dy];
-  const q = [x1 - rx1, rx2 - x1, y1 - ry1, ry2 - y1];
-  for (let i = 0; i < 4; i++){
-    if (p[i] === 0){
-      if (q[i] < 0) return null; // parallel and outside
-    } else {
-      const t = q[i] / p[i];
-      if (p[i] < 0){
-        if (t > tMax) return null;
-        if (t > tMin) tMin = t;
-      } else {
-        if (t < tMin) return null;
-        if (t < tMax) tMax = t;
-      }
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const RIPPLE_STEP = .09;
+
+  function splitName(nameEl){
+    const text = nameEl.textContent.trim();
+    const chars = text.split('');
+    const letterCount = chars.filter(ch => ch !== ' ').length;
+
+    const seedPositions = letterCount <= 6
+      ? [ Math.floor(letterCount / 2) ]
+      : [ Math.round(letterCount * 0.32), Math.round(letterCount * 0.68) ];
+
+    let letterPos = 0;
+    nameEl.innerHTML = chars.map(ch => {
+      if (ch === ' ') return ' ';
+      const isSeed = seedPositions.includes(letterPos);
+      const markup = `<span class="letter" data-pos="${letterPos}"><span class="letter-text">${ch}</span>${isSeed ? '<span class="seed-dot"></span>' : ''}</span>`;
+      letterPos++;
+      return markup;
+    }).join('');
+
+    const letterEls = [...nameEl.querySelectorAll('.letter')].map(el => ({
+      textEl: el.querySelector('.letter-text'),
+      distance: Math.min(...seedPositions.map(s => Math.abs(Number(el.dataset.pos) - s))),
+    }));
+    const seedDots = nameEl.querySelectorAll('.seed-dot');
+    const maxDistance = Math.max(...letterEls.map(l => l.distance), 0);
+
+    return { letterEls, seedDots, maxDistance };
+  }
+
+  rows.forEach(row => {
+    const nameEls  = row.querySelectorAll('.districts-name');
+    const photoEls = row.querySelectorAll('.districts-photo');
+    const timeEl   = row.querySelector('.districts-time');
+    if (!nameEls.length) return;
+
+    const parts = [...nameEls].map(splitName);
+    const allLetterEls = parts.flatMap(p => p.letterEls);
+    const allSeedDots  = parts.flatMap(p => [...p.seedDots]);
+    const overallMaxDistance = Math.max(...parts.map(p => p.maxDistance), 0);
+
+    if (reduceMotion){
+      gsap.set(allSeedDots, { opacity: 0, scale: 0 });
+      gsap.set(allLetterEls.map(l => l.textEl), { opacity: 1, scale: 1 });
+      gsap.set(photoEls, { opacity: 1, scale: 1 });
+      if (timeEl) gsap.set(timeEl, { opacity: 1, y: 0 });
+      return;
     }
-  }
-  return { x: x1 + tMin * dx, y: y1 + tMin * dy };
-}
 
-/* Recompute every SVG line so it starts at the dot and stops right at the
-   edge of its label's bounding box (plus a small gap) -- this guarantees
-   the line never overlaps the label text, regardless of text length,
-   font, or viewport width. Runs on load and on resize. Desktop only --
-   on mobile the lines are hidden entirely (legend list is used instead). */
-function updateStoryLines(){
-  const stage = document.getElementById('story');
-  if (!stage) return;
-  if (window.matchMedia('(max-width:880px)').matches) return;
+    gsap.set(allSeedDots, { opacity: 0, scale: 0 });
+    gsap.set(allLetterEls.map(l => l.textEl), { opacity: 0, scale: .15 });
+    gsap.set(photoEls, { opacity: 0, scale: .8 });
+    if (timeEl) gsap.set(timeEl, { opacity: 0, y: 6 });
 
-  const stageRect = stage.getBoundingClientRect();
-  if (!stageRect.width || !stageRect.height) return;
-
-  const GAP = 10; // px breathing room between line end and label box
-
-  stage.querySelectorAll('.story-line').forEach(line => {
-    const idx = line.dataset.index;
-    const dot   = stage.querySelector(`.story-dot[data-index="${idx}"]`);
-    const label = stage.querySelector(`.story-labels-col .story-label[data-index="${idx}"]`);
-    if (!dot || !label) return;
-
-    const dotRect   = dot.getBoundingClientRect();
-    const labelRect = label.getBoundingClientRect();
-
-    const dotX = dotRect.left + dotRect.width / 2;
-    const dotY = dotRect.top + dotRect.height / 2;
-    const labelCX = labelRect.left + labelRect.width / 2;
-    const labelCY = labelRect.top + labelRect.height / 2;
-
-    const hit = intersectSegmentWithRect(
-      dotX, dotY, labelCX, labelCY,
-      labelRect.left - GAP, labelRect.top - GAP,
-      labelRect.right + GAP, labelRect.bottom + GAP
-    );
-    const end = hit || { x: labelCX, y: labelCY };
-
-    const x1 = (dotX - stageRect.left) / stageRect.width * 100;
-    const y1 = (dotY - stageRect.top) / stageRect.height * 100;
-    const x2 = (end.x - stageRect.left) / stageRect.width * 100;
-    const y2 = (end.y - stageRect.top) / stageRect.height * 100;
-
-    line.setAttribute('x1', x1.toFixed(2));
-    line.setAttribute('y1', y1.toFixed(2));
-    line.setAttribute('x2', x2.toFixed(2));
-    line.setAttribute('y2', y2.toFixed(2));
-  });
-}
-
-/* ================= STORY SHAPES (traced outlines, not circles) =================
-   Each entry is one label's set of outline(s), as percentages of the RAW
-   photo file (bouquet-story.png) -- exactly what the shape-picker tool
-   exports. Эвкалипт has several disconnected leaf clusters, so it's an
-   array of several point-strings; everything else is a single outline.
-   Розы (index 0 и 2) currently share one combined outline since tracing
-   each rose individually was impractical -- both labels light up the
-   same area until/unless they're split into two separate traces. */
-const STORY_SHAPES = {
-  0: [ // Пионовидные розы (shared outline, see note above)
-    "57.1,60.6 46.7,58.3 38.1,56.6 35.8,53.4 31.4,53.7 25.7,53.4 21.7,50.5 18.4,46.5 19.9,42.0 23.0,37.8 27.0,33.1 32.5,33.1 37.4,30.0 40.9,28.7 44.9,28.6 49.1,31.1 52.0,28.9 55.8,30.7 57.1,32.4 60.8,31.8 65.7,33.1 64.6,34.9 69.0,36.0 70.8,37.8 71.2,40.1 75.7,42.0 76.5,44.7 77.7,47.0 75.9,51.7 72.8,53.4 69.2,53.7 68.1,56.3 64.2,58.3 58.8,60.4"
-  ],
-  1: [ // Эвкалипт -- 6 отдельных пучков листьев
-    "38.3,44.2 38.1,46.2 36.1,45.6 33.8,46.2 35.6,44.2 31.9,43.8 32.5,42.9 30.5,41.6 28.8,40.0 25.2,40.0 22.1,40.4 20.4,38.9 23.9,37.8 27.2,38.6 33.2,40.4 35.4,40.4 38.1,42.7",
-    "27.2,35.8 23.7,36.9 22.6,35.1 26.3,32.4 27.2,30.8 32.1,28.8 34.5,30.4 36.7,31.5 33.8,32.2 33.2,34.6 31.0,34.9 29.9,32.6 27.2,33.1",
-    "42.0,40.5 40.0,40.0 40.0,38.4 37.8,37.8 41.4,36.9 43.6,38.0 43.4,36.6 41.2,34.0 43.1,32.8 41.4,31.5 42.5,28.9 45.6,30.6 46.9,31.3 47.6,33.7 48.2,35.5 51.8,36.9 50.0,38.6 46.7,37.5 44.2,38.4",
-    "62.4,32.0 63.9,30.2 67.9,29.1 69.2,30.4 63.3,32.8",
-    "58.4,40.4 61.5,38.9 64.8,39.6 61.7,41.1 58.6,41.1",
-    "70.4,33.8 68.4,36.7 69.2,39.6 67.7,40.9 69.0,44.2 67.7,46.3 62.8,47.4 60.4,46.3 57.7,48.5 54.9,48.3 54.6,51.4 57.7,51.1 60.4,49.4 63.9,50.9 67.3,50.1 68.8,48.7 70.8,49.1 70.4,51.8 72.6,52.3 73.9,50.3 71.9,48.5 72.1,47.4 73.5,47.2 76.8,46.9 77.2,44.9 73.0,43.8 72.6,42.5 71.7,40.5 69.9,39.5 70.6,37.5 75.2,38.2 78.5,38.4 81.6,37.3 79.6,35.5 75.7,35.5 74.1,36.9"
-  ],
-  2: [ // Кустовые розы (тот же контур, что и index 0 -- см. примечание выше)
-    "57.1,60.6 46.7,58.3 38.1,56.6 35.8,53.4 31.4,53.7 25.7,53.4 21.7,50.5 18.4,46.5 19.9,42.0 23.0,37.8 27.0,33.1 32.5,33.1 37.4,30.0 40.9,28.7 44.9,28.6 49.1,31.1 52.0,28.9 55.8,30.7 57.1,32.4 60.8,31.8 65.7,33.1 64.6,34.9 69.0,36.0 70.8,37.8 71.2,40.1 75.7,42.0 76.5,44.7 77.7,47.0 75.9,51.7 72.8,53.4 69.2,53.7 68.1,56.3 64.2,58.3 58.8,60.4"
-  ],
-  3: [ // Упаковка
-    "62.8,90.8 63.1,89.2 62.8,86.5 62.4,83.8 61.7,80.3 60.4,77.1 59.7,74.3 58.4,72.5 61.3,71.8 67.7,69.8 70.6,65.5 76.8,62.6 81.0,44.3 78.8,40.1 76.1,38.1 72.3,35.8 71.5,37.4 74.3,40.5 77.2,44.3 78.8,49.0 73.7,54.6 66.8,58.2 57.7,60.4 49.6,58.6 43.4,58.2 38.9,58.4 33.4,57.3 26.5,54.8 22.1,52.4 18.8,49.3 17.7,42.3 15.0,46.4 19.0,53.9 22.1,59.7 25.7,64.0 27.2,65.8 30.3,67.5 28.5,68.0 21.7,80.5 21.0,85.8 24.3,88.7 28.5,90.8 28.5,93.0 49.6,95.5 52.4,95.2 55.3,94.1 56.6,91.2 59.1,90.7"
-  ],
-  4: [ // Лента
-    "57.1,82.1 59.1,78.9 56.6,72.7 54.9,72.9 45.1,72.5 38.3,70.5 35.0,68.9 31.2,72.0 27.7,78.9 28.1,81.6 32.1,74.3 36.3,70.4 38.7,70.5 36.5,73.4 39.8,74.7 41.4,73.6 41.2,76.0 40.0,78.7 43.8,82.1 45.4,79.1 46.2,74.9 45.6,73.4 50.4,73.4 54.2,74.5 56.0,76.9 57.3,79.8"
-  ]
-};
-
-/* Turns a closed loop of points into a smooth SVG path (cubic Beziers via
-   Catmull-Rom), instead of the straight-line segments a raw polygon draws
-   between hand-traced points -- removes the "zig-zag" look without
-   needing to re-trace with more/fewer points. */
-function smoothClosedPath(points, tension = 6){
-  const n = points.length;
-  if (n < 3) return '';
-  let d = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)} `;
-  for (let i = 0; i < n; i++){
-    const p0 = points[(i - 1 + n) % n];
-    const p1 = points[i];
-    const p2 = points[(i + 1) % n];
-    const p3 = points[(i + 2) % n];
-    const c1x = p1.x + (p2.x - p0.x) / tension;
-    const c1y = p1.y + (p2.y - p0.y) / tension;
-    const c2x = p2.x - (p3.x - p1.x) / tension;
-    const c2y = p2.y - (p3.y - p1.y) / tension;
-    d += `C ${c1x.toFixed(2)} ${c1y.toFixed(2)}, ${c2x.toFixed(2)} ${c2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} `;
-  }
-  return d + 'Z';
-}
-
-function initStoryHotspots(){
-  console.log('%c[story-shapes] script version: v4-debug', 'color:#E8412C;font-weight:bold');
-  const stage = document.getElementById('story');
-  const photoFrame = document.getElementById('storyPhotoFrame');
-  if (!stage || !photoFrame) return;
-
-  const dots   = stage.querySelectorAll('.story-dot');
-  const lines  = stage.querySelectorAll('.story-line');
-  const labels = stage.querySelectorAll('.story-labels-col .story-label');
-  const legendItems = document.querySelectorAll('.story-legend-item');
-
-  /* ---- build the outline <path> elements once, one per traced shape
-     (eucalyptus needs several) -- their "d" gets filled in by
-     updateStoryShapes() once we know the photo's real render box ---- */
-  const shapesSvg = document.getElementById('storyShapes');
-  const shapePolys = [];
-  if (shapesSvg){
-    Object.keys(STORY_SHAPES).forEach(idx => {
-      STORY_SHAPES[idx].forEach((_, shapeIdx) => {
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.classList.add('shape-poly');
-        path.dataset.index = idx;
-        path.dataset.shapeIdx = String(shapeIdx);
-        shapesSvg.appendChild(path);
-        shapePolys.push(path);
-      });
-    });
-  }
-  let shapeFrameCoords = {}; // cache: index -> [ [ {xPct,yPct}, ... ], ... ] in FRAME percentage
-
-  /* Converts the raw-photo percentages in STORY_SHAPES into percentages of
-     the visibly rendered frame, replicating exactly what
-     object-fit:cover; object-position:center 20% does to the image --
-     otherwise outlines would drift off their real target since cover
-     crops part of the photo away. Recomputed on load/resize since the
-     crop depends on the frame's current on-screen aspect ratio. */
-  function updateStoryShapes(){
-    const photo = photoFrame.querySelector('.story-photo:not(.story-photo-color)');
-    if (!photo || !photo.naturalWidth) return;
-
-    const frameRect = photoFrame.getBoundingClientRect();
-    const Fw = frameRect.width, Fh = frameRect.height;
-    if (!Fw || !Fh) return;
-
-    const W = photo.naturalWidth, H = photo.naturalHeight;
-    const scale = Math.max(Fw / W, Fh / H);
-    const Ws = W * scale, Hs = H * scale;
-    const offsetX = (Fw - Ws) / 2;     // object-position: center (horizontal)
-    const offsetY = (Fh - Hs) * 0.20;  // object-position: 20% (vertical)
-
-    shapeFrameCoords = {};
-    Object.keys(STORY_SHAPES).forEach(idx => {
-      shapeFrameCoords[idx] = STORY_SHAPES[idx].map(pointsStr =>
-        pointsStr.trim().split(/\s+/).map(pair => {
-          const [px, py] = pair.split(',').map(Number);
-          const fx = offsetX + (px / 100 * W) * scale;
-          const fy = offsetY + (py / 100 * H) * scale;
-          return { xPct: fx / Fw * 100, yPct: fy / Fh * 100 };
-        })
-      );
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: row,
+        start: 'top 92%',
+        end:   'top 58%',
+        scrub: .5,
+      }
     });
 
-    shapePolys.forEach(path => {
-      const coords = shapeFrameCoords[path.dataset.index]?.[Number(path.dataset.shapeIdx)];
-      if (!coords) return;
-      path.setAttribute('d', smoothClosedPath(coords.map(c => ({ x: c.xPct, y: c.yPct }))));
+    tl.to(allSeedDots, { opacity: 1, scale: 1, duration: .4, ease: 'power2.out' }, 0)
+      .to(allSeedDots, { opacity: 0, scale: 0, duration: .35, ease: 'power1.in' }, .55);
+
+    allLetterEls.forEach(({ textEl, distance }) => {
+      tl.to(textEl, {
+        opacity: 1, scale: 1,
+        duration: .4,
+        ease: 'steps(5)',
+      }, .95 + distance * RIPPLE_STEP);
     });
-  }
 
-  /* Cuts the colour reveal layer to the same traced shape(s) as the
-     active label, in on-screen pixels (clip-path needs px, not %) --
-     smoothed the same way as the visible outline so both match. */
-  function applyClipPath(index){
-    const colorLayer = photoFrame.querySelector('.story-photo-color');
-    const shapes = shapeFrameCoords[index];
-    if (!colorLayer || !shapes || !shapes.length) return;
+    if (photoEls.length){
+      tl.to(photoEls, { opacity: 1, scale: 1, duration: .6, ease: 'power2.out' }, .9);
+    }
 
-    const frameRect = photoFrame.getBoundingClientRect();
-    const Fw = frameRect.width, Fh = frameRect.height;
-
-    const pathStr = shapes.map(coords =>
-      smoothClosedPath(coords.map(c => ({ x: c.xPct / 100 * Fw, y: c.yPct / 100 * Fh })))
-    ).join(' ');
-
-    colorLayer.style.clipPath = `path('${pathStr}')`;
-  }
-
-  function setActive(index){
-    updateStoryShapes(); // recompute fresh -- layout may have shifted since last calc (e.g. web fonts swapping in)
-    dots.forEach(el => el.classList.toggle('is-active', el.dataset.index === index));
-    lines.forEach(el => el.classList.toggle('is-active', el.dataset.index === index));
-    labels.forEach(el => el.classList.toggle('is-active', el.dataset.index === index));
-    legendItems.forEach(el => el.classList.toggle('is-active', el.dataset.index === index));
-    shapePolys.forEach(el => el.classList.toggle('is-active', el.dataset.index === index));
-
-    applyClipPath(index);
-    photoFrame.classList.add('is-spotlight');
-  }
-
-  function clearActive(){
-    dots.forEach(el => el.classList.remove('is-active'));
-    lines.forEach(el => el.classList.remove('is-active'));
-    labels.forEach(el => el.classList.remove('is-active'));
-    legendItems.forEach(el => el.classList.remove('is-active'));
-    shapePolys.forEach(el => el.classList.remove('is-active'));
-    photoFrame.classList.remove('is-spotlight');
-  }
-
-  const groups = [...dots, ...labels, ...legendItems];
-  groups.forEach(el => {
-    el.addEventListener('mouseenter', () => setActive(el.dataset.index));
-    el.addEventListener('mouseleave', clearActive);
-    el.addEventListener('click', () => setActive(el.dataset.index));
-    el.addEventListener('focus', () => setActive(el.dataset.index));
-    el.addEventListener('blur', clearActive);
+    if (timeEl){
+      tl.to(timeEl, { opacity: 1, y: 0, duration: .5, ease: 'power2.out' }, .95 + overallMaxDistance * RIPPLE_STEP + .3);
+    }
   });
-
-  // initial placement + keep in sync with layout changes
-  updateStoryLines();
-  updateStoryShapes();
-  window.addEventListener('load', () => { updateStoryLines(); updateStoryShapes(); });
-  window.addEventListener('resize', () => {
-    clearTimeout(stage._lineResizeTimer);
-    stage._lineResizeTimer = setTimeout(() => { updateStoryLines(); updateStoryShapes(); }, 120);
-  });
-  const storyPhoto = photoFrame.querySelector('.story-photo');
-  if (storyPhoto){
-    if (storyPhoto.complete) { updateStoryLines(); updateStoryShapes(); }
-    else storyPhoto.addEventListener('load', () => { updateStoryLines(); updateStoryShapes(); }, { once: true });
-  }
-  if (document.fonts && document.fonts.ready){
-    document.fonts.ready.then(() => { updateStoryLines(); updateStoryShapes(); });
-  }
 }
-initStoryHotspots();
+initDistrictsReveal();
 
-/* Photo rushes into place slightly faster than the normal scroll as the
-   section enters view (classic parallax), settling back to its natural
-   spot well before it's fully on screen -- so by the time the annotation
-   overlay is allowed to appear (see below), the dots/lines are already
-   sitting exactly where updateStoryLines() expects them. */
-function initStoryParallax(){
-  const wrap = document.getElementById('storyPhotoFrame');
-  if (!wrap) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  if (window.matchMedia('(max-width:880px)').matches) return;
 
-  const photos = wrap.querySelectorAll('.story-photo');
-  if (!photos.length) return;
 
-  gsap.fromTo(photos,
-    { yPercent: 8 },
-    {
-      yPercent: 0,
+/* ================= ADVANTAGES -- pinned scrollytelling ================= */
+function initAdvantagesPin(){
+  const section = document.getElementById('advantages');
+  const prevSection = document.getElementById('districts');
+  const indexEl = document.getElementById('advIndex');
+  const headingEl = document.getElementById('advHeading');
+  const descEl = document.getElementById('advDesc');
+  const ghostEl = document.getElementById('advGhost');
+  const ringEl = document.getElementById('advRingProgress');
+  const dots = document.querySelectorAll('.advantages-dot');
+  if (!section || !prevSection || !indexEl || !headingEl || !descEl) return;
+
+  const items = [
+    { num:'01', title:'Свежая срезка',    desc:'Цветы приходят с фермы не позже чем за 48 часов до сборки — не залёживаются на складе.' },
+    { num:'02', title:'60 минут',         desc:'От заявки до звонка в дверь — курьер уже в пути, пока флорист довязывает бант.' },
+    { num:'03', title:'Честный состав',   desc:'У каждого букета — разбор по цветам и материалам. Видите, за что платите, до заказа.' },
+    { num:'04', title:'Без слащавости',   desc:'Ни целлофана, ни рюшей — крафт-бумага, смелые сочетания и минимум декора.' },
+  ];
+
+  const ringLength = ringEl ? ringEl.getTotalLength() : 0;
+  if (ringEl){
+    ringEl.style.strokeDasharray = ringLength;
+    ringEl.style.strokeDashoffset = ringLength;
+  }
+
+  let current = 0;
+
+  function render(i){
+    if (i === current) return;
+    current = i;
+    const item = items[i];
+
+    gsap.timeline()
+      .to([indexEl, descEl], { opacity: 0, y: -14, duration: .22, ease: 'power2.in' })
+      .call(() => {
+        indexEl.textContent = item.num;
+        descEl.textContent = item.desc;
+        if (ghostEl) ghostEl.textContent = item.num;
+        scrambleText(headingEl, item.title);
+      })
+      .to([indexEl, descEl], { opacity: 1, y: 0, duration: .32, ease: 'power2.out' });
+
+    if (ghostEl){
+      gsap.fromTo(ghostEl, { opacity: 0 }, { opacity: .035, duration: .5, ease: 'power2.out' });
+    }
+    dots.forEach((d, idx) => d.classList.toggle('active', idx === i));
+  }
+
+  const mm = gsap.matchMedia();
+
+  mm.add('(min-width: 881px)', () => {
+    gsap.set(prevSection, { transformOrigin: '50% 100%' });
+    const shrinkTween = gsap.to(prevSection, {
+      scale: .92,
       ease: 'none',
       scrollTrigger: {
-        trigger: wrap,
+        trigger: section,
         start: 'top bottom',
-        end: 'top 40%',
+        end: 'top top',
         scrub: true,
       }
-    }
-  );
-}
-initStoryParallax();
+    });
 
-/* ================= CURTAIN TRANSITION =================
-   A tile-mosaic blackout transition, matching the reference: a grid of
-   small rounded tiles scales in with a center-out stagger until they
-   fully cover the screen, then the same grid scales back out the same
-   way, revealing whatever's now underneath. It's a real one-shot event
-   -- scrolling is briefly locked while it plays, on its own clock, not
-   tied to scroll distance -- because that's what makes it read as a
-   clean cut rather than something you can scrub back and forth through.
+    const segments = items.length;
+    const pinTrigger = ScrollTrigger.create({
+      trigger: section,
+      start: 'top top',
+      end: () => '+=' + (window.innerHeight * segments),
+      pin: true,
+      scrub: true,
+      anticipatePin: 1,
+      invalidateOnRefresh: true,
+      onUpdate: self => {
+        const scaled = self.progress * segments;
+        const idx = Math.min(segments - 1, Math.floor(scaled));
+        render(idx);
 
-   Since this page has no real routes to swap between (unlike the
-   reference, which is cutting between two pages), the "swap" here is a
-   straight jump of the scroll position to #story's top, done in the one
-   instant the tiles are fully covering the screen -- invisible, exactly
-   like a page-swap would be. */
-function initCurtainTransition(){
-  const catalog  = document.getElementById('catalog');
-  const story    = document.getElementById('story');
-  const gridWrap = document.getElementById('curtainBars');
-  if (!catalog || !story || !gridWrap) return;
-
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  const COLS = 12;
-  const ROWS = 7;
-  const tiles = [];
-
-  gridWrap.style.display = 'grid';
-  gridWrap.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
-  gridWrap.style.gridTemplateRows = `repeat(${ROWS}, 1fr)`;
-
-  for (let i = 0; i < COLS * ROWS; i++){
-    const tile = document.createElement('div');
-    tile.className = 'curtain-tile';
-    gridWrap.appendChild(tile);
-    tiles.push(tile);
-  }
-
-  gsap.set(tiles, { scale: 0 });
-
-  const TILE_DUR   = .5;   // real seconds -- own clock, not scrubbed
-  const TILE_STAGGER_TOTAL = .45; // spread of the center-out ripple across all tiles
-
-  let played = false;
-  let locked = false;
-
-  function preventKey(e){
-    const blocked = ['ArrowDown','ArrowUp','PageDown','PageUp','Space',' ','End','Home'];
-    if (blocked.includes(e.key)) e.preventDefault();
-  }
-  function preventScroll(e){ e.preventDefault(); }
-
-  function lockScroll(){
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('wheel', preventScroll, { passive: false });
-    window.addEventListener('touchmove', preventScroll, { passive: false });
-    window.addEventListener('keydown', preventKey, { passive: false });
-  }
-  function unlockScroll(){
-    document.documentElement.style.overflow = '';
-    document.body.style.overflow = '';
-    window.removeEventListener('wheel', preventScroll, { passive: false });
-    window.removeEventListener('touchmove', preventScroll, { passive: false });
-    window.removeEventListener('keydown', preventKey, { passive: false });
-  }
-
-  function playTransition(){
-    if (played || locked) return;
-    locked = true;
-    gridWrap.classList.add('is-active');
-    lockScroll();
-
-    gsap.timeline({
-      onComplete: () => {
-        unlockScroll();
-        gridWrap.classList.remove('is-active');
-        gsap.set(tiles, { scale: 0 }); // reset for a possible replay later
-        locked = false;
-        played = true;
-        ScrollTrigger.refresh();
+        if (ringEl && ringLength){
+          const localProgress = scaled - idx;
+          ringEl.style.strokeDashoffset = ringLength * (1 - localProgress);
+        }
       }
-    })
-    .to(tiles, {
-      scale: 1,
-      duration: TILE_DUR,
-      ease: 'power2.out',
-      stagger: { grid: [ROWS, COLS], from: 'center', amount: TILE_STAGGER_TOTAL },
-    })
-    .add(() => {
-      // fully covered here -- jump straight to #story's real position
-      // while nothing is visible, so there's nothing to see jump
-      const storyTop = story.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo(0, storyTop);
-    })
-    .to(tiles, {
-      scale: 0,
-      duration: TILE_DUR,
-      ease: 'power2.in',
-      stagger: { grid: [ROWS, COLS], from: 'center', amount: TILE_STAGGER_TOTAL },
+    });
+
+    return () => {
+      pinTrigger.kill();
+      shrinkTween.kill();
+      gsap.set(prevSection, { clearProps: 'transform' });
+      if (ringEl && ringLength) ringEl.style.strokeDashoffset = ringLength;
+    };
+  });
+}
+initAdvantagesPin();
+function initStoryPanels(){
+  const section = document.getElementById('story');
+  if (!section) return;
+
+  const logo = document.getElementById('storyLogo');
+  const wordWrapEl = section.querySelector('.story-word-wrap');
+  const wordEl = document.getElementById('storyWord');
+  const subEl  = document.getElementById('storySub');
+  const dots   = section.querySelectorAll('.story-progress-dot');
+  if (!wordWrapEl || !wordEl || !subEl) return;
+
+  const items = [
+    { word:'Прозрачность',    sub:'Пока вы читаете это, где-то в Эквадоре режут розы для завтрашней доставки.' },
+    { word:'Эквадор, 2800 м', sub:'Фермы высоко в горах — розы растут медленнее, бутон получается плотнее и держится дольше.' },
+    { word:'48 часов',        sub:'От срезки до сборки букета — никакого склада и никакой перележки в холодильнике.' },
+    { word:'Ручная сборка',   sub:'Каждый стебель осматриваем и подрезаем под углом вручную — никакого конвейера.' },
+    { word:'Фейс-контроль',   sub:'Флорист лично проверяет каждый букет перед тем, как он поедет к вам.' },
+  ];
+  const segments   = items.length;
+  const transitions = segments - 1;      // сколько флипов нужно, чтобы показать все тексты (4)
+  const dwellAfterLast = 0.5;            // короткая пауза-"отдых" после последнего флипа, в высотах экрана
+  const totalScrollUnits = transitions + dwellAfterLast;
+
+  let current = -1;
+
+  function render(i, immediate = false){
+    if (i === current) return;
+    current = i;
+    const item = items[i];
+    const isDark = i % 2 === 0;
+    const sideRight = isDark;
+
+    section.classList.toggle('is-dark', isDark);
+    section.classList.toggle('is-light', !isDark);
+    wordWrapEl.classList.toggle('story-side-right', sideRight);
+    wordWrapEl.classList.toggle('story-side-left', !sideRight);
+
+    const enterX = sideRight ? 64 : -64;
+
+    if (immediate){
+      wordEl.textContent = item.word;
+      subEl.textContent = item.sub;
+      gsap.set(wordWrapEl, { x:0, opacity:1, scale:1 });
+    } else {
+      gsap.timeline()
+        .to(wordWrapEl, { opacity:0, x: sideRight ? -18 : 18, scale:.94, duration:.22, ease:'power2.in' })
+        .call(() => {
+          wordEl.textContent = item.word;
+          subEl.textContent = item.sub;
+        })
+        .fromTo(wordWrapEl,
+          { opacity:0, x:enterX, scale:.94 },
+          { opacity:1, x:0, scale:1, duration:.5, ease:'back.out(1.6)' }
+        );
+    }
+
+    dots.forEach((d, idx) => d.classList.toggle('active', idx === i));
+  }
+
+  /* ---- вращение лого от прогресса скролла.
+     phase идёт 0..totalScrollUnits. Каждое ЦЕЛОЕ значение фазы
+     (0,1,2,3,4) -- это момент, когда rotateY кратен 180°, то есть
+     лого развёрнуто плашмя к зрителю -- именно тогда меняем текст
+     (Math.floor(phase) даёт индекс сегмента ровно с этой границы).
+     После последнего перехода (phase >= transitions) вращение
+     ЗАМОРАЖИВАЕТСЯ -- остаток скролла (dwellAfterLast) просто держит
+     лого неподвижным лицом к зрителю, без лишнего докручивания. ---- */
+  function updateLogoRotation(rawPhase){
+    if (!logo) return;
+    const rotationPhase = Math.min(rawPhase, transitions);
+    logo.style.transform = `rotateY(${rotationPhase * 180}deg)`;
+  }
+
+  function segmentIndexFromPhase(rawPhase){
+    return Math.min(segments - 1, Math.floor(rawPhase));
+  }
+
+  render(0, true);
+  updateLogoRotation(0);
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    return;
+  }
+
+  const mm = gsap.matchMedia();
+
+  mm.add('(min-width: 881px)', () => {
+    const pinTrigger = ScrollTrigger.create({
+      trigger: section,
+      start: 'top top',
+      end: () => '+=' + (window.innerHeight * totalScrollUnits),
+      pin: true,
+      scrub: true,
+      anticipatePin: 1,
+      invalidateOnRefresh: true,
+      onUpdate: self => {
+        const phase = self.progress * totalScrollUnits;
+        updateLogoRotation(phase);
+        render(segmentIndexFromPhase(phase));
+      },
+      onRefresh: self => {
+        const phase = self.progress * totalScrollUnits;
+        updateLogoRotation(phase);
+        render(segmentIndexFromPhase(phase), true);
+      },
+    });
+
+    return () => { pinTrigger.kill(); };
+  });
+}
+initStoryPanels();
+/* ================= FAQ (glass strips, scramble + scroll-invert) ================= */
+initFAQ();
+
+/* ================= FLORISTS (pinned card-dealing sequence + video crossfade) ================= */
+initFlorists();
+
+/* ---- три видео секции florists все стартуют с autoplay при загрузке
+   и продолжают декодироваться фоном, даже если видно только .is-active
+   -- это лишняя постоянная нагрузка, которая как раз и складывается с
+   пином/скрабом этой секции в лаг. Секция вне вьюпорта -- пауза всем;
+   в кадре -- играет только текущий активный ролик, остальные на паузе. ---- */
+(function initFloristsVideoPerf(){
+  const section = document.getElementById('florists');
+  if (!section) return;
+  const videos = section.querySelectorAll('.florists-video');
+  if (!videos.length) return;
+
+  function syncPlayback(sectionInView){
+    videos.forEach(v => {
+      if (sectionInView && v.classList.contains('is-active')) v.play().catch(()=>{});
+      else v.pause();
     });
   }
 
-  ScrollTrigger.create({
-    trigger: catalog,
-    start: 'bottom bottom', // fires once the carousel has fully scrolled into view
-    onEnter: playTransition,
-    onLeaveBack: () => { played = false; }, // scrolled back up above the catalog -- allow it to play again if they scroll down a second time
+  new IntersectionObserver((entries) => {
+    entries.forEach(entry => syncPlayback(entry.isIntersecting));
+  }, { threshold: .05 }).observe(section);
+
+  // florists.js переключает .is-active при кроссфейде -- ловим смену
+  // класса и держим играющим только новый активный ролик
+  const classObserver = new MutationObserver(() => {
+    syncPlayback(section.getBoundingClientRect().top < window.innerHeight && section.getBoundingClientRect().bottom > 0);
   });
-}
-initCurtainTransition();
+  videos.forEach(v => classObserver.observe(v, { attributes:true, attributeFilter:['class'] }));
+})();
+
+/* ================= REVIEW CARDS: MAGNETIC 3D TILT ================= */
+document.querySelectorAll('.review-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const r = card.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - .5;
+    const py = (e.clientY - r.top) / r.height - .5;
+    gsap.to(card, {
+      rotateX: py * -9,
+      rotateY: px * 11,
+      y: -6,
+      scale: 1.02,
+      transformPerspective: 700,
+      duration: .45,
+      ease: 'power2.out'
+    });
+  });
+  card.addEventListener('mouseleave', () => {
+    gsap.to(card, {
+      rotateX: 0, rotateY: 0, y: 0, scale: 1,
+      duration: .7, ease: 'elastic.out(1,0.5)'
+    });
+  });
+});
 
 /* ================= NAV: TRANSPARENT AT TOP, HIDE ON SCROLL DOWN,
    SOLID BLACK ON SCROLL BACK UP ================= */
 const siteNav = document.querySelector('.nav');
 let lastScrollY = window.scrollY;
-const NAV_TOP_THRESHOLD = 40; // пока страница почти вверху -- навбар прозрачный
+const NAV_TOP_THRESHOLD = 40;
 
 window.addEventListener('scroll', () => {
   const currentY = window.scrollY;
@@ -924,5 +996,7 @@ window.addEventListener('scroll', () => {
 
   lastScrollY = currentY;
 }, { passive: true });
-import { initFAQ } from './faq.js';
-initFAQ();
+initBrandBanner();
+initMouseTrail();
+initContactPanel();
+initMobileNav();

@@ -1,0 +1,44 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: [ "main" ] # Деплой будет происходить только при пуше в ветку main
+
+permissions:
+  contents: write # Даем пайплайну право записывать код в ветку gh-pages
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Скачиваем код репозитория
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 2. Устанавливаем Node.js
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    # 3. Устанавливаем зависимости
+    - name: Install dependencies
+      run: npm ci
+
+    # 4. Проверяем код линтером
+    - name: Run linter
+      run: npm run lint --if-present
+
+    # 5. Собираем проект (если в package.json есть скрипт build)
+    # Если сборки нет и у вас просто готовые HTML-файлы, этот шаг автоматически пропустится
+    - name: Build project
+      run: npm run build --if-present
+
+    # 6. Автоматический деплой
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: dist
+        branch: gh-pages # Ветка, куда зальется готовый сайт
